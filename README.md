@@ -4,12 +4,28 @@ A cross-platform code scratchpad and rapid prototyping tool inspired by LINQPad.
 
 ## Features
 
-- **Multi-language Support**: C#, Python, JavaScript, and more
+### ✅ Available Now (Phase 1 MVP - ~85% Complete)
+
+- **C# Code Execution**: Run C# snippets with dotnet-script
+- **Monaco Editor**: VS Code's powerful editor with syntax highlighting and IntelliSense
+- **Snippet Management**: Create, save, rename, and delete code snippets
+- **Real-time Output**: Streaming execution output as code runs
+- **Starred Snippets**: Mark favorites for quick access
+- **Recently Opened**: Quick access to your recent work
+- **Search & Filter**: Find snippets by name or language
+- **Import/Export**: Share snippets via .cs files or backup to JSON
+- **Keyboard Shortcuts**: Ctrl+S (save), Ctrl+Shift+S (save as), F5 (run), Ctrl+N (new)
+- **Error Handling**: Helpful error messages and .NET runtime detection
+- **Cross-platform**: Windows, macOS, and Linux support
+
+### 🚧 Coming Soon (Phase 2)
+
 - **Rich Output Visualization**: Beautiful object inspection with `.Dump()` equivalent
-- **Monaco Editor**: VS Code's editor with full IntelliSense
-- **Cross-platform**: Windows, macOS, and Linux
-- **Package Management**: NuGet, pip, npm integration
+- **NuGet Package Support**: Add packages with `#r "nuget:..."` directives
+- **Multi-language Support**: Python, JavaScript, and more
 - **Database Connectivity**: Query databases directly from snippets
+- **Application Menu**: Full menu system with File, Edit, View, Run, Help
+- **Settings UI**: Customize editor preferences and execution options
 
 ## Development Setup
 
@@ -155,8 +171,65 @@ MIT License - see [LICENSE](LICENSE) file for details
 
 Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details.
 
+## Usage
+
+### First Time Setup
+
+1. **Install .NET SDK** (if not already installed):
+   - Download from [https://dotnet.microsoft.com/download](https://dotnet.microsoft.com/download)
+   - Install .NET 8.0 or later
+
+2. **Install dotnet-script**:
+   ```bash
+   dotnet tool install -g dotnet-script
+   ```
+
+3. **Launch CodePad**:
+   - CodePad will automatically detect if requirements are missing
+   - Follow on-screen instructions if runtime components are not found
+
+### Quick Start
+
+1. **Create a new snippet**: Click "New" or press Ctrl+N
+2. **Write your C# code**: Use the Monaco editor with IntelliSense
+3. **Run your code**: Click "Run Code" or press F5
+4. **Save your work**: Click "Save As..." or press Ctrl+S
+5. **Star favorites**: Click the star icon to mark important snippets
+6. **Search snippets**: Use the search box in the sidebar
+
+### Import/Export
+
+- **Export snippet**: Select a snippet and click "Export" to save as .cs file
+- **Import snippet**: Click "Import" to load a .cs file as a new snippet
+- **Backup all**: Click "Export All" to save all snippets to JSON
+
+### View Logs
+
+If you encounter issues:
+
+```bash
+# Linux/macOS/WSL
+npm run logs
+
+# Windows
+npm run logs:windows
+```
+
+Logs are stored in:
+- **Linux**: `~/.config/codepad/logs/`
+- **macOS**: `~/Library/Logs/codepad/`
+- **Windows**: `%APPDATA%\codepad\logs\`
+
 ## Status
 
-🚧 **In Development** - Currently in Phase 0 (Foundation)
+✅ **Phase 1 MVP: ~85% Complete**
 
-Target MVP release: ~4 months
+Core features working:
+- C# execution ✅
+- Snippet management ✅
+- Search & filtering ✅
+- Import/export ✅
+- Error handling ✅
+- Comprehensive logging ✅
+
+Next up: Rich output, Application menu, Settings UI
