@@ -12,6 +12,7 @@
     "electron:dev": "npm run build && electron .",
     "electron:build": "electron-builder",
     "test": "vitest",
+    "test:coverage": "vitest --coverage",
     "test:e2e": "playwright test",
     "lint": "eslint src --ext ts,tsx",
     "format": "prettier --write \"src/**/*.{ts,tsx}\"",
