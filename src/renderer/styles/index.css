@@ -43,161 +43,24 @@ body {
 }
 
 /* Ant Design overrides for VS Code theme */
-.ant-layout {
-  background: var(--vscode-bg) !important;
-}
-
 .ant-layout-header {
-  background: var(--vscode-header-bg) !important;
-  border-bottom: 1px solid var(--vscode-border) !important;
-  padding: 0 16px !important;
+  border-bottom: 1px solid var(--vscode-border);
 }
 
 .ant-layout-sider {
-  background: var(--vscode-sidebar-bg) !important;
-  border-right: 1px solid var(--vscode-border) !important;
+  border-right: 1px solid var(--vscode-border);
 }
 
 .ant-list {
-  background: transparent !important;
-  color: var(--vscode-text) !important;
+  background: transparent;
 }
 
 .ant-list-item {
-  border-bottom: 1px solid var(--vscode-border) !important;
-  color: var(--vscode-text) !important;
-}
-
-.ant-list-item:hover {
-  background-color: var(--vscode-hover) !important;
-}
-
-.ant-list-item-meta-title {
-  color: var(--vscode-text) !important;
-}
-
-.ant-list-item-meta-description {
-  color: var(--vscode-text-secondary) !important;
-}
-
-.ant-empty-description {
-  color: var(--vscode-text-secondary) !important;
-}
-
-.ant-select {
-  background: var(--vscode-panel-bg) !important;
-}
-
-.ant-select-selector {
-  background-color: var(--vscode-panel-bg) !important;
-  border: 1px solid var(--vscode-border) !important;
-  color: var(--vscode-text) !important;
-}
-
-.ant-select-dropdown {
-  background-color: var(--vscode-sidebar-bg) !important;
-  border: 1px solid var(--vscode-border) !important;
-}
-
-.ant-select-item {
-  color: var(--vscode-text) !important;
-}
-
-.ant-select-item-option-selected {
-  background-color: var(--vscode-selection) !important;
-}
-
-.ant-select-item-option-active {
-  background-color: var(--vscode-hover) !important;
-}
-
-.ant-btn {
-  background: var(--vscode-panel-bg) !important;
-  border: 1px solid var(--vscode-border) !important;
-  color: var(--vscode-text) !important;
-}
-
-.ant-btn:hover {
-  background: var(--vscode-hover) !important;
-  border-color: var(--vscode-accent) !important;
-  color: var(--vscode-text) !important;
-}
-
-.ant-btn-primary {
-  background: var(--vscode-accent) !important;
-  border-color: var(--vscode-accent) !important;
-  color: #ffffff !important;
-}
-
-.ant-btn-primary:hover {
-  background: var(--vscode-accent-hover) !important;
-  border-color: var(--vscode-accent-hover) !important;
-  color: #ffffff !important;
-}
-
-.ant-btn-text {
-  background: transparent !important;
-  border: none !important;
+  border-bottom: 1px solid var(--vscode-border);
 }
 
 .ant-btn-text:hover {
   background: var(--vscode-hover) !important;
-}
-
-.ant-btn-dangerous {
-  color: var(--vscode-error) !important;
-}
-
-.ant-modal-content {
-  background-color: var(--vscode-sidebar-bg) !important;
-  border: 1px solid var(--vscode-border) !important;
-}
-
-.ant-modal-header {
-  background-color: var(--vscode-header-bg) !important;
-  border-bottom: 1px solid var(--vscode-border) !important;
-}
-
-.ant-modal-title {
-  color: var(--vscode-text) !important;
-}
-
-.ant-modal-footer {
-  border-top: 1px solid var(--vscode-border) !important;
-}
-
-.ant-input {
-  background-color: var(--vscode-panel-bg) !important;
-  border: 1px solid var(--vscode-border) !important;
-  color: var(--vscode-text) !important;
-}
-
-.ant-input:focus,
-.ant-input-focused {
-  border-color: var(--vscode-accent) !important;
-  box-shadow: 0 0 0 2px rgba(0, 122, 204, 0.2) !important;
-}
-
-.ant-popconfirm-inner {
-  background-color: var(--vscode-sidebar-bg) !important;
-  border: 1px solid var(--vscode-border) !important;
-}
-
-.ant-popconfirm-message {
-  color: var(--vscode-text) !important;
-}
-
-.ant-popconfirm-buttons {
-  border-top: 1px solid var(--vscode-border) !important;
-}
-
-.ant-message {
-  color: var(--vscode-text) !important;
-}
-
-.ant-message-notice-content {
-  background: var(--vscode-sidebar-bg) !important;
-  border: 1px solid var(--vscode-border) !important;
 }
 
 /* Icon colors */
