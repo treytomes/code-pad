@@ -21,66 +21,65 @@ import type { Snippet } from '../backend/database';
 const { Header, Content, Sider } = Layout;
 
 const DEFAULT_CODE = `// Welcome to CodePad v0.1.0!
-// A LINQPad-style code scratchpad for C#
 // Press F5 to run | Ctrl+S to save | Ctrl+N for new snippet
 
 using System;
 using System.Linq;
 using System.Text.Json;
 
-Console.WriteLine("🎉 CodePad Demo - Rich Output Visualization\\n");
+// This demo shows CodePad's rich output visualization
+// The output below will render as an interactive JSON tree view
 
-// === 1. JSON Output (Auto-formatted with tree view) ===
-var person = new {
-    Name = "John Doe",
-    Age = 30,
-    Email = "john@example.com",
-    Address = new {
-        Street = "123 Main St",
-        City = "Springfield",
-        Zip = "12345"
+var demo = new {
+    Welcome = "CodePad - Rich Output Demo",
+    Version = "0.1.0",
+    Features = new[] {
+        "JSON tree view with collapsible nodes",
+        "Table rendering for pipe-delimited data",
+        "Auto-format detection",
+        "Syntax highlighting"
     },
-    Skills = new[] { "C#", "JavaScript", "Python" }
+
+    ExampleData = new {
+        Person = new {
+            Name = "John Doe",
+            Age = 30,
+            Email = "john@example.com",
+            Address = new {
+                Street = "123 Main St",
+                City = "Springfield",
+                Zip = "12345"
+            }
+        },
+
+        Users = new[] {
+            new { Id = 1, Name = "Alice", Role = "Admin", Active = true },
+            new { Id = 2, Name = "Bob", Role = "Developer", Active = true },
+            new { Id = 3, Name = "Carol", Role = "Designer", Active = false }
+        },
+
+        Statistics = new {
+            TotalUsers = 3,
+            ActiveUsers = 2,
+            Roles = new[] { "Admin", "Developer", "Designer" }
+        }
+    },
+
+    TryThese = new[] {
+        "Click nodes to expand/collapse",
+        "Copy this snippet and modify the data",
+        "Try table output: Console.WriteLine(\\\"| Col1 | Col2 |\\\")",
+        "See RICH-OUTPUT-TESTING.md for more examples"
+    }
 };
 
-Console.WriteLine("Person Object (JSON):");
-Console.WriteLine(JsonSerializer.Serialize(person, new JsonSerializerOptions { WriteIndented = true }));
+// Output as JSON - will render as interactive tree view
+Console.WriteLine(JsonSerializer.Serialize(demo, new JsonSerializerOptions {
+    WriteIndented = true
+}));
 
-// === 2. Array/Collection Output ===
-var users = new[] {
-    new { Id = 1, Name = "Alice", Role = "Admin" },
-    new { Id = 2, Name = "Bob", Role = "Developer" },
-    new { Id = 3, Name = "Carol", Role = "Designer" }
-};
-
-Console.WriteLine("\\nUsers Array (JSON):");
-Console.WriteLine(JsonSerializer.Serialize(users, new JsonSerializerOptions { WriteIndented = true }));
-
-// === 3. Table Output (Pipe-delimited) ===
-Console.WriteLine("\\nUsers Table:");
-Console.WriteLine("| ID | Name  | Role       |");
-Console.WriteLine("|----|-------|------------|");
-Console.WriteLine("| 1  | Alice | Admin      |");
-Console.WriteLine("| 2  | Bob   | Developer  |");
-Console.WriteLine("| 3  | Carol | Designer   |");
-
-// === 4. LINQ Queries ===
-var numbers = Enumerable.Range(1, 10);
-var stats = new {
-    Count = numbers.Count(),
-    Sum = numbers.Sum(),
-    Average = numbers.Average(),
-    Max = numbers.Max(),
-    Min = numbers.Min(),
-    Evens = numbers.Where(n => n % 2 == 0).ToArray()
-};
-
-Console.WriteLine("\\nStatistics (JSON):");
-Console.WriteLine(JsonSerializer.Serialize(stats, new JsonSerializerOptions { WriteIndented = true }));
-
-// === 5. Try Your Own Code! ===
-Console.WriteLine("\\n✨ Edit this snippet and press F5 to run!");
-Console.WriteLine("💡 Output formats automatically: JSON → Tree view, Tables → Grid, Plain text");
+// TIP: Remove the JsonSerializer and just write plain text to see the difference!
+// TIP: Try outputting a table format instead - see docs for examples
 `;
 
 function App() {
