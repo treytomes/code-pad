@@ -48,7 +48,8 @@ export class CSharpExecutor {
    */
   async execute(
     code: string,
-    options: ExecutionOptions = {}
+    options: ExecutionOptions = {},
+    onOutputChunk?: (chunk: string, isError: boolean) => void
   ): Promise<ExecutionResult> {
     const timeout = options.timeout || 30000;
     const startTime = Date.now();
@@ -57,7 +58,7 @@ export class CSharpExecutor {
     const tempFile = await this.createTempFile(code);
 
     try {
-      const result = await this.runDotnetScript(tempFile, timeout);
+      const result = await this.runDotnetScript(tempFile, timeout, onOutputChunk);
 
       return {
         ...result,
@@ -76,7 +77,34 @@ export class CSharpExecutor {
     const fileName = `codepad-${randomUUID()}.csx`;
     const filePath = join(tmpdir(), fileName);
 
-    await fs.writeFile(filePath, code, 'utf-8');
+    // Insert auto-flush code AFTER #r directives and using statements
+    // to avoid CS1529 (using must precede other elements)
+    const lines = code.split('\n');
+    let insertIndex = 0;
+
+    // Find the last #r directive or using statement
+    for (let i = 0; i < lines.length; i++) {
+      const trimmed = lines[i].trim();
+      if (trimmed.startsWith('#r ') || trimmed.startsWith('using ')) {
+        insertIndex = i + 1;
+      } else if (trimmed && !trimmed.startsWith('//')) {
+        // Stop at first non-comment, non-using, non-#r line
+        break;
+      }
+    }
+
+    // Insert auto-flush code after using statements (using fully-qualified names)
+    const autoFlushCode = [
+      '// Auto-flush console output for real-time streaming',
+      'System.Console.SetOut(new System.IO.StreamWriter(System.Console.OpenStandardOutput()) { AutoFlush = true });',
+      'System.Console.SetError(new System.IO.StreamWriter(System.Console.OpenStandardError()) { AutoFlush = true });',
+      ''
+    ];
+
+    lines.splice(insertIndex, 0, ...autoFlushCode);
+    const unbufferedCode = lines.join('\n');
+
+    await fs.writeFile(filePath, unbufferedCode, 'utf-8');
 
     return filePath;
   }
@@ -98,7 +126,8 @@ export class CSharpExecutor {
    */
   private runDotnetScript(
     scriptPath: string,
-    timeout: number
+    timeout: number,
+    onOutputChunk?: (chunk: string, isError: boolean) => void
   ): Promise<ExecutionResult> {
     return new Promise((resolve) => {
       let stdout = '';
@@ -145,12 +174,24 @@ export class CSharpExecutor {
 
       // Capture stdout
       childProcess.stdout?.on('data', (data) => {
-        stdout += data.toString();
+        const chunk = data.toString();
+        stdout += chunk;
+
+        // Emit chunk for streaming
+        if (onOutputChunk) {
+          onOutputChunk(chunk, false);
+        }
       });
 
       // Capture stderr
       childProcess.stderr?.on('data', (data) => {
-        stderr += data.toString();
+        const chunk = data.toString();
+        stderr += chunk;
+
+        // Emit chunk for streaming
+        if (onOutputChunk) {
+          onOutputChunk(chunk, true);
+        }
       });
 
       // Handle exit

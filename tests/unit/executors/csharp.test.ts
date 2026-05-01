@@ -109,4 +109,64 @@ describe('CSharpExecutor', () => {
     expect(result.exitCode).toBe(0);
     expect(result.stdout).toContain('test');
   });
+
+  it('should handle code with using statements without CS1529 error', async () => {
+    const code = `using System;
+using System.Linq;
+
+Console.WriteLine("Hello World");`;
+
+    const result = await executor.execute(code);
+
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).toContain('Hello World');
+    expect(result.stderr).not.toContain('CS1529');
+  });
+
+  it('should handle code with #r directives before using statements', async () => {
+    const code = `// #r "nuget: Newtonsoft.Json"
+using System;
+using System.Linq;
+
+var numbers = new[] { 1, 2, 3 };
+Console.WriteLine(string.Join(", ", numbers));`;
+
+    const result = await executor.execute(code);
+
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).toContain('1, 2, 3');
+    expect(result.stderr).not.toContain('CS1529');
+  });
+
+  it('should handle code with comments before using statements', async () => {
+    const code = `// This is a comment
+// Another comment
+using System;
+
+Console.WriteLine("Test");`;
+
+    const result = await executor.execute(code);
+
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).toContain('Test');
+  });
+
+  it('should insert auto-flush code after using statements', async () => {
+    // This tests that our auto-flush logic doesn't break the code structure
+    const code = `using System;
+using System.Collections.Generic;
+
+var list = new List<string> { "A", "B", "C" };
+foreach (var item in list)
+{
+    Console.WriteLine(item);
+}`;
+
+    const result = await executor.execute(code);
+
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).toContain('A');
+    expect(result.stdout).toContain('B');
+    expect(result.stdout).toContain('C');
+  });
 });

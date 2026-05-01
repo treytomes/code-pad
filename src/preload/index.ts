@@ -11,6 +11,22 @@ contextBridge.exposeInMainWorld('electronAPI', {
   executeCode: (code: string, options?: { timeout?: number }) =>
     ipcRenderer.invoke('execute-code', code, options),
 
+  // Subscribe to output chunks during execution
+  onOutputChunk: (callback: (chunk: string, isError: boolean) => void) => {
+    const listener = (
+      _event: Electron.IpcRendererEvent,
+      data: { chunk: string; isError: boolean }
+    ) => {
+      callback(data.chunk, data.isError);
+    };
+    ipcRenderer.on('execution-output-chunk', listener);
+
+    // Return cleanup function
+    return () => {
+      ipcRenderer.removeListener('execution-output-chunk', listener);
+    };
+  },
+
   // Database operations
   db: {
     createSnippet: (snippet: {

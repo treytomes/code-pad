@@ -36,9 +36,16 @@ function createWindow() {
 // IPC Handlers
 electron.ipcMain.handle(
   'execute-code',
-  async (_event, code: string, options?: { timeout?: number }) => {
+  async (event, code: string, options?: { timeout?: number }) => {
     try {
-      const result = await csharpExecutor.execute(code, options);
+      const result = await csharpExecutor.execute(
+        code,
+        options,
+        (chunk: string, isError: boolean) => {
+          // Send output chunk to renderer
+          event.sender.send('execution-output-chunk', { chunk, isError });
+        }
+      );
       return result;
     } catch (error) {
       return {

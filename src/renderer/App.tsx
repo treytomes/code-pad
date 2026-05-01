@@ -15,6 +15,15 @@ const { Header, Content, Sider } = Layout;
 const DEFAULT_CODE = `// Welcome to CodePad!
 // A LINQPad-style code scratchpad for C#
 
+// === Adding NuGet Packages ===
+// Use #r "nuget: PackageName" to add packages:
+// #r "nuget: Newtonsoft.Json, 13.0.3"
+// #r "nuget: Dapper"
+
+// === Standard Imports ===
+using System;
+using System.Linq;
+
 // === Basic Output ===
 Console.WriteLine("=== CodePad Demo ===\\n");
 
@@ -70,7 +79,7 @@ function App() {
 
   const handleRun = async () => {
     setIsRunning(true);
-    setOutput('Executing...');
+    setOutput('');
 
     // Start live timer
     executionStartRef.current = performance.now();
@@ -80,6 +89,11 @@ function App() {
       const elapsed = Math.round(performance.now() - executionStartRef.current);
       setExecutionTime(elapsed);
     }, 100); // Update every 100ms
+
+    // Subscribe to streaming output
+    const cleanup = window.electronAPI.onOutputChunk((chunk: string, isError: boolean) => {
+      setOutput((prev) => prev + chunk);
+    });
 
     try {
       const result = await window.electronAPI.executeCode(code);
@@ -92,12 +106,16 @@ function App() {
       const finalTime = Math.round(performance.now() - executionStartRef.current);
       setExecutionTime(finalTime);
 
-      if (result.exitCode === 0) {
-        setOutput(result.stdout || '(no output)');
-      } else {
-        setOutput(
-          `Error (exit code ${result.exitCode}):\n${result.stderr || result.error || 'Unknown error'}`
+      // Clean up output subscription
+      cleanup();
+
+      // Show error if execution failed
+      if (result.exitCode !== 0) {
+        setOutput((prev) =>
+          prev + `\n\nError (exit code ${result.exitCode}):\n${result.stderr || result.error || 'Unknown error'}`
         );
+      } else if (!result.stdout && !result.stderr) {
+        setOutput((prev) => prev || '(no output)');
       }
 
       // Increment execution count if snippet is loaded
@@ -112,6 +130,10 @@ function App() {
         executionTimerRef.current = null;
       }
       setExecutionTime(null);
+
+      // Clean up output subscription
+      cleanup();
+
       setOutput(
         `Failed to execute: ${error instanceof Error ? error.message : String(error)}`
       );
@@ -125,15 +147,20 @@ function App() {
     setSaveModalVisible(true);
   };
 
+  const handleSaveAs = () => {
+    setSnippetName('');
+    setSaveModalVisible(true);
+  };
+
   const handleSaveExisting = async () => {
     if (!currentSnippetId) return;
 
     try {
       await window.electronAPI.db.updateSnippet(currentSnippetId, { code });
-      message.success('Snippet updated');
+      message.success('Snippet saved');
       setRefreshTrigger((prev) => prev + 1);
     } catch (error) {
-      message.error('Failed to update snippet');
+      message.error('Failed to save snippet');
     }
   };
 
@@ -176,6 +203,16 @@ function App() {
       }
     } catch (error) {
       message.error('Failed to delete snippet');
+    }
+  };
+
+  const handleRenameSnippet = async (id: string, newName: string) => {
+    try {
+      await window.electronAPI.db.updateSnippet(id, { name: newName });
+      message.success('Snippet renamed');
+      setRefreshTrigger((prev) => prev + 1);
+    } catch (error) {
+      message.error('Failed to rename snippet');
     }
   };
 
@@ -261,8 +298,13 @@ function App() {
   // Keyboard shortcuts
   React.useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Ctrl+Shift+S or Cmd+Shift+S - Save As
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'S') {
+        e.preventDefault();
+        handleSaveAs();
+      }
       // Ctrl+S or Cmd+S - Save
-      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+      else if ((e.ctrlKey || e.metaKey) && e.key === 's') {
         e.preventDefault();
         if (currentSnippetId) {
           handleSaveExisting();
@@ -319,17 +361,38 @@ function App() {
           <Button
             icon={<PlusOutlined />}
             onClick={handleNewSnippet}
-            title="New Snippet"
+            title="New Snippet (Ctrl+N)"
           >
             New
           </Button>
-          <Button
-            type="primary"
-            icon={<SaveOutlined />}
-            onClick={currentSnippetId ? handleSaveExisting : handleSaveNew}
-          >
-            {currentSnippetId ? 'Update' : 'Save As...'}
-          </Button>
+          {currentSnippetId ? (
+            <>
+              <Button
+                type="primary"
+                icon={<SaveOutlined />}
+                onClick={handleSaveExisting}
+                title="Save (Ctrl+S)"
+              >
+                Save
+              </Button>
+              <Button
+                icon={<SaveOutlined />}
+                onClick={handleSaveAs}
+                title="Save As (Ctrl+Shift+S)"
+              >
+                Save As...
+              </Button>
+            </>
+          ) : (
+            <Button
+              type="primary"
+              icon={<SaveOutlined />}
+              onClick={handleSaveNew}
+              title="Save As (Ctrl+S)"
+            >
+              Save As...
+            </Button>
+          )}
           <Button type="primary" onClick={handleRun} loading={isRunning}>
             Run Code
           </Button>
@@ -349,6 +412,7 @@ function App() {
           <SnippetList
             onSelectSnippet={handleSelectSnippet}
             onDeleteSnippet={handleDeleteSnippet}
+            onRenameSnippet={handleRenameSnippet}
             refreshTrigger={refreshTrigger}
           />
           {/* Sidebar resize handle */}
