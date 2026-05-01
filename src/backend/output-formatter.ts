@@ -80,7 +80,7 @@ export function formatJSON(json: string, indent: number = 2): FormattedOutput {
         length: Array.isArray(parsed) ? parsed.length : Object.keys(parsed).length,
       },
     };
-  } catch (error) {
+  } catch (_error) {
     return {
       format: 'plain',
       content: json,

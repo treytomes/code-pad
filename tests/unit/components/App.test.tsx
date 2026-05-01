@@ -34,6 +34,11 @@ vi.mock('@monaco-editor/react', () => ({
 const mockElectronAPI = {
   executeCode: vi.fn(),
   onOutputChunk: vi.fn(() => vi.fn()), // Returns cleanup function
+  versions: {
+    electron: '1.0.0',
+    chrome: '100.0.0',
+    node: '18.0.0',
+  },
   db: {
     createSnippet: vi.fn(),
     updateSnippet: vi.fn(),

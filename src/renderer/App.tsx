@@ -117,7 +117,7 @@ function App() {
     }, 100); // Update every 100ms
 
     // Subscribe to streaming output
-    const cleanup = window.electronAPI.onOutputChunk((chunk: string, isError: boolean) => {
+    const cleanup = window.electronAPI.onOutputChunk((chunk: string, _isError: boolean) => {
       setOutput((prev) => prev + chunk);
     });
 
@@ -187,7 +187,7 @@ function App() {
       setHasUnsavedChanges(false);
       message.success('Snippet saved');
       setRefreshTrigger((prev) => prev + 1);
-    } catch (error) {
+    } catch (_error) {
       message.error('Failed to save snippet');
     }
   };
@@ -211,7 +211,7 @@ function App() {
       message.success('Snippet saved');
       setSaveModalVisible(false);
       setRefreshTrigger((prev) => prev + 1);
-    } catch (error) {
+    } catch (_error) {
       message.error('Failed to save snippet');
     }
   };

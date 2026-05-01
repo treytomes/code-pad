@@ -11,16 +11,17 @@ import { join } from 'path';
 import { randomUUID } from 'crypto';
 
 // Import logger - but make it optional for tests
-let logInfo: (msg: string, ...args: any[]) => void = console.log;
+let _logInfo: (msg: string, ...args: any[]) => void = console.log;
 let logError: (msg: string, error?: any) => void = console.error;
-let logDebug: (msg: string, ...args: any[]) => void = console.log;
+let _logDebug: (msg: string, ...args: any[]) => void = console.log;
 
 try {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const logger = require('../../shared/logger');
-  logInfo = logger.logInfo;
+  _logInfo = logger.logInfo;
   logError = logger.logError;
-  logDebug = logger.logDebug;
-} catch (e) {
+  _logDebug = logger.logDebug;
+} catch (_e) {
   // Logger not available (e.g., in tests), use console
 }
 

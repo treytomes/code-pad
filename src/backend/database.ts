@@ -7,14 +7,15 @@ import { randomUUID } from 'crypto';
 // Import logger - but make it optional for tests
 let logInfo: (msg: string, ...args: any[]) => void = console.log;
 let logError: (msg: string, error?: any) => void = console.error;
-let logWarn: (msg: string, ...args: any[]) => void = console.warn;
+let _logWarn: (msg: string, ...args: any[]) => void = console.warn;
 
 try {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const logger = require('../shared/logger');
   logInfo = logger.logInfo;
   logError = logger.logError;
-  logWarn = logger.logWarn;
-} catch (e) {
+  _logWarn = logger.logWarn;
+} catch (_e) {
   // Logger not available (e.g., in tests), use console
 }
 
