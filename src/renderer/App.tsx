@@ -378,6 +378,52 @@ function App() {
     }
   };
 
+  // Menu event handlers
+  React.useEffect(() => {
+    const cleanups: (() => void)[] = [];
+
+    // New Snippet
+    cleanups.push(window.electronAPI.onMenuEvent('menu-new-snippet', handleNewSnippet));
+
+    // Save
+    cleanups.push(window.electronAPI.onMenuEvent('menu-save', () => {
+      if (currentSnippetId) {
+        handleSaveExisting();
+      } else {
+        handleSaveNew();
+      }
+    }));
+
+    // Save As
+    cleanups.push(window.electronAPI.onMenuEvent('menu-save-as', handleSaveAs));
+
+    // Import
+    cleanups.push(window.electronAPI.onMenuEvent('menu-import', handleImport));
+
+    // Export
+    cleanups.push(window.electronAPI.onMenuEvent('menu-export', handleExport));
+
+    // Export All
+    cleanups.push(window.electronAPI.onMenuEvent('menu-export-all', handleExportAll));
+
+    // Run
+    cleanups.push(window.electronAPI.onMenuEvent('menu-run', () => {
+      if (!isRunning) {
+        handleRun();
+      }
+    }));
+
+    // Clear Output
+    cleanups.push(window.electronAPI.onMenuEvent('menu-clear-output', handleClearOutput));
+
+    // About
+    cleanups.push(window.electronAPI.onMenuEvent('menu-about', () => setAboutVisible(true)));
+
+    return () => {
+      cleanups.forEach(cleanup => cleanup());
+    };
+  }, [currentSnippetId, isRunning, code]);
+
   // Cleanup timer on unmount
   React.useEffect(() => {
     return () => {

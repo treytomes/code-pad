@@ -5,6 +5,7 @@ import { CSharpExecutor } from '../backend/executors/csharp';
 import { SnippetDatabase } from '../backend/database';
 import { checkRuntimeRequirements, RuntimeInfo } from '../backend/runtime-checker';
 import { exportSnippetToFile, importSnippetFromFile, exportAllSnippets } from '../backend/import-export';
+import { createApplicationMenu } from './menu';
 import { logger, logInfo, logError, logWarn, logDebug } from '../shared/logger';
 
 let mainWindow: electron.BrowserWindow | null = null;
@@ -49,6 +50,9 @@ function createWindow() {
     logInfo('Main window closed');
     mainWindow = null;
   });
+
+  // Create application menu
+  createApplicationMenu(mainWindow);
 }
 
 // IPC Handlers

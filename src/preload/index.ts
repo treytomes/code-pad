@@ -44,6 +44,15 @@ contextBridge.exposeInMainWorld('electronAPI', {
     };
   },
 
+  // Menu event listeners
+  onMenuEvent: (event: string, callback: () => void) => {
+    const listener = () => callback();
+    ipcRenderer.on(event, listener);
+    return () => {
+      ipcRenderer.removeListener(event, listener);
+    };
+  },
+
   // Database operations
   db: {
     createSnippet: (snippet: {
