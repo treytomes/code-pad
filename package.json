@@ -33,7 +33,7 @@
   "dependencies": {
     "@monaco-editor/react": "^4.7.0",
     "antd": "^6.3.7",
-    "better-sqlite3": "^11.7.0",
+    "better-sqlite3": "^12.9.0",
     "electron-log": "^5.4.3",
     "monaco-editor": "^0.55.1",
     "react": "^19.2.5",

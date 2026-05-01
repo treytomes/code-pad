@@ -3,6 +3,7 @@ import * as electron from 'electron';
 import * as path from 'path';
 import { CSharpExecutor } from '../backend/executors/csharp';
 import { SnippetDatabase } from '../backend/database';
+import { checkRuntimeRequirements, RuntimeInfo } from '../backend/runtime-checker';
 import { logger, logInfo, logError, logWarn, logDebug } from '../shared/logger';
 
 let mainWindow: electron.BrowserWindow | null = null;
@@ -130,7 +131,19 @@ electron.ipcMain.handle('db-get-recently-opened', async (_event, limit?: number)
   return snippetDb.getRecentlyOpenedSnippets(limit);
 });
 
-electron.app.whenReady().then(() => {
+// Check runtime requirements
+electron.ipcMain.handle('check-runtime', async (): Promise<RuntimeInfo> => {
+  return await checkRuntimeRequirements();
+});
+
+electron.app.whenReady().then(async () => {
+  // Check runtime requirements on startup
+  const runtimeInfo = await checkRuntimeRequirements();
+
+  if (!runtimeInfo.hasDotnet || !runtimeInfo.hasDotnetScript) {
+    logWarn('Runtime requirements not met, but continuing to launch app');
+  }
+
   createWindow();
 
   electron.app.on('activate', () => {

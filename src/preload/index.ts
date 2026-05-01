@@ -11,6 +11,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   executeCode: (code: string, options?: { timeout?: number }) =>
     ipcRenderer.invoke('execute-code', code, options),
 
+  // Check runtime requirements
+  checkRuntime: () => ipcRenderer.invoke('check-runtime'),
+
   // Subscribe to output chunks during execution
   onOutputChunk: (callback: (chunk: string, isError: boolean) => void) => {
     const listener = (

@@ -8,6 +8,7 @@ import {
 } from '@ant-design/icons';
 import { CodeEditor } from './components/Editor';
 import { SnippetList } from './components/SnippetList';
+import { RuntimeWarning } from './components/RuntimeWarning';
 import type { Snippet } from '../backend/database';
 
 const { Header, Content, Sider } = Layout;
@@ -342,6 +343,7 @@ function App() {
 
   return (
     <Layout style={{ height: '100vh', background: '#1e1e1e' }}>
+      <RuntimeWarning />
       <Header
         style={{
           display: 'flex',
