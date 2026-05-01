@@ -26,6 +26,24 @@ export interface ExecutionOptions {
 
 export class CSharpExecutor {
   /**
+   * Find dotnet executable path
+   */
+  private findDotnetPath(): string {
+    // On Windows, add common .NET installation paths
+    if (process.platform === 'win32') {
+      const commonPaths = [
+        'C:\\Program Files\\dotnet',
+        'C:\\Program Files (x86)\\dotnet',
+        process.env.ProgramFiles + '\\dotnet',
+        process.env['ProgramFiles(x86)'] + '\\dotnet',
+      ];
+
+      return commonPaths.filter(Boolean).join(';') + ';';
+    }
+    return '';
+  }
+
+  /**
    * Execute C# code and return results
    */
   async execute(
@@ -91,14 +109,19 @@ export class CSharpExecutor {
       // Spawn dotnet script process
       const env = { ...process.env };
 
-      // Add .dotnet/tools to PATH (needed on Linux/macOS where it's not automatic)
+      // Build PATH with dotnet locations
+      const pathSeparator = process.platform === 'win32' ? ';' : ':';
+      const dotnetCommonPaths = this.findDotnetPath();
+
+      // Add .dotnet/tools to PATH (needed for dotnet-script)
       const dotnetToolsPath = join(
         env.HOME || env.USERPROFILE || '',
         '.dotnet',
         'tools'
       );
-      const pathSeparator = process.platform === 'win32' ? ';' : ':';
-      env.PATH = `${dotnetToolsPath}${pathSeparator}${env.PATH || ''}`;
+
+      // Combine all paths: common dotnet paths + dotnet tools + existing PATH
+      env.PATH = `${dotnetCommonPaths}${dotnetToolsPath}${pathSeparator}${env.PATH || ''}`;
       env.DOTNET_CLI_TELEMETRY_OPTOUT = '1'; // Disable telemetry
 
       const childProcess: ChildProcess = spawn('dotnet', ['script', scriptPath], {
@@ -148,13 +171,20 @@ export class CSharpExecutor {
       childProcess.on('error', (error) => {
         clearTimeout(timer);
 
+        let errorMessage = error.message;
+
+        // Provide helpful error message for ENOENT (command not found)
+        if (error.message.includes('ENOENT')) {
+          errorMessage = `dotnet command not found. Please ensure .NET SDK is installed and available in PATH.\n\nError: ${error.message}\n\nCurrent PATH: ${env.PATH?.substring(0, 200)}...`;
+        }
+
         resolve({
           stdout: stdout.trim(),
           stderr: stderr.trim(),
           exitCode: -1,
           executionTime: 0,
           timedOut: false,
-          error: error.message,
+          error: errorMessage,
         });
       });
     });
