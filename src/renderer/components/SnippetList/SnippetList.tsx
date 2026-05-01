@@ -11,6 +11,7 @@ import {
   StarFilled,
   ClockCircleOutlined,
   SearchOutlined,
+  CopyOutlined,
 } from '@ant-design/icons';
 import type { Snippet } from '../../../backend/database';
 
@@ -21,6 +22,7 @@ interface SnippetListProps {
   onSelectSnippet: (snippet: Snippet) => void;
   onDeleteSnippet: (id: string) => void;
   onRenameSnippet: (id: string, newName: string) => void;
+  onDuplicateSnippet: (snippet: Snippet) => void;
   refreshTrigger?: number;
 }
 
@@ -28,6 +30,7 @@ export const SnippetList: React.FC<SnippetListProps> = ({
   onSelectSnippet,
   onDeleteSnippet,
   onRenameSnippet,
+  onDuplicateSnippet,
   refreshTrigger,
 }) => {
   const [snippets, setSnippets] = useState<Snippet[]>([]);
@@ -196,6 +199,18 @@ export const SnippetList: React.FC<SnippetListProps> = ({
                     icon={<EditOutlined />}
                     onClick={(e) => handleStartRename(snippet, e)}
                     style={{ color: '#858585' }}
+                    title="Rename"
+                  />
+                  <Button
+                    type="text"
+                    size="small"
+                    icon={<CopyOutlined />}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDuplicateSnippet(snippet);
+                    }}
+                    style={{ color: '#858585' }}
+                    title="Duplicate"
                   />
                   <Popconfirm
                     title="Delete this snippet?"

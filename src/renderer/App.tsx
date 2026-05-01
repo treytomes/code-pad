@@ -20,47 +20,67 @@ import type { Snippet } from '../backend/database';
 
 const { Header, Content, Sider } = Layout;
 
-const DEFAULT_CODE = `// Welcome to CodePad!
+const DEFAULT_CODE = `// Welcome to CodePad v0.1.0!
 // A LINQPad-style code scratchpad for C#
+// Press F5 to run | Ctrl+S to save | Ctrl+N for new snippet
 
-// === Adding NuGet Packages ===
-// Use #r "nuget: PackageName" to add packages:
-// #r "nuget: Newtonsoft.Json, 13.0.3"
-// #r "nuget: Dapper"
-
-// === Standard Imports ===
 using System;
 using System.Linq;
+using System.Text.Json;
 
-// === Basic Output ===
-Console.WriteLine("=== CodePad Demo ===\\n");
+Console.WriteLine("🎉 CodePad Demo - Rich Output Visualization\\n");
 
-// Variables and expressions
-var name = "CodePad";
-var version = "0.1.0";
-Console.WriteLine($"Welcome to {name} v{version}!");
+// === 1. JSON Output (Auto-formatted with tree view) ===
+var person = new {
+    Name = "John Doe",
+    Age = 30,
+    Email = "john@example.com",
+    Address = new {
+        Street = "123 Main St",
+        City = "Springfield",
+        Zip = "12345"
+    },
+    Skills = new[] { "C#", "JavaScript", "Python" }
+};
 
-// === Collections & LINQ ===
-var numbers = new[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
-Console.WriteLine($"\\nNumbers: {string.Join(", ", numbers)}");
-Console.WriteLine($"Sum: {numbers.Sum()}");
-Console.WriteLine($"Average: {numbers.Average():F2}");
-Console.WriteLine($"Evens: {string.Join(", ", numbers.Where(n => n % 2 == 0))}");
+Console.WriteLine("Person Object (JSON):");
+Console.WriteLine(JsonSerializer.Serialize(person, new JsonSerializerOptions { WriteIndented = true }));
 
-// === String Manipulation ===
-var text = "  CodePad is awesome!  ";
-Console.WriteLine($"\\nOriginal: '{text}'");
-Console.WriteLine($"Trimmed: '{text.Trim()}'");
-Console.WriteLine($"Upper: '{text.Trim().ToUpper()}'");
-Console.WriteLine($"Length: {text.Trim().Length}");
+// === 2. Array/Collection Output ===
+var users = new[] {
+    new { Id = 1, Name = "Alice", Role = "Admin" },
+    new { Id = 2, Name = "Bob", Role = "Developer" },
+    new { Id = 3, Name = "Carol", Role = "Designer" }
+};
 
-// === Date & Time ===
-var now = DateTime.Now;
-Console.WriteLine($"\\nCurrent time: {now:yyyy-MM-dd HH:mm:ss}");
-Console.WriteLine($"Day of week: {now.DayOfWeek}");
+Console.WriteLine("\\nUsers Array (JSON):");
+Console.WriteLine(JsonSerializer.Serialize(users, new JsonSerializerOptions { WriteIndented = true }));
 
-// === Try your own code below ===
-Console.WriteLine("\\n--- Edit and run your code here! ---");
+// === 3. Table Output (Pipe-delimited) ===
+Console.WriteLine("\\nUsers Table:");
+Console.WriteLine("| ID | Name  | Role       |");
+Console.WriteLine("|----|-------|------------|");
+Console.WriteLine("| 1  | Alice | Admin      |");
+Console.WriteLine("| 2  | Bob   | Developer  |");
+Console.WriteLine("| 3  | Carol | Designer   |");
+
+// === 4. LINQ Queries ===
+var numbers = Enumerable.Range(1, 10);
+var stats = new {
+    Count = numbers.Count(),
+    Sum = numbers.Sum(),
+    Average = numbers.Average(),
+    Max = numbers.Max(),
+    Min = numbers.Min(),
+    Evens = numbers.Where(n => n % 2 == 0).ToArray()
+};
+
+Console.WriteLine("\\nStatistics (JSON):");
+Console.WriteLine(JsonSerializer.Serialize(stats, new JsonSerializerOptions { WriteIndented = true }));
+
+// === 5. Try Your Own Code! ===
+Console.WriteLine("\\n✨ Edit this snippet and press F5 to run!");
+Console.WriteLine("💡 Output formats automatically: JSON → Tree view, Tables → Grid, Plain text");
 `;
 
 function App() {
@@ -72,6 +92,8 @@ function App() {
   const executionStartRef = useRef<number>(0);
   const [outputHeight, setOutputHeight] = useState(200);
   const [sidebarWidth, setSidebarWidth] = useState(250);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const savedCodeRef = useRef<string>(DEFAULT_CODE);
   const [isDraggingOutput, setIsDraggingOutput] = useState(false);
   const [isDraggingSidebar, setIsDraggingSidebar] = useState(false);
   const [currentSnippetId, setCurrentSnippetId] = useState<string | null>(null);
@@ -85,6 +107,8 @@ function App() {
 
   const handleCodeChange = (newCode: string) => {
     setCode(newCode);
+    // Check if code has changed from saved version
+    setHasUnsavedChanges(newCode !== savedCodeRef.current);
   };
 
   const handleRun = async () => {
@@ -167,6 +191,8 @@ function App() {
 
     try {
       await window.electronAPI.db.updateSnippet(currentSnippetId, { code });
+      savedCodeRef.current = code;
+      setHasUnsavedChanges(false);
       message.success('Snippet saved');
       setRefreshTrigger((prev) => prev + 1);
     } catch (error) {
@@ -188,6 +214,8 @@ function App() {
       });
 
       setCurrentSnippetId(snippet.id);
+      savedCodeRef.current = code;
+      setHasUnsavedChanges(false);
       message.success('Snippet saved');
       setSaveModalVisible(false);
       setRefreshTrigger((prev) => prev + 1);
@@ -197,7 +225,19 @@ function App() {
   };
 
   const handleSelectSnippet = async (snippet: Snippet) => {
+    // Warn if there are unsaved changes
+    if (hasUnsavedChanges) {
+      const confirmed = window.confirm(
+        'You have unsaved changes. Do you want to discard them?'
+      );
+      if (!confirmed) {
+        return;
+      }
+    }
+
     setCode(snippet.code);
+    savedCodeRef.current = snippet.code;
+    setHasUnsavedChanges(false);
     setCurrentSnippetId(snippet.id);
     setOutput('');
 
@@ -218,6 +258,8 @@ function App() {
       if (currentSnippetId === id) {
         setCurrentSnippetId(null);
         setCode(DEFAULT_CODE);
+        savedCodeRef.current = DEFAULT_CODE;
+        setHasUnsavedChanges(false);
       }
     } catch (error) {
       message.error('Failed to delete snippet');
@@ -234,8 +276,41 @@ function App() {
     }
   };
 
+  const handleDuplicateSnippet = async (snippet: Snippet) => {
+    try {
+      const newSnippet = await window.electronAPI.db.createSnippet({
+        name: `${snippet.name} (Copy)`,
+        language: snippet.language,
+        code: snippet.code,
+      });
+      message.success('Snippet duplicated');
+      setRefreshTrigger((prev) => prev + 1);
+
+      // Optionally open the duplicated snippet
+      setCode(newSnippet.code);
+      savedCodeRef.current = newSnippet.code;
+      setHasUnsavedChanges(false);
+      setCurrentSnippetId(newSnippet.id);
+      setOutput('');
+    } catch (error) {
+      message.error('Failed to duplicate snippet');
+    }
+  };
+
   const handleNewSnippet = () => {
+    // Warn if there are unsaved changes
+    if (hasUnsavedChanges) {
+      const confirmed = window.confirm(
+        'You have unsaved changes. Do you want to discard them?'
+      );
+      if (!confirmed) {
+        return;
+      }
+    }
+
     setCode(DEFAULT_CODE);
+    savedCodeRef.current = DEFAULT_CODE;
+    setHasUnsavedChanges(false);
     setCurrentSnippetId(null);
     setOutput('');
   };
@@ -525,8 +600,9 @@ function App() {
                 icon={<SaveOutlined />}
                 onClick={handleSaveExisting}
                 title="Save (Ctrl+S)"
+                danger={hasUnsavedChanges}
               >
-                Save
+                {hasUnsavedChanges ? 'Save *' : 'Save'}
               </Button>
               <Button
                 icon={<SaveOutlined />}
@@ -587,6 +663,7 @@ function App() {
             onSelectSnippet={handleSelectSnippet}
             onDeleteSnippet={handleDeleteSnippet}
             onRenameSnippet={handleRenameSnippet}
+            onDuplicateSnippet={handleDuplicateSnippet}
             refreshTrigger={refreshTrigger}
           />
           {/* Sidebar resize handle */}

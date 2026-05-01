@@ -9,7 +9,7 @@
 
 ## Current Status (May 1, 2026)
 
-**Phase 1 MVP: 100% COMPLETE** 🎉🎉🎉
+**Phase 1 MVP: ~98% Complete** 🎉 (Final polish in progress)
 
 ### ✅ Completed Features
 - Full C# code execution with dotnet-script
@@ -349,7 +349,19 @@
   - [x] Create TESTING-CHECKLIST.md (297 test items) ✓
   - [x] Add 13 new npm scripts for better DX ✓
 
-**Week 7-8 Status**: ✅ **COMPLETE** (May 1, 2026)
+### Week 8 Continuation: Final MVP Polish
+
+- [ ] **UX Improvements**
+  - [ ] Unsaved changes indicator (show * when code modified)
+  - [ ] Warn before closing unsaved snippet
+  - [ ] Add duplicate snippet button/menu item
+  - [ ] Update default snippet code to showcase rich output
+  
+- [ ] **Execution Enhancements**
+  - [ ] Implement execution cancellation (Stop button)
+  - [ ] Add process management for killing child processes
+
+**Week 7-8 Status**: ✅ Core complete, final polish in progress
 
 All core objectives AND stretch goals achieved:
 - ✅ Error Handling (boundary, runtime detection, warnings)
@@ -359,9 +371,13 @@ All core objectives AND stretch goals achieved:
 - ✅ **Application Menu** (File, Edit, View, Run, Help with full shortcuts)
 - ✅ **Settings & Preferences** (Editor, Execution, Appearance tabs)
 
-**Deliverable**: Feature-complete MVP ready for internal testing ✅
+**Remaining for Phase 1 MVP:**
+- Unsaved changes warning
+- Duplicate snippet feature
+- Execution cancellation
+- Better default code
 
-**Phase 1 MVP**: **100% COMPLETE** 🎉
+**Deliverable**: Feature-complete MVP ready for internal testing ✅
 
 **GitHub Repository**: https://github.com/treytomes/code-pad
 
@@ -454,11 +470,9 @@ All core objectives AND stretch goals achieved:
   - [ ] Implement "new tab" functionality
   - [ ] Add tab close buttons
   - [ ] Support drag-to-reorder tabs
-  - [ ] Implement unsaved changes indicator (*)
 
 - [ ] **Snippet Features**
   - [ ] Add tags support
-  - [ ] Add duplicate snippet feature
   - [ ] Create tree view with folders
   - [ ] Support folder organization
 
