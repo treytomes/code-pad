@@ -133,7 +133,8 @@ export function parseTableData(output: string): {
     line
       .split(separator)
       .map(cell => cell.trim())
-      .filter((cell, idx) => idx < headers.length) // Only take as many cells as headers
+      .filter(cell => cell.length > 0) // Remove empty cells from leading/trailing separators
+      .slice(0, headers.length) // Only take as many cells as headers
   );
 
   return { headers, rows, separator };

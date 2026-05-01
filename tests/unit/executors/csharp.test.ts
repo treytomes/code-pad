@@ -1,10 +1,26 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeAll } from 'vitest';
 import { CSharpExecutor } from '../../../src/backend/executors/csharp';
+import { exec } from 'child_process';
+import { promisify } from 'util';
+
+const execAsync = promisify(exec);
+
+// Check if dotnet is available
+let dotnetAvailable = false;
+beforeAll(async () => {
+  try {
+    await execAsync('dotnet --version');
+    dotnetAvailable = true;
+  } catch {
+    dotnetAvailable = false;
+    console.warn('⚠️  .NET SDK not found - C# executor tests will be skipped');
+  }
+});
 
 describe('CSharpExecutor', () => {
   const executor = new CSharpExecutor();
 
-  it('should execute simple Console.WriteLine', async () => {
+  it.skipIf(!dotnetAvailable)('should execute simple Console.WriteLine', async () => {
     const code = 'Console.WriteLine("Hello World");';
     const result = await executor.execute(code);
 
@@ -15,7 +31,7 @@ describe('CSharpExecutor', () => {
     expect(result.executionTime).toBeGreaterThan(0);
   });
 
-  it('should capture multiple lines of output', async () => {
+  it.skipIf(!dotnetAvailable)('should capture multiple lines of output', async () => {
     const code = `
       Console.WriteLine("Line 1");
       Console.WriteLine("Line 2");
@@ -29,7 +45,7 @@ describe('CSharpExecutor', () => {
     expect(result.stdout).toContain('Line 3');
   });
 
-  it('should handle compile errors', async () => {
+  it.skipIf(!dotnetAvailable)('should handle compile errors', async () => {
     const code = 'this is not valid C# code!!!';
     const result = await executor.execute(code);
 
@@ -37,7 +53,7 @@ describe('CSharpExecutor', () => {
     expect(result.stderr.length).toBeGreaterThan(0);
   });
 
-  it('should handle runtime errors', async () => {
+  it.skipIf(!dotnetAvailable)('should handle runtime errors', async () => {
     const code = 'throw new Exception("Test error");';
     const result = await executor.execute(code);
 
@@ -45,7 +61,7 @@ describe('CSharpExecutor', () => {
     expect(result.stderr).toContain('Test error');
   });
 
-  it(
+  it.skipIf(!dotnetAvailable)(
     'should timeout long-running code',
     async () => {
       const code =
@@ -58,7 +74,7 @@ describe('CSharpExecutor', () => {
     10000
   ); // Test timeout 10s
 
-  it('should execute code with variables', async () => {
+  it.skipIf(!dotnetAvailable)('should execute code with variables', async () => {
     const code = `
       var x = 5;
       var y = 10;
@@ -70,7 +86,7 @@ describe('CSharpExecutor', () => {
     expect(result.stdout).toContain('Sum: 15');
   });
 
-  it('should support LINQ queries', async () => {
+  it.skipIf(!dotnetAvailable)('should support LINQ queries', async () => {
     const code = `
       var numbers = new[] { 1, 2, 3, 4, 5 };
       var evens = numbers.Where(n => n % 2 == 0);
@@ -82,7 +98,7 @@ describe('CSharpExecutor', () => {
     expect(result.stdout).toContain('2, 4');
   });
 
-  it('should measure execution time', async () => {
+  it.skipIf(!dotnetAvailable)('should measure execution time', async () => {
     const code = `
       System.Threading.Thread.Sleep(100);
       Console.WriteLine("Done");
@@ -93,7 +109,7 @@ describe('CSharpExecutor', () => {
     expect(result.executionTime).toBeLessThan(5000);
   });
 
-  it('should provide helpful error when dotnet not found', async () => {
+  it.skipIf(!dotnetAvailable)('should provide helpful error when dotnet not found', async () => {
     // This test verifies error message quality, not that we can break dotnet
     // In real scenario with missing dotnet, the error handler provides:
     // 1. Clear message about dotnet not found
@@ -110,7 +126,7 @@ describe('CSharpExecutor', () => {
     expect(result.stdout).toContain('test');
   });
 
-  it('should handle code with using statements without CS1529 error', async () => {
+  it.skipIf(!dotnetAvailable)('should handle code with using statements without CS1529 error', async () => {
     const code = `using System;
 using System.Linq;
 
@@ -123,7 +139,7 @@ Console.WriteLine("Hello World");`;
     expect(result.stderr).not.toContain('CS1529');
   });
 
-  it('should handle code with #r directives before using statements', async () => {
+  it.skipIf(!dotnetAvailable)('should handle code with #r directives before using statements', async () => {
     const code = `// #r "nuget: Newtonsoft.Json"
 using System;
 using System.Linq;
@@ -138,7 +154,7 @@ Console.WriteLine(string.Join(", ", numbers));`;
     expect(result.stderr).not.toContain('CS1529');
   });
 
-  it('should handle code with comments before using statements', async () => {
+  it.skipIf(!dotnetAvailable)('should handle code with comments before using statements', async () => {
     const code = `// This is a comment
 // Another comment
 using System;
@@ -151,7 +167,7 @@ Console.WriteLine("Test");`;
     expect(result.stdout).toContain('Test');
   });
 
-  it('should insert auto-flush code after using statements', async () => {
+  it.skipIf(!dotnetAvailable)('should insert auto-flush code after using statements', async () => {
     // This tests that our auto-flush logic doesn't break the code structure
     const code = `using System;
 using System.Collections.Generic;
