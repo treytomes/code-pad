@@ -173,7 +173,7 @@
   - [x] Add starred/favorite snippets section ✓
   - [x] Toggle star functionality ✓
   - [x] Track last opened timestamp ✓
-  - [ ] Create tree view with folders (deferred to Phase 2)
+  - [-] Create tree view with folders (deferred to Phase 2)
 
 - [x] **Editor Component** ✓
   - [x] Integrate Monaco Editor fully ✓

@@ -36,6 +36,9 @@ export class SnippetDatabase {
 
     // Initialize schema
     this.initializeSchema();
+
+    // Run migrations
+    this.runMigrations();
   }
 
   private initializeSchema() {
@@ -47,9 +50,7 @@ export class SnippetDatabase {
         code TEXT NOT NULL,
         created_at INTEGER NOT NULL,
         modified_at INTEGER NOT NULL,
-        execution_count INTEGER DEFAULT 0,
-        starred INTEGER DEFAULT 0,
-        last_opened_at INTEGER
+        execution_count INTEGER DEFAULT 0
       );
 
       CREATE INDEX IF NOT EXISTS idx_snippets_language
@@ -57,13 +58,34 @@ export class SnippetDatabase {
 
       CREATE INDEX IF NOT EXISTS idx_snippets_modified
         ON snippets(modified_at DESC);
-
-      CREATE INDEX IF NOT EXISTS idx_snippets_starred
-        ON snippets(starred DESC, modified_at DESC);
-
-      CREATE INDEX IF NOT EXISTS idx_snippets_last_opened
-        ON snippets(last_opened_at DESC);
     `);
+  }
+
+  private runMigrations() {
+    // Check if starred column exists
+    const tableInfo = this.db.prepare("PRAGMA table_info(snippets)").all() as any[];
+    const hasStarred = tableInfo.some(col => col.name === 'starred');
+    const hasLastOpened = tableInfo.some(col => col.name === 'last_opened_at');
+
+    // Migration 1: Add starred column
+    if (!hasStarred) {
+      console.log('Running migration: Add starred column');
+      this.db.exec(`
+        ALTER TABLE snippets ADD COLUMN starred INTEGER DEFAULT 0;
+        CREATE INDEX IF NOT EXISTS idx_snippets_starred
+          ON snippets(starred DESC, modified_at DESC);
+      `);
+    }
+
+    // Migration 2: Add last_opened_at column
+    if (!hasLastOpened) {
+      console.log('Running migration: Add last_opened_at column');
+      this.db.exec(`
+        ALTER TABLE snippets ADD COLUMN last_opened_at INTEGER;
+        CREATE INDEX IF NOT EXISTS idx_snippets_last_opened
+          ON snippets(last_opened_at DESC);
+      `);
+    }
   }
 
   // Create
