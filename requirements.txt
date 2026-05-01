@@ -1,0 +1,14 @@
+# Python Requirements for CodePad
+#
+# This file lists Python packages needed for building native Node.js modules
+# (primarily better-sqlite3 which requires Python for node-gyp)
+#
+# Currently no additional packages are required beyond Python 3.8+ itself.
+# node-gyp uses Python's standard library only.
+#
+# Future additions might include:
+#   - Code analysis tools
+#   - Build scripts
+#   - Testing utilities
+
+# No additional packages required at this time

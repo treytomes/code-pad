@@ -57,8 +57,9 @@ out/
 # Husky
 .husky/_
 
-# Python virtual environment
+# Python virtual environment (WSL and Windows)
 venv/
+venv-win/
 .venv/
 env/
 .env/

@@ -4,7 +4,16 @@
     {
       "label": "npm: install",
       "type": "shell",
-      "command": "export PYTHON=\"$(pwd)/venv/bin/python\" && npm install",
+      "command": "npm install",
+      "windows": {
+        "command": "setup-python.bat && npm install"
+      },
+      "linux": {
+        "command": "export PYTHON=\"$(pwd)/venv/bin/python\" && npm install"
+      },
+      "osx": {
+        "command": "export PYTHON=\"$(pwd)/venv/bin/python\" && npm install"
+      },
       "problemMatcher": [],
       "detail": "Install dependencies with Python venv"
     },
@@ -84,8 +93,17 @@
       "label": "Activate Python venv",
       "type": "shell",
       "command": "source venv/bin/activate",
+      "windows": {
+        "command": "call venv-win\\Scripts\\activate.bat"
+      },
+      "linux": {
+        "command": "source venv/bin/activate"
+      },
+      "osx": {
+        "command": "source venv/bin/activate"
+      },
       "problemMatcher": [],
-      "detail": "Activate Python 3.11 virtual environment"
+      "detail": "Activate Python virtual environment"
     },
     {
       "label": "Install .NET dotnet-script",

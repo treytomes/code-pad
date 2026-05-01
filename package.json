@@ -29,8 +29,7 @@
   "dependencies": {
     "@monaco-editor/react": "^4.7.0",
     "antd": "^6.3.7",
-    "better-sqlite3": "^9.6.0",
-    "electron": "^30.0.0",
+    "better-sqlite3": "^11.7.0",
     "monaco-editor": "^0.55.1",
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
@@ -49,6 +48,7 @@
     "@typescript-eslint/parser": "^8.59.1",
     "@vitejs/plugin-react": "^4.7.0",
     "autoprefixer": "^10.5.0",
+    "electron": "^30.0.0",
     "electron-builder": "^26.8.1",
     "eslint": "^9.39.4",
     "eslint-config-prettier": "^10.1.8",
