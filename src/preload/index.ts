@@ -14,6 +14,13 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // Check runtime requirements
   checkRuntime: () => ipcRenderer.invoke('check-runtime'),
 
+  // Import/Export
+  exportSnippet: (snippetName: string, code: string) =>
+    ipcRenderer.invoke('export-snippet', snippetName, code),
+  importSnippet: () => ipcRenderer.invoke('import-snippet'),
+  exportAllSnippets: (snippets: any[]) =>
+    ipcRenderer.invoke('export-all-snippets', snippets),
+
   // Subscribe to output chunks during execution
   onOutputChunk: (callback: (chunk: string, isError: boolean) => void) => {
     const listener = (

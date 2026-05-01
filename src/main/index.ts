@@ -4,6 +4,7 @@ import * as path from 'path';
 import { CSharpExecutor } from '../backend/executors/csharp';
 import { SnippetDatabase } from '../backend/database';
 import { checkRuntimeRequirements, RuntimeInfo } from '../backend/runtime-checker';
+import { exportSnippetToFile, importSnippetFromFile, exportAllSnippets } from '../backend/import-export';
 import { logger, logInfo, logError, logWarn, logDebug } from '../shared/logger';
 
 let mainWindow: electron.BrowserWindow | null = null;
@@ -134,6 +135,19 @@ electron.ipcMain.handle('db-get-recently-opened', async (_event, limit?: number)
 // Check runtime requirements
 electron.ipcMain.handle('check-runtime', async (): Promise<RuntimeInfo> => {
   return await checkRuntimeRequirements();
+});
+
+// Import/Export handlers
+electron.ipcMain.handle('export-snippet', async (_event, snippetName: string, code: string) => {
+  return await exportSnippetToFile(snippetName, code);
+});
+
+electron.ipcMain.handle('import-snippet', async () => {
+  return await importSnippetFromFile();
+});
+
+electron.ipcMain.handle('export-all-snippets', async (_event, snippets: any[]) => {
+  return await exportAllSnippets(snippets);
 });
 
 electron.app.whenReady().then(async () => {

@@ -5,6 +5,9 @@ import {
   PlusOutlined,
   ClearOutlined,
   CopyOutlined,
+  ExportOutlined,
+  ImportOutlined,
+  DownloadOutlined,
 } from '@ant-design/icons';
 import { CodeEditor } from './components/Editor';
 import { SnippetList } from './components/SnippetList';
@@ -295,6 +298,83 @@ function App() {
     }
   }, [isDraggingOutput, isDraggingSidebar]);
 
+  // Import/Export handlers
+  const handleExport = async () => {
+    if (!currentSnippetId) {
+      message.warning('No snippet selected to export');
+      return;
+    }
+
+    try {
+      const snippet = await window.electronAPI.db.getSnippet(currentSnippetId);
+      if (!snippet) {
+        message.error('Snippet not found');
+        return;
+      }
+
+      const result = await window.electronAPI.exportSnippet(snippet.name, code);
+      if (result.success) {
+        message.success(`Exported to ${result.filePath}`);
+      } else if (result.error !== 'Export canceled') {
+        message.error(`Export failed: ${result.error}`);
+      }
+    } catch (error) {
+      console.error('Export error:', error);
+      message.error('Failed to export snippet');
+    }
+  };
+
+  const handleImport = async () => {
+    try {
+      const result = await window.electronAPI.importSnippet();
+      if (result.success && result.name && result.code) {
+        // Create new snippet from imported code
+        const newSnippet = await window.electronAPI.db.createSnippet({
+          name: result.name,
+          language: 'csharp',
+          code: result.code,
+        });
+
+        setCurrentSnippetId(newSnippet.id);
+        setCode(result.code);
+        setRefreshTrigger((prev) => prev + 1);
+        message.success(`Imported ${result.name}`);
+      } else if (result.error !== 'Import canceled') {
+        message.error(`Import failed: ${result.error}`);
+      }
+    } catch (error) {
+      console.error('Import error:', error);
+      message.error('Failed to import snippet');
+    }
+  };
+
+  const handleExportAll = async () => {
+    try {
+      const snippets = await window.electronAPI.db.listSnippets();
+      if (snippets.length === 0) {
+        message.warning('No snippets to export');
+        return;
+      }
+
+      const exportData = snippets.map((s) => ({
+        name: s.name,
+        language: s.language,
+        code: s.code,
+        starred: s.starred,
+      }));
+
+      const result = await window.electronAPI.exportAllSnippets(exportData);
+      if (result.success) {
+        message.success(`Exported ${snippets.length} snippets to ${result.filePath}`);
+      } else if (result.error !== 'Export canceled') {
+        message.error(`Export failed: ${result.error}`);
+      }
+    } catch (error) {
+      console.error('Export all error:', error);
+      message.error('Failed to export snippets');
+    }
+  };
+
   // Cleanup timer on unmount
   React.useEffect(() => {
     return () => {
@@ -375,6 +455,13 @@ function App() {
           >
             New
           </Button>
+          <Button
+            icon={<ImportOutlined />}
+            onClick={handleImport}
+            title="Import from .cs file"
+          >
+            Import
+          </Button>
           {currentSnippetId ? (
             <>
               <Button
@@ -392,6 +479,13 @@ function App() {
               >
                 Save As...
               </Button>
+              <Button
+                icon={<ExportOutlined />}
+                onClick={handleExport}
+                title="Export to .cs file"
+              >
+                Export
+              </Button>
             </>
           ) : (
             <Button
@@ -403,6 +497,13 @@ function App() {
               Save As...
             </Button>
           )}
+          <Button
+            icon={<DownloadOutlined />}
+            onClick={handleExportAll}
+            title="Export all snippets to JSON"
+          >
+            Export All
+          </Button>
           <Button type="primary" onClick={handleRun} loading={isRunning}>
             Run Code
           </Button>
