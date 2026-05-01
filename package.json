@@ -16,7 +16,9 @@
     "test:e2e": "playwright test",
     "lint": "eslint src --ext ts,tsx",
     "format": "prettier --write \"src/**/*.{ts,tsx}\"",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "logs": "bash scripts/view-logs.sh",
+    "logs:windows": "scripts\\view-logs.bat"
   },
   "keywords": [
     "code",
