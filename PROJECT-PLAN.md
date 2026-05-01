@@ -149,10 +149,10 @@
 - [x] **Output Panel Component** ✓
   - [x] Create basic output display
   - [ ] Add stdout/stderr separation
-  - [ ] Implement execution timing display
-  - [ ] Add clear output button
+  - [x] Implement execution timing display
+  - [x] Add clear output button
   - [x] Support text output (plain)
-  - [ ] Add copy to clipboard functionality
+  - [x] Add copy to clipboard functionality
 
 - [ ] **Status Bar Component**
   - [ ] Show current language (C#)
