@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { List, Button, Empty, Popconfirm, Typography, Select, Input, Space, Divider } from 'antd';
 import {
   DeleteOutlined,
@@ -10,6 +10,7 @@ import {
   StarOutlined,
   StarFilled,
   ClockCircleOutlined,
+  SearchOutlined,
 } from '@ant-design/icons';
 import type { Snippet } from '../../../backend/database';
 
@@ -36,6 +37,7 @@ export const SnippetList: React.FC<SnippetListProps> = ({
   const [languageFilter, setLanguageFilter] = useState<string | undefined>(
     undefined
   );
+  const [searchText, setSearchText] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState('');
 
@@ -97,6 +99,22 @@ export const SnippetList: React.FC<SnippetListProps> = ({
       console.error('Failed to toggle star:', error);
     }
   };
+
+  // Filter snippets by search text
+  const filterBySearch = (snippetList: Snippet[]) => {
+    if (!searchText.trim()) {
+      return snippetList;
+    }
+    const search = searchText.toLowerCase();
+    return snippetList.filter(snippet =>
+      snippet.name.toLowerCase().includes(search)
+    );
+  };
+
+  // Memoized filtered lists
+  const filteredStarred = useMemo(() => filterBySearch(starredSnippets), [starredSnippets, searchText]);
+  const filteredRecent = useMemo(() => filterBySearch(recentSnippets), [recentSnippets, searchText]);
+  const filteredSnippets = useMemo(() => filterBySearch(snippets), [snippets, searchText]);
 
   const renderSnippetItem = (snippet: Snippet) => (
     <List.Item
@@ -244,22 +262,36 @@ export const SnippetList: React.FC<SnippetListProps> = ({
           background: '#252526',
         }}
       >
-        <Select
-          placeholder="Filter by language"
-          allowClear
-          style={{ width: '100%' }}
-          onChange={setLanguageFilter}
-          value={languageFilter}
-        >
-          <Option value="csharp">C#</Option>
-          <Option value="python">Python</Option>
-          <Option value="javascript">JavaScript</Option>
-        </Select>
+        <Space direction="vertical" style={{ width: '100%' }} size="small">
+          <Select
+            placeholder="Filter by language"
+            allowClear
+            style={{ width: '100%' }}
+            onChange={setLanguageFilter}
+            value={languageFilter}
+          >
+            <Option value="csharp">C#</Option>
+            <Option value="python">Python</Option>
+            <Option value="javascript">JavaScript</Option>
+          </Select>
+          <Input
+            placeholder="Search snippets..."
+            prefix={<SearchOutlined style={{ color: '#858585' }} />}
+            allowClear
+            value={searchText}
+            onChange={(e) => setSearchText(e.target.value)}
+            style={{
+              backgroundColor: '#3c3c3c',
+              borderColor: '#2d2d30',
+              color: '#cccccc',
+            }}
+          />
+        </Space>
       </div>
 
       <div style={{ flex: 1, overflowY: 'auto', background: '#252526' }}>
         {/* Starred Snippets Section */}
-        {starredSnippets.length > 0 && (
+        {filteredStarred.length > 0 && (
           <>
             <div
               style={{
@@ -277,10 +309,15 @@ export const SnippetList: React.FC<SnippetListProps> = ({
                 }}
               >
                 <StarFilled /> Starred
+                {searchText && (
+                  <Text style={{ fontSize: '12px', color: '#858585', marginLeft: '8px' }}>
+                    ({filteredStarred.length}/{starredSnippets.length})
+                  </Text>
+                )}
               </Text>
             </div>
             <List
-              dataSource={starredSnippets}
+              dataSource={filteredStarred}
               renderItem={(snippet) => renderSnippetItem(snippet)}
               split={false}
             />
@@ -289,7 +326,7 @@ export const SnippetList: React.FC<SnippetListProps> = ({
         )}
 
         {/* Recently Opened Section */}
-        {recentSnippets.length > 0 && (
+        {filteredRecent.length > 0 && (
           <>
             <div
               style={{
@@ -307,10 +344,15 @@ export const SnippetList: React.FC<SnippetListProps> = ({
                 }}
               >
                 <ClockCircleOutlined /> Recently Opened
+                {searchText && (
+                  <Text style={{ fontSize: '12px', color: '#858585', marginLeft: '8px' }}>
+                    ({filteredRecent.length}/{recentSnippets.length})
+                  </Text>
+                )}
               </Text>
             </div>
             <List
-              dataSource={recentSnippets}
+              dataSource={filteredRecent}
               renderItem={(snippet) => renderSnippetItem(snippet)}
               split={false}
             />
@@ -327,16 +369,21 @@ export const SnippetList: React.FC<SnippetListProps> = ({
         >
           <Text strong style={{ color: '#cccccc' }}>
             All Snippets
+            {searchText && (
+              <Text style={{ fontSize: '12px', color: '#858585', marginLeft: '8px' }}>
+                ({filteredSnippets.length}/{snippets.length})
+              </Text>
+            )}
           </Text>
         </div>
         <List
           loading={loading}
-          dataSource={snippets}
+          dataSource={filteredSnippets}
           locale={{
             emptyText: (
               <Empty
                 image={Empty.PRESENTED_IMAGE_SIMPLE}
-                description="No snippets yet"
+                description={searchText ? `No snippets found matching "${searchText}"` : "No snippets yet"}
               />
             ),
           }}
