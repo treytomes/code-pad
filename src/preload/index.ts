@@ -7,6 +7,13 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // Example: Ping/Pong test
   ping: () => 'pong',
 
+  // System information
+  versions: {
+    electron: process.versions.electron,
+    chrome: process.versions.chrome,
+    node: process.versions.node,
+  },
+
   // Execute C# code
   executeCode: (code: string, options?: { timeout?: number }) =>
     ipcRenderer.invoke('execute-code', code, options),

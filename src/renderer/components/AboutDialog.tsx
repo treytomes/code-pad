@@ -11,9 +11,9 @@ interface AboutDialogProps {
 
 export const AboutDialog: React.FC<AboutDialogProps> = ({ visible, onClose }) => {
   const version = '0.1.0';
-  const electronVersion = process.versions.electron;
-  const chromeVersion = process.versions.chrome;
-  const nodeVersion = process.versions.node;
+  const electronVersion = window.electronAPI.versions.electron;
+  const chromeVersion = window.electronAPI.versions.chrome;
+  const nodeVersion = window.electronAPI.versions.node;
 
   return (
     <Modal
