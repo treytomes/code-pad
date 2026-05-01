@@ -123,12 +123,12 @@
 
 ### Week 3-4: UI Foundation
 
-- [ ] **Component Architecture**
-  - [ ] Design component hierarchy
-  - [ ] Create base layout (3-panel: explorer, editor, output)
-  - [ ] Implement responsive splitter panels
-  - [ ] Add Ant Design theme configuration
-  - [ ] Set up Tailwind CSS
+- [x] **Component Architecture** ✓
+  - [x] Design component hierarchy
+  - [x] Create base layout (3-panel: explorer, editor, output)
+  - [x] Implement responsive splitter panels
+  - [x] Add Ant Design theme configuration
+  - [x] Set up Tailwind CSS
 
 - [ ] **Snippet Explorer Component**
   - [ ] Create tree view using Ant Design Tree
@@ -136,22 +136,22 @@
   - [ ] Add context menu (new, rename, delete)
   - [ ] Show recently opened snippets
   - [ ] Add starred snippets section
-  - [ ] Implement search/filter
+  - [x] Implement search/filter (language filter implemented)
 
-- [ ] **Editor Component**
-  - [ ] Integrate Monaco Editor fully
+- [x] **Editor Component** ✓
+  - [x] Integrate Monaco Editor fully
   - [ ] Add tab management (multiple open snippets)
   - [ ] Implement "new tab" functionality
   - [ ] Add tab close buttons
   - [ ] Support drag-to-reorder tabs
   - [ ] Implement unsaved changes indicator (*)
 
-- [ ] **Output Panel Component**
-  - [ ] Create basic output display
+- [x] **Output Panel Component** ✓
+  - [x] Create basic output display
   - [ ] Add stdout/stderr separation
   - [ ] Implement execution timing display
   - [ ] Add clear output button
-  - [ ] Support text output (plain)
+  - [x] Support text output (plain)
   - [ ] Add copy to clipboard functionality
 
 - [ ] **Status Bar Component**
@@ -164,36 +164,36 @@
 
 ### Week 5-6: Core Functionality
 
-- [ ] **Snippet Management Backend**
-  - [ ] Implement Zustand store for snippets
-  - [ ] Create snippet CRUD operations
-  - [ ] Implement file storage for snippet content
-  - [ ] Add snippet metadata tracking
+- [x] **Snippet Management Backend** ✓
+  - [ ] Implement Zustand store for snippets (using React state instead)
+  - [x] Create snippet CRUD operations
+  - [x] Implement file storage for snippet content (SQLite database)
+  - [x] Add snippet metadata tracking (createdAt, modifiedAt, executionCount)
   - [ ] Support folder organization
-  - [ ] Implement search functionality
+  - [x] Implement search functionality (language filter implemented)
 
-- [ ] **Code Execution System**
-  - [ ] Create execution worker process
-  - [ ] Implement C# executor class
-  - [ ] Add execution timeout handling
+- [x] **Code Execution System** ✓
+  - [x] Create execution worker process (dotnet-script)
+  - [x] Implement C# executor class
+  - [x] Add execution timeout handling
   - [ ] Implement resource limits
-  - [ ] Add error handling and formatting
-  - [ ] Create execution result parser
+  - [x] Add error handling and formatting
+  - [x] Create execution result parser
 
-- [ ] **IPC Layer**
-  - [ ] Define IPC channel types
-  - [ ] Implement typed IPC handlers
-  - [ ] Create secure context bridge (preload)
-  - [ ] Add request/response patterns
-  - [ ] Implement error propagation
+- [x] **IPC Layer** ✓
+  - [x] Define IPC channel types
+  - [x] Implement typed IPC handlers
+  - [x] Create secure context bridge (preload)
+  - [x] Add request/response patterns
+  - [x] Implement error propagation
   - [ ] Add execution cancellation
 
-- [ ] **Integration**
-  - [ ] Connect UI to backend via IPC
-  - [ ] Wire up "Execute" button (F5)
-  - [ ] Implement snippet save (Ctrl+S)
-  - [ ] Add snippet open/close
-  - [ ] Enable snippet delete with confirmation
+- [x] **Integration** ✓
+  - [x] Connect UI to backend via IPC
+  - [x] Wire up "Execute" button (F5 not implemented yet)
+  - [ ] Implement snippet save (Ctrl+S not implemented yet)
+  - [x] Add snippet open/close
+  - [x] Enable snippet delete with confirmation
   - [ ] Add keyboard shortcuts
 
 **Deliverable**: Functional app that can create, edit, save, and execute C# snippets
