@@ -19,10 +19,15 @@
 - CRUD operations for snippets (create, read, update, delete)
 - Rename functionality with inline editing
 - Save/Save As functionality
+- Starred/favorite snippets
+- Recently opened snippets tracking
 - Language filtering
+- Real-time search by snippet name
 - Execution count tracking
 - Keyboard shortcuts (Ctrl+S, Ctrl+Shift+S, F5, Ctrl+N)
 - Resizable panels (editor/output split, sidebar)
+- Comprehensive logging with electron-log
+- Database migrations system
 - Unit tests with 80%+ coverage (54+ test cases)
 - CS1529 fix for using statement ordering
 
@@ -169,6 +174,7 @@
   - [x] Add delete with confirmation ✓
   - [x] Show execution count per snippet ✓
   - [x] Implement language filter ✓
+  - [x] Real-time search filter by name ✓
   - [x] Show recently opened snippets ✓
   - [x] Add starred/favorite snippets section ✓
   - [x] Toggle star functionality ✓
