@@ -258,6 +258,38 @@ function App() {
     };
   }, []);
 
+  // Keyboard shortcuts
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ctrl+S or Cmd+S - Save
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        if (currentSnippetId) {
+          handleSaveExisting();
+        } else {
+          handleSaveNew();
+        }
+      }
+      // F5 - Run code
+      else if (e.key === 'F5') {
+        e.preventDefault();
+        if (!isRunning) {
+          handleRun();
+        }
+      }
+      // Ctrl+N or Cmd+N - New snippet
+      else if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
+        e.preventDefault();
+        handleNewSnippet();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [currentSnippetId, isRunning, code]);
+
   return (
     <Layout style={{ height: '100vh', background: '#1e1e1e' }}>
       <Header
