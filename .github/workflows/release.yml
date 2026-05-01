@@ -1,0 +1,168 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  create-release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    outputs:
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
+      version: ${{ steps.get_version.outputs.version }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Get version from tag
+        id: get_version
+        run: echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: CodePad v${{ steps.get_version.outputs.version }}
+          body: |
+            ## CodePad v${{ steps.get_version.outputs.version }}
+
+            ### Downloads
+            - **Windows**: CodePad-Setup-${{ steps.get_version.outputs.version }}.exe
+            - **macOS**: CodePad-${{ steps.get_version.outputs.version }}.dmg
+            - **Linux**: CodePad-${{ steps.get_version.outputs.version }}.AppImage
+
+            ### What's New
+            See [CHANGELOG.md](https://github.com/treytomes/code-pad/blob/main/CHANGELOG.md) for details.
+
+            ### Installation
+            1. Download the appropriate installer for your platform
+            2. Install .NET SDK 8.0+ from https://dotnet.microsoft.com/download
+            3. Install dotnet-script: `dotnet tool install -g dotnet-script`
+            4. Run CodePad!
+
+            ### Documentation
+            - [README](https://github.com/treytomes/code-pad#readme)
+            - [Testing Checklist](https://github.com/treytomes/code-pad/blob/main/TESTING-CHECKLIST.md)
+          draft: false
+          prerelease: false
+
+  build-windows:
+    name: Build Windows
+    needs: create-release
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+        shell: cmd
+
+      - name: Build and package
+        run: npm run build:prod
+        shell: cmd
+
+      - name: List release files
+        run: dir release
+        shell: cmd
+
+      - name: Upload Windows installer
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.create-release.outputs.upload_url }}
+          asset_path: ./release/CodePad Setup ${{ needs.create-release.outputs.version }}.exe
+          asset_name: CodePad-Setup-${{ needs.create-release.outputs.version }}.exe
+          asset_content_type: application/octet-stream
+
+  build-macos:
+    name: Build macOS
+    needs: create-release
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build and package
+        run: npm run build:prod
+
+      - name: List release files
+        run: ls -la release
+
+      - name: Upload macOS DMG
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.create-release.outputs.upload_url }}
+          asset_path: ./release/CodePad-${{ needs.create-release.outputs.version }}.dmg
+          asset_name: CodePad-${{ needs.create-release.outputs.version }}.dmg
+          asset_content_type: application/octet-stream
+
+  build-linux:
+    name: Build Linux
+    needs: create-release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build and package
+        run: npm run build:prod
+
+      - name: List release files
+        run: ls -la release
+
+      - name: Upload Linux AppImage
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.create-release.outputs.upload_url }}
+          asset_path: ./release/CodePad-${{ needs.create-release.outputs.version }}.AppImage
+          asset_name: CodePad-${{ needs.create-release.outputs.version }}.AppImage
+          asset_content_type: application/octet-stream
+
+      - name: Upload Linux deb
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.create-release.outputs.upload_url }}
+          asset_path: ./release/codepad_${{ needs.create-release.outputs.version }}_amd64.deb
+          asset_name: codepad_${{ needs.create-release.outputs.version }}_amd64.deb
+          asset_content_type: application/octet-stream
