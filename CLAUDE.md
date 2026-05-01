@@ -276,6 +276,79 @@ Ctrl+Shift+P     # Command Palette → "Tasks: Run Task"
 
 ## Development Guidelines
 
+### Unit Testing and Code Coverage
+
+**CRITICAL**: All new code MUST include comprehensive unit tests.
+
+**Coverage Requirements**:
+- Backend modules: **80%+ coverage** (executors, database, utilities)
+- React components: **70%+ coverage** (UI logic, event handlers)
+- Utilities/helpers: **90%+ coverage** (pure functions, no side effects)
+
+**Test Frameworks**:
+- **Vitest** for unit/integration tests (`npm test`)
+- **React Testing Library** for component tests
+- **Playwright** for E2E tests (`npm run test:e2e`)
+
+**Testing Best Practices**:
+1. **Write tests FIRST** or immediately after implementation
+2. **Test behavior, not implementation** - Focus on what code does, not how
+3. **Cover edge cases** - Errors, timeouts, boundary conditions
+4. **Keep tests fast** - Mock external dependencies, use test databases
+5. **Make tests deterministic** - No flaky tests, no timing dependencies
+6. **Use descriptive test names** - Should explain what and why
+
+**Example Test Structure**:
+```typescript
+describe('FeatureName', () => {
+  describe('happyPath', () => {
+    it('should do expected thing with valid input', () => {});
+  });
+  
+  describe('edgeCases', () => {
+    it('should handle empty input', () => {});
+    it('should handle null/undefined', () => {});
+    it('should timeout after threshold', () => {});
+  });
+  
+  describe('errorHandling', () => {
+    it('should throw on invalid input', () => {});
+    it('should log errors appropriately', () => {});
+  });
+});
+```
+
+**Running Tests**:
+```bash
+# Run all tests
+npm test
+
+# Run specific test file
+npm test -- csharp.test.ts
+
+# Run tests in watch mode
+npm test -- --watch
+
+# Generate coverage report
+npm test -- --coverage
+
+# Run tests with UI
+npm test -- --ui
+```
+
+**Coverage Reporting**:
+- Coverage reports generated in `coverage/` directory
+- View HTML report: Open `coverage/index.html` in browser
+- CI/CD should fail if coverage drops below thresholds
+
+**Before Committing**:
+1. ✅ All tests passing
+2. ✅ Coverage meets requirements
+3. ✅ No console errors/warnings in tests
+4. ✅ Tests run in < 30 seconds (unit tests)
+
+---
+
 ### Code Style
 - **TypeScript**: Strict mode enabled
 - **Formatting**: Prettier with 2-space tabs, semicolons, single quotes
