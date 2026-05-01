@@ -1,6 +1,11 @@
 import React, { useState, useRef } from 'react';
 import { Button, Layout, Modal, Input, message, Space } from 'antd';
-import { SaveOutlined, PlusOutlined } from '@ant-design/icons';
+import {
+  SaveOutlined,
+  PlusOutlined,
+  ClearOutlined,
+  CopyOutlined,
+} from '@ant-design/icons';
 import { CodeEditor } from './components/Editor';
 import { SnippetList } from './components/SnippetList';
 import type { Snippet } from '../backend/database';
@@ -129,6 +134,23 @@ function App() {
     setCode(DEFAULT_CODE);
     setCurrentSnippetId(null);
     setOutput('');
+  };
+
+  const handleClearOutput = () => {
+    setOutput('');
+  };
+
+  const handleCopyOutput = async () => {
+    if (!output) {
+      message.warning('No output to copy');
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(output);
+      message.success('Output copied to clipboard');
+    } catch (error) {
+      message.error('Failed to copy to clipboard');
+    }
   };
 
   const handleOutputMouseDown = () => {
@@ -300,35 +322,74 @@ function App() {
           <div
             style={{
               height: `${outputHeight}px`,
-              padding: '12px',
               backgroundColor: '#181818',
-              color: '#cccccc',
-              fontFamily: "'Consolas', 'Courier New', monospace",
-              fontSize: '13px',
-              overflowY: 'auto',
               borderTop: '1px solid #2d2d30',
+              display: 'flex',
+              flexDirection: 'column',
             }}
           >
-            <strong
+            {/* Output panel header */}
+            <div
               style={{
-                color: '#4ec9b0',
-                fontSize: '11px',
-                textTransform: 'uppercase',
-                letterSpacing: '1px',
-                fontWeight: 600,
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                padding: '8px 12px',
+                borderBottom: '1px solid #2d2d30',
               }}
             >
-              Output
-            </strong>
-            <pre
+              <strong
+                style={{
+                  color: '#4ec9b0',
+                  fontSize: '11px',
+                  textTransform: 'uppercase',
+                  letterSpacing: '1px',
+                  fontWeight: 600,
+                }}
+              >
+                Output
+              </strong>
+              <Space size="small">
+                <Button
+                  type="text"
+                  size="small"
+                  icon={<CopyOutlined />}
+                  onClick={handleCopyOutput}
+                  title="Copy to clipboard"
+                  style={{ color: '#858585' }}
+                />
+                <Button
+                  type="text"
+                  size="small"
+                  icon={<ClearOutlined />}
+                  onClick={handleClearOutput}
+                  title="Clear output"
+                  style={{ color: '#858585' }}
+                />
+              </Space>
+            </div>
+
+            {/* Output content */}
+            <div
               style={{
-                margin: '8px 0 0 0',
-                whiteSpace: 'pre-wrap',
+                flex: 1,
+                padding: '12px',
                 color: '#cccccc',
+                fontFamily: "'Consolas', 'Courier New', monospace",
+                fontSize: '13px',
+                overflowY: 'auto',
               }}
             >
-              {output || 'Click "Run Code" to execute'}
-            </pre>
+              <pre
+                style={{
+                  margin: 0,
+                  whiteSpace: 'pre-wrap',
+                  color: '#cccccc',
+                }}
+              >
+                {output || 'Click "Run Code" to execute'}
+              </pre>
+            </div>
           </div>
         </Content>
       </Layout>
