@@ -49,8 +49,21 @@ export const SnippetList: React.FC<SnippetListProps> = ({
   };
 
   return (
-    <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <div style={{ padding: '8px', borderBottom: '1px solid #d9d9d9' }}>
+    <div
+      style={{
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        background: '#252526',
+      }}
+    >
+      <div
+        style={{
+          padding: '8px',
+          borderBottom: '1px solid #2d2d30',
+          background: '#252526',
+        }}
+      >
         <Select
           placeholder="Filter by language"
           allowClear
@@ -64,7 +77,7 @@ export const SnippetList: React.FC<SnippetListProps> = ({
         </Select>
       </div>
 
-      <div style={{ flex: 1, overflowY: 'auto' }}>
+      <div style={{ flex: 1, overflowY: 'auto', background: '#252526' }}>
         <List
           loading={loading}
           dataSource={snippets}
@@ -81,10 +94,12 @@ export const SnippetList: React.FC<SnippetListProps> = ({
               style={{
                 padding: '8px 12px',
                 cursor: 'pointer',
-                borderBottom: '1px solid #f0f0f0',
+                borderBottom: '1px solid #2d2d30',
+                background: 'transparent',
+                transition: 'background-color 0.15s ease',
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = '#f5f5f5';
+                e.currentTarget.style.backgroundColor = '#2a2d2e';
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.backgroundColor = 'transparent';

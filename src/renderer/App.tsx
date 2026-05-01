@@ -156,16 +156,30 @@ function App() {
   }, [isDragging]);
 
   return (
-    <Layout style={{ height: '100vh' }}>
+    <Layout style={{ height: '100vh', background: '#1e1e1e' }}>
       <Header
         style={{
           display: 'flex',
           alignItems: 'center',
           gap: '10px',
           padding: '0 16px',
+          background: '#323233',
+          borderBottom: '1px solid #2d2d30',
+          height: '48px',
+          lineHeight: '48px',
         }}
       >
-        <h1 style={{ color: 'white', margin: 0 }}>CodePad</h1>
+        <h1
+          style={{
+            color: '#cccccc',
+            margin: 0,
+            fontSize: '14px',
+            fontWeight: 400,
+            letterSpacing: '0.5px',
+          }}
+        >
+          CodePad
+        </h1>
         <Space>
           <Button
             icon={<PlusOutlined />}
@@ -187,11 +201,14 @@ function App() {
         </Space>
       </Header>
 
-      <Layout>
+      <Layout style={{ background: '#1e1e1e' }}>
         <Sider
           width={250}
-          theme="light"
-          style={{ borderRight: '1px solid #d9d9d9' }}
+          theme="dark"
+          style={{
+            background: '#252526',
+            borderRight: '1px solid #2d2d30',
+          }}
         >
           <SnippetList
             onSelectSnippet={handleSelectSnippet}
@@ -213,8 +230,7 @@ function App() {
             style={{
               flex: 1,
               minHeight: 0,
-              border: '1px solid #d9d9d9',
-              borderBottom: 'none',
+              background: '#1e1e1e',
             }}
           >
             <CodeEditor value={code} onChange={handleCodeChange} />
@@ -225,17 +241,17 @@ function App() {
             onMouseDown={handleMouseDown}
             style={{
               height: '4px',
-              backgroundColor: '#d9d9d9',
+              backgroundColor: '#2d2d30',
               cursor: 'ns-resize',
               userSelect: 'none',
               zIndex: 10,
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = '#1890ff';
+              e.currentTarget.style.backgroundColor = '#007acc';
             }}
             onMouseLeave={(e) => {
               if (!isDragging) {
-                e.currentTarget.style.backgroundColor = '#d9d9d9';
+                e.currentTarget.style.backgroundColor = '#2d2d30';
               }
             }}
           />
@@ -243,18 +259,33 @@ function App() {
           <div
             style={{
               height: `${outputHeight}px`,
-              border: '1px solid #d9d9d9',
-              borderTop: 'none',
-              padding: '8px',
-              backgroundColor: '#1e1e1e',
-              color: '#d4d4d4',
-              fontFamily: 'monospace',
-              fontSize: '14px',
+              padding: '12px',
+              backgroundColor: '#181818',
+              color: '#cccccc',
+              fontFamily: "'Consolas', 'Courier New', monospace",
+              fontSize: '13px',
               overflowY: 'auto',
+              borderTop: '1px solid #2d2d30',
             }}
           >
-            <strong style={{ color: '#4ec9b0' }}>Output:</strong>
-            <pre style={{ margin: '8px 0 0 0', whiteSpace: 'pre-wrap' }}>
+            <strong
+              style={{
+                color: '#4ec9b0',
+                fontSize: '11px',
+                textTransform: 'uppercase',
+                letterSpacing: '1px',
+                fontWeight: 600,
+              }}
+            >
+              Output
+            </strong>
+            <pre
+              style={{
+                margin: '8px 0 0 0',
+                whiteSpace: 'pre-wrap',
+                color: '#cccccc',
+              }}
+            >
               {output || 'Click "Run Code" to execute'}
             </pre>
           </div>

@@ -2,16 +2,209 @@
 @tailwind components;
 @tailwind utilities;
 
+/* VS Code Dark Theme Colors */
+:root {
+  --vscode-bg: #1e1e1e;
+  --vscode-sidebar-bg: #252526;
+  --vscode-editor-bg: #1e1e1e;
+  --vscode-panel-bg: #181818;
+  --vscode-border: #2d2d30;
+  --vscode-header-bg: #323233;
+  --vscode-text: #cccccc;
+  --vscode-text-secondary: #858585;
+  --vscode-accent: #007acc;
+  --vscode-accent-hover: #1890ff;
+  --vscode-success: #4ec9b0;
+  --vscode-error: #f48771;
+  --vscode-warning: #dcdcaa;
+  --vscode-selection: #264f78;
+  --vscode-hover: #2a2d2e;
+}
+
 /* Global styles */
+* {
+  box-sizing: border-box;
+}
+
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu',
     'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background-color: var(--vscode-bg);
+  color: var(--vscode-text);
+  overflow: hidden;
 }
 
 #root {
   width: 100%;
   height: 100vh;
+}
+
+/* Ant Design overrides for VS Code theme */
+.ant-layout {
+  background: var(--vscode-bg) !important;
+}
+
+.ant-layout-header {
+  background: var(--vscode-header-bg) !important;
+  border-bottom: 1px solid var(--vscode-border) !important;
+  padding: 0 16px !important;
+}
+
+.ant-layout-sider {
+  background: var(--vscode-sidebar-bg) !important;
+  border-right: 1px solid var(--vscode-border) !important;
+}
+
+.ant-list {
+  background: transparent !important;
+  color: var(--vscode-text) !important;
+}
+
+.ant-list-item {
+  border-bottom: 1px solid var(--vscode-border) !important;
+  color: var(--vscode-text) !important;
+}
+
+.ant-list-item:hover {
+  background-color: var(--vscode-hover) !important;
+}
+
+.ant-list-item-meta-title {
+  color: var(--vscode-text) !important;
+}
+
+.ant-list-item-meta-description {
+  color: var(--vscode-text-secondary) !important;
+}
+
+.ant-empty-description {
+  color: var(--vscode-text-secondary) !important;
+}
+
+.ant-select {
+  background: var(--vscode-panel-bg) !important;
+}
+
+.ant-select-selector {
+  background-color: var(--vscode-panel-bg) !important;
+  border: 1px solid var(--vscode-border) !important;
+  color: var(--vscode-text) !important;
+}
+
+.ant-select-dropdown {
+  background-color: var(--vscode-sidebar-bg) !important;
+  border: 1px solid var(--vscode-border) !important;
+}
+
+.ant-select-item {
+  color: var(--vscode-text) !important;
+}
+
+.ant-select-item-option-selected {
+  background-color: var(--vscode-selection) !important;
+}
+
+.ant-select-item-option-active {
+  background-color: var(--vscode-hover) !important;
+}
+
+.ant-btn {
+  background: var(--vscode-panel-bg) !important;
+  border: 1px solid var(--vscode-border) !important;
+  color: var(--vscode-text) !important;
+}
+
+.ant-btn:hover {
+  background: var(--vscode-hover) !important;
+  border-color: var(--vscode-accent) !important;
+  color: var(--vscode-text) !important;
+}
+
+.ant-btn-primary {
+  background: var(--vscode-accent) !important;
+  border-color: var(--vscode-accent) !important;
+  color: #ffffff !important;
+}
+
+.ant-btn-primary:hover {
+  background: var(--vscode-accent-hover) !important;
+  border-color: var(--vscode-accent-hover) !important;
+  color: #ffffff !important;
+}
+
+.ant-btn-text {
+  background: transparent !important;
+  border: none !important;
+}
+
+.ant-btn-text:hover {
+  background: var(--vscode-hover) !important;
+}
+
+.ant-btn-dangerous {
+  color: var(--vscode-error) !important;
+}
+
+.ant-modal-content {
+  background-color: var(--vscode-sidebar-bg) !important;
+  border: 1px solid var(--vscode-border) !important;
+}
+
+.ant-modal-header {
+  background-color: var(--vscode-header-bg) !important;
+  border-bottom: 1px solid var(--vscode-border) !important;
+}
+
+.ant-modal-title {
+  color: var(--vscode-text) !important;
+}
+
+.ant-modal-footer {
+  border-top: 1px solid var(--vscode-border) !important;
+}
+
+.ant-input {
+  background-color: var(--vscode-panel-bg) !important;
+  border: 1px solid var(--vscode-border) !important;
+  color: var(--vscode-text) !important;
+}
+
+.ant-input:focus,
+.ant-input-focused {
+  border-color: var(--vscode-accent) !important;
+  box-shadow: 0 0 0 2px rgba(0, 122, 204, 0.2) !important;
+}
+
+.ant-popconfirm-inner {
+  background-color: var(--vscode-sidebar-bg) !important;
+  border: 1px solid var(--vscode-border) !important;
+}
+
+.ant-popconfirm-message {
+  color: var(--vscode-text) !important;
+}
+
+.ant-popconfirm-buttons {
+  border-top: 1px solid var(--vscode-border) !important;
+}
+
+.ant-message {
+  color: var(--vscode-text) !important;
+}
+
+.ant-message-notice-content {
+  background: var(--vscode-sidebar-bg) !important;
+  border: 1px solid var(--vscode-border) !important;
+}
+
+/* Icon colors */
+.anticon {
+  color: var(--vscode-text-secondary);
+}
+
+.ant-btn-primary .anticon {
+  color: #ffffff;
 }
