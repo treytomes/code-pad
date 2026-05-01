@@ -51,23 +51,30 @@
   - [x] Create PROJECT-PLAN.md
   - [x] Update CLAUDE.md with project details
 
-- [ ] **Day 2-3: Initialize Project**
-  - [ ] Initialize npm project
-  - [ ] Set up TypeScript configuration
-  - [ ] Install core dependencies (React, Electron, Vite)
-  - [ ] Configure Vite with electron plugin
-  - [ ] Set up ESLint + Prettier
-  - [ ] Configure Husky + lint-staged
-  - [ ] Create initial project structure (folders)
-  - [ ] Initialize Git with .gitignore
+- [x] **Day 2-3: Initialize Project** ✓
+  - [x] Initialize npm project
+  - [x] Set up TypeScript configuration
+  - [x] Install core dependencies (React, Electron, Vite)
+  - [x] Configure Vite with electron plugin
+  - [x] Set up ESLint + Prettier
+  - [x] Configure Husky + lint-staged
+  - [x] Create initial project structure (folders)
+  - [x] Initialize Git with .gitignore
 
-- [ ] **Day 4-5: "Hello World" Electron App**
-  - [ ] Create basic Electron main process
-  - [ ] Create basic React renderer
-  - [ ] Set up IPC communication (ping/pong test)
-  - [ ] Verify hot reload works
-  - [ ] Test build process (`npm run build`)
-  - [ ] Verify app runs on current platform
+- [x] **Day 4-5: "Hello World" Electron App** ✓
+  - [x] Create basic Electron main process
+  - [x] Create basic React renderer
+  - [x] Set up IPC communication (ping/pong test)
+  - [x] Verify hot reload works
+  - [x] Test build process (`npm run build`)
+  - [x] Verify app runs on current platform
+
+- [x] **Week 1 Bonus: Windows Setup** ✓
+  - [x] Fix better-sqlite3 C++20 requirement (upgrade to v11.7.0)
+  - [x] Create Windows Python venv setup scripts
+  - [x] Fix VS Code debugging for Windows
+  - [x] Add electron-debug.js wrapper for clean exit
+  - [x] Create comprehensive setup documentation
 
 #### Week 2: Proof of Concepts
 
@@ -103,10 +110,10 @@
 - SQLite database working
 
 **Success Criteria**:
-- [ ] Can execute simple C# code and capture output
-- [ ] Monaco Editor displays and edits code
-- [ ] Database stores and retrieves data
-- [ ] App builds and runs without errors
+- [ ] Can execute simple C# code and capture output (Week 2, Day 1-2)
+- [ ] Monaco Editor displays and edits code (Week 2, Day 3-4)
+- [ ] Database stores and retrieves data (Week 2, Day 5)
+- [x] App builds and runs without errors ✓ (Week 1 complete)
 
 ---
 
