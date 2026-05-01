@@ -6,7 +6,8 @@
       "type": "node",
       "request": "launch",
       "cwd": "${workspaceFolder}",
-      "runtimeExecutable": "${workspaceFolder}/node_modules/.bin/electron",
+      "runtimeExecutable": "${env:HOME}/.nvm/versions/node/v22.11.0/bin/node",
+      "program": "${workspaceFolder}/node_modules/.bin/electron",
       "windows": {
         "runtimeExecutable": "${workspaceFolder}/node_modules/.bin/electron.cmd"
       },
@@ -17,6 +18,9 @@
         "${workspaceFolder}/**",
         "!**/node_modules/**"
       ],
+      "env": {
+        "NODE_ENV": "development"
+      },
       "preLaunchTask": "npm: build"
     },
     {
@@ -32,7 +36,7 @@
       "name": "Run Vitest Tests",
       "type": "node",
       "request": "launch",
-      "runtimeExecutable": "npm",
+      "runtimeExecutable": "${env:HOME}/.nvm/versions/node/v22.11.0/bin/npm",
       "runtimeArgs": ["run", "test", "--", "--run"],
       "console": "integratedTerminal",
       "internalConsoleOptions": "neverOpen"
@@ -41,7 +45,7 @@
       "name": "Debug Vitest Tests",
       "type": "node",
       "request": "launch",
-      "runtimeExecutable": "npm",
+      "runtimeExecutable": "${env:HOME}/.nvm/versions/node/v22.11.0/bin/npm",
       "runtimeArgs": ["run", "test", "--", "--inspect-brk", "--run"],
       "console": "integratedTerminal",
       "internalConsoleOptions": "neverOpen",

@@ -52,9 +52,23 @@
     "editor.formatOnSave": true
   },
 
+  // Node.js settings (nvm integration)
+  "terminal.integrated.defaultProfile.linux": "bash",
+  "terminal.integrated.profiles.linux": {
+    "bash": {
+      "path": "bash",
+      "icon": "terminal-bash",
+      "env": {
+        "NVM_DIR": "${env:HOME}/.nvm"
+      },
+      "args": ["-c", "source ~/.nvm/nvm.sh && exec bash"]
+    }
+  },
+
   // Terminal settings
   "terminal.integrated.env.linux": {
-    "PYTHON": "${workspaceFolder}/venv/bin/python"
+    "PYTHON": "${workspaceFolder}/venv/bin/python",
+    "PATH": "${env:HOME}/.nvm/versions/node/v22.11.0/bin:${env:PATH}"
   },
   "terminal.integrated.env.osx": {
     "PYTHON": "${workspaceFolder}/venv/bin/python"
