@@ -1,8 +1,10 @@
 // Electron Main Process
 import * as electron from 'electron';
 import * as path from 'path';
+import { CSharpExecutor } from '../backend/executors/csharp';
 
 let mainWindow: electron.BrowserWindow | null = null;
+const csharpExecutor = new CSharpExecutor();
 
 function createWindow() {
   mainWindow = new electron.BrowserWindow({
@@ -28,6 +30,26 @@ function createWindow() {
     mainWindow = null;
   });
 }
+
+// IPC Handlers
+electron.ipcMain.handle(
+  'execute-code',
+  async (_event, code: string, options?: { timeout?: number }) => {
+    try {
+      const result = await csharpExecutor.execute(code, options);
+      return result;
+    } catch (error) {
+      return {
+        stdout: '',
+        stderr: error instanceof Error ? error.message : String(error),
+        exitCode: -1,
+        executionTime: 0,
+        timedOut: false,
+        error: error instanceof Error ? error.message : String(error),
+      };
+    }
+  }
+);
 
 electron.app.whenReady().then(() => {
   createWindow();
