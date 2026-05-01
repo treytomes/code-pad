@@ -15,6 +15,7 @@ import { SnippetList } from './components/SnippetList';
 import { RuntimeWarning } from './components/RuntimeWarning';
 import { AboutDialog } from './components/AboutDialog';
 import { SettingsModal } from './components/SettingsModal';
+import { OutputDisplay } from './components/OutputDisplay';
 import type { Snippet } from '../backend/database';
 
 const { Header, Content, Sider } = Layout;
@@ -718,22 +719,23 @@ function App() {
             <div
               style={{
                 flex: 1,
-                padding: '12px',
-                color: '#cccccc',
-                fontFamily: "'Consolas', 'Courier New', monospace",
-                fontSize: '13px',
                 overflowY: 'auto',
+                background: '#1e1e1e',
               }}
             >
-              <pre
-                style={{
-                  margin: 0,
-                  whiteSpace: 'pre-wrap',
-                  color: '#cccccc',
-                }}
-              >
-                {output || 'Click "Run Code" to execute'}
-              </pre>
+              {output ? (
+                <OutputDisplay output={output} />
+              ) : (
+                <div
+                  style={{
+                    padding: '12px',
+                    color: '#858585',
+                    fontStyle: 'italic',
+                  }}
+                >
+                  Click "Run Code" to execute
+                </div>
+              )}
             </div>
           </div>
         </Content>
