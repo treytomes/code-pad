@@ -208,3 +208,12 @@ body {
 .ant-btn-primary .anticon {
   color: #ffffff;
 }
+
+/* Typography overrides */
+.ant-typography {
+  color: var(--vscode-text) !important;
+}
+
+.ant-typography-secondary {
+  color: var(--vscode-text-secondary) !important;
+}

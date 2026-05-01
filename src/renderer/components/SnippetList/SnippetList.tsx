@@ -107,7 +107,11 @@ export const SnippetList: React.FC<SnippetListProps> = ({
               onClick={() => onSelectSnippet(snippet)}
             >
               <List.Item.Meta
-                avatar={<CodeOutlined style={{ fontSize: '20px' }} />}
+                avatar={
+                  <CodeOutlined
+                    style={{ fontSize: '20px', color: '#858585' }}
+                  />
+                }
                 title={
                   <div
                     style={{
@@ -116,7 +120,9 @@ export const SnippetList: React.FC<SnippetListProps> = ({
                       alignItems: 'center',
                     }}
                   >
-                    <Text strong>{snippet.name}</Text>
+                    <Text strong style={{ color: '#cccccc' }}>
+                      {snippet.name}
+                    </Text>
                     <Popconfirm
                       title="Delete this snippet?"
                       onConfirm={(e) => {
@@ -139,13 +145,20 @@ export const SnippetList: React.FC<SnippetListProps> = ({
                 }
                 description={
                   <div>
-                    <Text type="secondary" style={{ fontSize: '12px' }}>
+                    <Text
+                      type="secondary"
+                      style={{ fontSize: '12px', color: '#858585' }}
+                    >
                       {snippet.language}
                     </Text>
                     {snippet.executionCount > 0 && (
                       <Text
                         type="secondary"
-                        style={{ fontSize: '12px', marginLeft: '8px' }}
+                        style={{
+                          fontSize: '12px',
+                          marginLeft: '8px',
+                          color: '#858585',
+                        }}
                       >
                         <PlayCircleOutlined /> {snippet.executionCount}
                       </Text>
