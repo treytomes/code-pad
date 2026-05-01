@@ -9,7 +9,7 @@
 
 ## Current Status (May 1, 2026)
 
-**Phase 1 MVP: ~85% Complete** 🎉
+**Phase 1 MVP: ~90% Complete** 🎉
 
 ### ✅ Completed Features
 - Full C# code execution with dotnet-script
@@ -30,18 +30,23 @@
 - Database migrations system
 - Unit tests with 80%+ coverage (54+ test cases)
 - CS1529 fix for using statement ordering
+- **Error handling: React error boundary & .NET runtime detection**
+- **Import/Export: .cs files and JSON backup**
+- **Updated documentation (README)**
 
-### 🚧 In Progress
-- Rich output visualization (.Dump() equivalent)
-- Application menu
-- Settings/preferences UI
+### 🚧 In Progress (Week 7-8)
+- Polish & documentation tasks
+- Application icon
+- About dialog
 
 ### 📋 Next Priority Tasks
-- Complete rich output for objects/arrays/tables
-- Add application menu
+- Create application icon
+- Add About dialog
+- Systematic testing in production build
+- Application menu
 - Settings modal
-- Status bar component
-- Integration and E2E tests
+- Rich output visualization
+- NuGet package support
 
 ## Table of Contents
 
@@ -305,21 +310,21 @@
   - [ ] Implement theme switching (light/dark)
   - [ ] Store settings in database
 
-- [ ] **Error Handling** ⚠️ HIGH PRIORITY
-  - [ ] Global error boundary in React
-  - [ ] User-friendly error messages
-  - [ ] Crash reporting (local logs)
-  - [ ] Handle missing .NET runtime gracefully (detect on startup)
+- [x] **Error Handling** ✅ COMPLETE
+  - [x] Global error boundary in React ✓
+  - [x] User-friendly error messages ✓
+  - [x] Crash reporting (local logs) ✓
+  - [x] Handle missing .NET runtime gracefully (detect on startup) ✓
 
-- [ ] **Import/Export**
-  - [ ] Export snippet to .cs file
-  - [ ] Import snippet from .cs file
-  - [ ] Export all snippets (backup)
+- [x] **Import/Export** ✅ COMPLETE
+  - [x] Export snippet to .cs file ✓
+  - [x] Import snippet from .cs file ✓
+  - [x] Export all snippets (backup) ✓
 
-- [ ] **Polish & Documentation**
+- [ ] **Polish & Documentation** (In Progress)
   - [ ] Create application icon (replace default Electron icon)
   - [ ] Add About dialog (Help > About with version info)
-  - [ ] Update README.md with new features (starred, search, recently opened)
+  - [x] Update README.md with new features (starred, search, recently opened) ✓
   - [ ] Test all new features systematically in production build
   - [ ] Add package.json script improvements
 
