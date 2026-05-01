@@ -10,4 +10,29 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // Execute C# code
   executeCode: (code: string, options?: { timeout?: number }) =>
     ipcRenderer.invoke('execute-code', code, options),
+
+  // Database operations
+  db: {
+    createSnippet: (snippet: {
+      name: string;
+      language: string;
+      code: string;
+    }) => ipcRenderer.invoke('db-create-snippet', snippet),
+
+    getSnippet: (id: string) => ipcRenderer.invoke('db-get-snippet', id),
+
+    updateSnippet: (
+      id: string,
+      updates: { name?: string; code?: string }
+    ) => ipcRenderer.invoke('db-update-snippet', id, updates),
+
+    deleteSnippet: (id: string) =>
+      ipcRenderer.invoke('db-delete-snippet', id),
+
+    listSnippets: (language?: string) =>
+      ipcRenderer.invoke('db-list-snippets', language),
+
+    incrementExecution: (id: string) =>
+      ipcRenderer.invoke('db-increment-execution', id),
+  },
 });

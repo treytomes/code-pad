@@ -1,8 +1,11 @@
 import React, { useState, useRef } from 'react';
-import { Button, Layout } from 'antd';
+import { Button, Layout, Modal, Input, message, Space } from 'antd';
+import { SaveOutlined, PlusOutlined } from '@ant-design/icons';
 import { CodeEditor } from './components/Editor';
+import { SnippetList } from './components/SnippetList';
+import type { Snippet } from '../backend/database';
 
-const { Header, Content } = Layout;
+const { Header, Content, Sider } = Layout;
 
 const DEFAULT_CODE = `// Welcome to CodePad!
 // Try editing this C# code
@@ -21,6 +24,10 @@ function App() {
   const [isRunning, setIsRunning] = useState(false);
   const [outputHeight, setOutputHeight] = useState(200);
   const [isDragging, setIsDragging] = useState(false);
+  const [currentSnippetId, setCurrentSnippetId] = useState<string | null>(null);
+  const [saveModalVisible, setSaveModalVisible] = useState(false);
+  const [snippetName, setSnippetName] = useState('');
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const handleCodeChange = (newCode: string) => {
@@ -41,6 +48,12 @@ function App() {
           `Error (exit code ${result.exitCode}):\n${result.stderr || result.error || 'Unknown error'}`
         );
       }
+
+      // Increment execution count if snippet is loaded
+      if (currentSnippetId) {
+        await window.electronAPI.db.incrementExecution(currentSnippetId);
+        setRefreshTrigger((prev) => prev + 1);
+      }
     } catch (error) {
       setOutput(
         `Failed to execute: ${error instanceof Error ? error.message : String(error)}`
@@ -48,6 +61,71 @@ function App() {
     } finally {
       setIsRunning(false);
     }
+  };
+
+  const handleSaveNew = () => {
+    setSnippetName('');
+    setSaveModalVisible(true);
+  };
+
+  const handleSaveExisting = async () => {
+    if (!currentSnippetId) return;
+
+    try {
+      await window.electronAPI.db.updateSnippet(currentSnippetId, { code });
+      message.success('Snippet updated');
+      setRefreshTrigger((prev) => prev + 1);
+    } catch (error) {
+      message.error('Failed to update snippet');
+    }
+  };
+
+  const handleSaveConfirm = async () => {
+    if (!snippetName.trim()) {
+      message.error('Please enter a snippet name');
+      return;
+    }
+
+    try {
+      const snippet = await window.electronAPI.db.createSnippet({
+        name: snippetName,
+        language: 'csharp',
+        code,
+      });
+
+      setCurrentSnippetId(snippet.id);
+      message.success('Snippet saved');
+      setSaveModalVisible(false);
+      setRefreshTrigger((prev) => prev + 1);
+    } catch (error) {
+      message.error('Failed to save snippet');
+    }
+  };
+
+  const handleSelectSnippet = (snippet: Snippet) => {
+    setCode(snippet.code);
+    setCurrentSnippetId(snippet.id);
+    setOutput('');
+  };
+
+  const handleDeleteSnippet = async (id: string) => {
+    try {
+      await window.electronAPI.db.deleteSnippet(id);
+      message.success('Snippet deleted');
+
+      if (currentSnippetId === id) {
+        setCurrentSnippetId(null);
+        setCode(DEFAULT_CODE);
+      }
+    } catch (error) {
+      message.error('Failed to delete snippet');
+    }
+  };
+
+  const handleNewSnippet = () => {
+    setCode(DEFAULT_CODE);
+    setCurrentSnippetId(null);
+    setOutput('');
   };
 
   const handleMouseDown = () => {
@@ -72,7 +150,8 @@ function App() {
   React.useEffect(() => {
     if (isDragging) {
       document.addEventListener('mouseup', handleMouseUp as any);
-      return () => document.removeEventListener('mouseup', handleMouseUp as any);
+      return () =>
+        document.removeEventListener('mouseup', handleMouseUp as any);
     }
   }, [isDragging]);
 
@@ -87,69 +166,115 @@ function App() {
         }}
       >
         <h1 style={{ color: 'white', margin: 0 }}>CodePad</h1>
-        <Button type="primary" onClick={handleRun} loading={isRunning}>
-          Run Code
-        </Button>
+        <Space>
+          <Button
+            icon={<PlusOutlined />}
+            onClick={handleNewSnippet}
+            title="New Snippet"
+          >
+            New
+          </Button>
+          <Button
+            type="primary"
+            icon={<SaveOutlined />}
+            onClick={currentSnippetId ? handleSaveExisting : handleSaveNew}
+          >
+            {currentSnippetId ? 'Update' : 'Save As...'}
+          </Button>
+          <Button type="primary" onClick={handleRun} loading={isRunning}>
+            Run Code
+          </Button>
+        </Space>
       </Header>
-      <Content
-        ref={containerRef}
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          overflow: 'hidden',
-        }}
-        onMouseMove={handleMouseMove}
+
+      <Layout>
+        <Sider
+          width={250}
+          theme="light"
+          style={{ borderRight: '1px solid #d9d9d9' }}
+        >
+          <SnippetList
+            onSelectSnippet={handleSelectSnippet}
+            onDeleteSnippet={handleDeleteSnippet}
+            refreshTrigger={refreshTrigger}
+          />
+        </Sider>
+
+        <Content
+          ref={containerRef}
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: 'hidden',
+          }}
+          onMouseMove={handleMouseMove}
+        >
+          <div
+            style={{
+              flex: 1,
+              minHeight: 0,
+              border: '1px solid #d9d9d9',
+              borderBottom: 'none',
+            }}
+          >
+            <CodeEditor value={code} onChange={handleCodeChange} />
+          </div>
+
+          {/* Resize handle */}
+          <div
+            onMouseDown={handleMouseDown}
+            style={{
+              height: '4px',
+              backgroundColor: '#d9d9d9',
+              cursor: 'ns-resize',
+              userSelect: 'none',
+              zIndex: 10,
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = '#1890ff';
+            }}
+            onMouseLeave={(e) => {
+              if (!isDragging) {
+                e.currentTarget.style.backgroundColor = '#d9d9d9';
+              }
+            }}
+          />
+
+          <div
+            style={{
+              height: `${outputHeight}px`,
+              border: '1px solid #d9d9d9',
+              borderTop: 'none',
+              padding: '8px',
+              backgroundColor: '#1e1e1e',
+              color: '#d4d4d4',
+              fontFamily: 'monospace',
+              fontSize: '14px',
+              overflowY: 'auto',
+            }}
+          >
+            <strong style={{ color: '#4ec9b0' }}>Output:</strong>
+            <pre style={{ margin: '8px 0 0 0', whiteSpace: 'pre-wrap' }}>
+              {output || 'Click "Run Code" to execute'}
+            </pre>
+          </div>
+        </Content>
+      </Layout>
+
+      <Modal
+        title="Save Snippet"
+        open={saveModalVisible}
+        onOk={handleSaveConfirm}
+        onCancel={() => setSaveModalVisible(false)}
       >
-        <div
-          style={{
-            flex: 1,
-            minHeight: 0,
-            border: '1px solid #d9d9d9',
-            borderBottom: 'none',
-          }}
-        >
-          <CodeEditor value={code} onChange={handleCodeChange} />
-        </div>
-
-        {/* Resize handle */}
-        <div
-          onMouseDown={handleMouseDown}
-          style={{
-            height: '4px',
-            backgroundColor: '#d9d9d9',
-            cursor: 'ns-resize',
-            userSelect: 'none',
-            zIndex: 10,
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = '#1890ff';
-          }}
-          onMouseLeave={(e) => {
-            if (!isDragging) {
-              e.currentTarget.style.backgroundColor = '#d9d9d9';
-            }
-          }}
+        <Input
+          placeholder="Enter snippet name"
+          value={snippetName}
+          onChange={(e) => setSnippetName(e.target.value)}
+          onPressEnter={handleSaveConfirm}
+          autoFocus
         />
-
-        <div
-          style={{
-            height: `${outputHeight}px`,
-            border: '1px solid #d9d9d9',
-            borderTop: 'none',
-            padding: '8px',
-            backgroundColor: '#1e1e1e',
-            color: '#d4d4d4',
-            fontFamily: 'monospace',
-            fontSize: '14px',
-            overflowY: 'auto',
-          }}
-        >
-          <strong style={{ color: '#4ec9b0' }}>Output:</strong>
-          <pre style={{ margin: '8px 0 0 0', whiteSpace: 'pre-wrap' }}>
-            {output || 'Click "Run Code" to execute'}
-          </pre>
-        </div>
-      </Content>
+      </Modal>
     </Layout>
   );
 }
