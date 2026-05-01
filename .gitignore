@@ -21,7 +21,9 @@ yarn-error.log*
 lerna-debug.log*
 
 # IDE
-.vscode/
+# Note: .vscode/ config is committed for team consistency
+# Create .vscode/settings.local.json for personal overrides
+.vscode/settings.local.json
 .idea/
 *.swp
 *.swo

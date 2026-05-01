@@ -1,0 +1,105 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "npm: install",
+      "type": "shell",
+      "command": "export PYTHON=\"$(pwd)/venv/bin/python\" && npm install",
+      "problemMatcher": [],
+      "detail": "Install dependencies with Python venv"
+    },
+    {
+      "label": "npm: dev",
+      "type": "npm",
+      "script": "dev",
+      "problemMatcher": [],
+      "detail": "Start Vite dev server (renderer only)",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      }
+    },
+    {
+      "label": "npm: electron:dev",
+      "type": "npm",
+      "script": "electron:dev",
+      "problemMatcher": [],
+      "detail": "Start Electron in development mode",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      }
+    },
+    {
+      "label": "npm: build",
+      "type": "npm",
+      "script": "build",
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": ["$tsc"],
+      "detail": "Build the project (TypeScript + Vite)"
+    },
+    {
+      "label": "npm: electron:build",
+      "type": "npm",
+      "script": "electron:build",
+      "problemMatcher": [],
+      "detail": "Build Electron distributables"
+    },
+    {
+      "label": "npm: test",
+      "type": "npm",
+      "script": "test",
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      },
+      "problemMatcher": [],
+      "detail": "Run unit tests with Vitest"
+    },
+    {
+      "label": "npm: test:e2e",
+      "type": "npm",
+      "script": "test:e2e",
+      "problemMatcher": [],
+      "detail": "Run E2E tests with Playwright"
+    },
+    {
+      "label": "npm: lint",
+      "type": "npm",
+      "script": "lint",
+      "problemMatcher": ["$eslint-stylish"],
+      "detail": "Lint code with ESLint"
+    },
+    {
+      "label": "npm: format",
+      "type": "npm",
+      "script": "format",
+      "problemMatcher": [],
+      "detail": "Format code with Prettier"
+    },
+    {
+      "label": "Activate Python venv",
+      "type": "shell",
+      "command": "source venv/bin/activate",
+      "problemMatcher": [],
+      "detail": "Activate Python 3.11 virtual environment"
+    },
+    {
+      "label": "Install .NET dotnet-script",
+      "type": "shell",
+      "command": "dotnet tool install -g dotnet-script",
+      "problemMatcher": [],
+      "detail": "Install dotnet-script global tool for C# execution"
+    },
+    {
+      "label": "Check .NET version",
+      "type": "shell",
+      "command": "dotnet --version && dotnet script --version",
+      "problemMatcher": [],
+      "detail": "Verify .NET SDK and dotnet-script are installed"
+    }
+  ]
+}

@@ -57,6 +57,39 @@ A cross-platform code scratchpad and rapid prototyping tool inspired by LINQPad.
    dotnet tool install -g dotnet-script
    ```
 
+### VS Code Setup
+
+This project includes VS Code configuration for a smooth development experience:
+
+**Recommended Extensions** (will be suggested automatically):
+- ESLint
+- Prettier
+- TypeScript
+- Tailwind CSS IntelliSense
+- Python
+- Pylance
+- Playwright Test
+- Vitest Explorer
+
+**Available Tasks** (Ctrl+Shift+P → "Tasks: Run Task"):
+- `npm: dev` - Start Vite dev server
+- `npm: electron:dev` - Start Electron app
+- `npm: build` - Build project (Ctrl+Shift+B)
+- `npm: test` - Run tests
+- `npm: lint` - Lint code
+- `npm: format` - Format code
+
+**Debug Configurations** (F5):
+- Debug Main Process - Debug Electron main process
+- Debug Renderer Process - Debug React renderer (attach)
+- Debug Electron (Main + Renderer) - Debug both
+- Run/Debug Vitest Tests - Test debugging
+
+**Quick Start Script**:
+```bash
+./dev.sh  # Interactive menu to start dev server, electron, tests, etc.
+```
+
 ### Development Commands
 
 ```bash
