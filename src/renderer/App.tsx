@@ -8,10 +8,12 @@ import {
   ExportOutlined,
   ImportOutlined,
   DownloadOutlined,
+  QuestionCircleOutlined,
 } from '@ant-design/icons';
 import { CodeEditor } from './components/Editor';
 import { SnippetList } from './components/SnippetList';
 import { RuntimeWarning } from './components/RuntimeWarning';
+import { AboutDialog } from './components/AboutDialog';
 import type { Snippet } from '../backend/database';
 
 const { Header, Content, Sider } = Layout;
@@ -72,6 +74,7 @@ function App() {
   const [isDraggingSidebar, setIsDraggingSidebar] = useState(false);
   const [currentSnippetId, setCurrentSnippetId] = useState<string | null>(null);
   const [saveModalVisible, setSaveModalVisible] = useState(false);
+  const [aboutVisible, setAboutVisible] = useState(false);
   const [snippetName, setSnippetName] = useState('');
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -447,6 +450,7 @@ function App() {
         >
           CodePad
         </h1>
+        <div style={{ flex: 1 }} />
         <Space>
           <Button
             icon={<PlusOutlined />}
@@ -508,6 +512,13 @@ function App() {
             Run Code
           </Button>
         </Space>
+        <Button
+          type="text"
+          icon={<QuestionCircleOutlined />}
+          onClick={() => setAboutVisible(true)}
+          title="About CodePad"
+          style={{ color: '#858585' }}
+        />
       </Header>
 
       <Layout ref={layoutRef} style={{ background: '#1e1e1e' }}>
@@ -691,6 +702,8 @@ function App() {
           autoFocus
         />
       </Modal>
+
+      <AboutDialog visible={aboutVisible} onClose={() => setAboutVisible(false)} />
     </Layout>
   );
 }
