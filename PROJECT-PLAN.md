@@ -78,41 +78,41 @@
 
 #### Week 2: Proof of Concepts
 
-- [ ] **Day 1-2: C# Execution PoC**
-  - [ ] Install `dotnet-script` globally
-  - [ ] Create execution worker process (Node.js)
-  - [ ] Implement basic C# code execution
-  - [ ] Test: Hello World C# script
-  - [ ] Test: Capture stdout/stderr
-  - [ ] Test: Handle execution timeout
-  - [ ] Test: Handle errors and exit codes
+- [x] **Day 1-2: C# Execution PoC** ✓
+  - [x] Install `dotnet-script` globally
+  - [x] Create execution worker process (Node.js)
+  - [x] Implement basic C# code execution
+  - [x] Test: Hello World C# script
+  - [x] Test: Capture stdout/stderr
+  - [x] Test: Handle execution timeout
+  - [x] Test: Handle errors and exit codes
 
-- [ ] **Day 3-4: Monaco Editor PoC**
-  - [ ] Install Monaco Editor dependencies
-  - [ ] Create basic Editor component
-  - [ ] Configure C# syntax highlighting
-  - [ ] Test: Code editing with syntax highlighting
-  - [ ] Test: Line numbers, folding, find/replace
-  - [ ] Verify performance with large files
+- [x] **Day 3-4: Monaco Editor PoC** ✓
+  - [x] Install Monaco Editor dependencies
+  - [x] Create basic Editor component
+  - [x] Configure C# syntax highlighting
+  - [x] Test: Code editing with syntax highlighting
+  - [x] Test: Line numbers, folding, find/replace
+  - [x] Verify performance with large files
 
-- [ ] **Day 5: Database PoC**
-  - [ ] Install better-sqlite3
-  - [ ] Create database schema
-  - [ ] Implement database wrapper class
-  - [ ] Test: CRUD operations for snippets
-  - [ ] Test: Database file creation in ~/.codepad/
-  - [ ] Verify cross-platform compatibility
+- [x] **Day 5: Database PoC** ✓
+  - [x] Install better-sqlite3
+  - [x] Create database schema
+  - [x] Implement database wrapper class
+  - [x] Test: CRUD operations for snippets
+  - [x] Test: Database file creation in ~/.codepad/
+  - [x] Verify cross-platform compatibility
 
 **Deliverable**: 
-- Working "Hello World" Electron app
-- Proven C# execution capability
-- Monaco Editor integrated
-- SQLite database working
+- Working "Hello World" Electron app ✓
+- Proven C# execution capability ✓
+- Monaco Editor integrated ✓
+- SQLite database working ✓
 
 **Success Criteria**:
-- [ ] Can execute simple C# code and capture output (Week 2, Day 1-2)
-- [ ] Monaco Editor displays and edits code (Week 2, Day 3-4)
-- [ ] Database stores and retrieves data (Week 2, Day 5)
+- [x] Can execute simple C# code and capture output ✓ (Week 2, Day 1-2)
+- [x] Monaco Editor displays and edits code ✓ (Week 2, Day 3-4)
+- [x] Database stores and retrieves data ✓ (Week 2, Day 5)
 - [x] App builds and runs without errors ✓ (Week 1 complete)
 
 ---
@@ -629,9 +629,9 @@
 ## Success Metrics
 
 ### Phase 0 Success (Week 2)
-- [ ] All PoCs working
-- [ ] Team confident in tech stack
-- [ ] No major technical blockers
+- [x] All PoCs working ✓
+- [x] Team confident in tech stack ✓
+- [x] No major technical blockers ✓
 
 ### Phase 1 Success (Week 8)
 - [ ] MVP feature-complete
@@ -687,7 +687,7 @@ Week  | Planned Tasks | Completed | Velocity
 
 | Milestone | Target Date | Status |
 |-----------|-------------|--------|
-| **Phase 0: Foundation** | Week 2 (May 15) | 🔄 In Progress |
+| **Phase 0: Foundation** | Week 2 (May 15) | ✅ Complete |
 | **Phase 1: Core MVP** | Week 8 (June 26) | ⏳ Planned |
 | **Phase 2: Polish** | Week 12 (July 24) | ⏳ Planned |
 | **Phase 3: Advanced** | Week 16 (August 21) | ⏳ Planned |
