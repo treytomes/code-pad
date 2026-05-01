@@ -14,6 +14,7 @@ import { CodeEditor } from './components/Editor';
 import { SnippetList } from './components/SnippetList';
 import { RuntimeWarning } from './components/RuntimeWarning';
 import { AboutDialog } from './components/AboutDialog';
+import { SettingsModal } from './components/SettingsModal';
 import type { Snippet } from '../backend/database';
 
 const { Header, Content, Sider } = Layout;
@@ -75,6 +76,7 @@ function App() {
   const [currentSnippetId, setCurrentSnippetId] = useState<string | null>(null);
   const [saveModalVisible, setSaveModalVisible] = useState(false);
   const [aboutVisible, setAboutVisible] = useState(false);
+  const [settingsVisible, setSettingsVisible] = useState(false);
   const [snippetName, setSnippetName] = useState('');
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -419,6 +421,9 @@ function App() {
     // About
     cleanups.push(window.electronAPI.onMenuEvent('menu-about', () => setAboutVisible(true)));
 
+    // Settings
+    cleanups.push(window.electronAPI.onMenuEvent('menu-settings', () => setSettingsVisible(true)));
+
     return () => {
       cleanups.forEach(cleanup => cleanup());
     };
@@ -750,6 +755,7 @@ function App() {
       </Modal>
 
       <AboutDialog visible={aboutVisible} onClose={() => setAboutVisible(false)} />
+      <SettingsModal visible={settingsVisible} onClose={() => setSettingsVisible(false)} />
     </Layout>
   );
 }

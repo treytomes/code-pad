@@ -112,6 +112,15 @@ export function createApplicationMenu(mainWindow: BrowserWindow) {
             mainWindow.webContents.send('menu-replace');
           },
         },
+        { type: 'separator' },
+        {
+          label: 'Settings...',
+          accelerator: 'CmdOrCtrl+,',
+          click: () => {
+            logInfo('Menu: Settings');
+            mainWindow.webContents.send('menu-settings');
+          },
+        },
       ],
     },
 
