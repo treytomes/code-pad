@@ -42,8 +42,15 @@ A cross-platform code scratchpad and rapid prototyping tool inspired by LINQPad.
 
 4. **Install dependencies**:
    ```bash
+   # Set Python path for native module compilation (needed for better-sqlite3)
+   export PYTHON="$(pwd)/venv/bin/python"
+   
    npm install
    ```
+   
+   **Note**: The Python virtual environment uses Python 3.11, which is required for building
+   native Node.js modules. AlmaLinux 8 ships with GCC 8.5, so we use better-sqlite3 v9.6.0
+   (requires C++17) instead of the latest version (requires C++20).
 
 5. **Install .NET global tool** (for C# execution):
    ```bash

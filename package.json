@@ -28,6 +28,7 @@
   "dependencies": {
     "@monaco-editor/react": "^4.7.0",
     "antd": "^6.3.7",
+    "better-sqlite3": "^9.6.0",
     "electron": "^41.4.0",
     "monaco-editor": "^0.55.1",
     "react": "^19.2.5",
@@ -38,6 +39,7 @@
   "devDependencies": {
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
+    "@types/better-sqlite3": "^7.6.13",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@types/uuid": "^10.0.0",
