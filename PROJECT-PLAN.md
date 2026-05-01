@@ -179,7 +179,6 @@
   - [x] Add starred/favorite snippets section ✓
   - [x] Toggle star functionality ✓
   - [x] Track last opened timestamp ✓
-  - [-] Create tree view with folders (deferred to Phase 2)
 
 - [x] **Editor Component** ✓
   - [x] Integrate Monaco Editor fully ✓
@@ -187,11 +186,6 @@
   - [x] C# syntax highlighting and IntelliSense ✓
   - [x] Code editing with line numbers ✓
   - [x] Dark theme (VS Code style) ✓
-  - [ ] Add tab management (multiple open snippets - deferred)
-  - [ ] Implement "new tab" functionality (deferred)
-  - [ ] Add tab close buttons (deferred)
-  - [ ] Support drag-to-reorder tabs (deferred)
-  - [ ] Implement unsaved changes indicator (*)
 
 - [x] **Output Panel Component** ✓
   - [x] Create basic output display ✓
@@ -201,14 +195,6 @@
   - [x] Add clear output button ✓
   - [x] Support text output (plain) ✓
   - [x] Add copy to clipboard functionality ✓
-  - [ ] Add stdout/stderr separation (shows in output)
-  - [ ] Syntax highlighting for output
-
-- [ ] **Status Bar Component** (deferred to Phase 2)
-  - [ ] Show current language (C#)
-  - [ ] Show runtime status (Ready/Executing)
-  - [ ] Show cursor position (line:column)
-  - [ ] Show execution time for last run
 
 **Deliverable**: Complete UI layout with all major components
 
@@ -222,7 +208,6 @@
   - [x] Add snippet metadata tracking (createdAt, modifiedAt, executionCount) ✓
   - [x] Auto-increment execution count on run ✓
   - [x] Implement search functionality (language filter implemented) ✓
-  - [ ] Support folder organization (deferred to Phase 2)
 
 - [x] **Code Execution System** ✓
   - [x] Create execution worker process (dotnet-script) ✓
@@ -235,7 +220,6 @@
   - [x] Add error handling and formatting ✓
   - [x] Create execution result parser ✓
   - [x] Measure execution time ✓
-  - [ ] Implement resource limits (memory/CPU - deferred)
 
 - [x] **IPC Layer** ✓
   - [x] Define IPC channel types ✓
@@ -246,7 +230,6 @@
   - [x] Database operations via IPC ✓
   - [x] Code execution via IPC ✓
   - [x] Streaming output via IPC ✓
-  - [ ] Add execution cancellation (deferred)
 
 - [x] **Integration** ✓
   - [x] Connect UI to backend via IPC ✓
@@ -297,8 +280,9 @@
   - [ ] Create `.Dump()` equivalent for C#
   - [ ] Build collapsible tree view for objects
   - [ ] Add table rendering for arrays/collections
-  - [ ] Implement syntax highlighting for output
   - [ ] Add HTML rendering support
+  - [ ] Add stdout/stderr separation
+  - [ ] Syntax highlighting for output
 
 - [ ] **Output Formatters**
   - [ ] Plain text formatter
@@ -411,13 +395,17 @@
   - [ ] Implement code folding
   - [ ] Add multi-cursor support
   - [ ] Improve find/replace UI
+  - [ ] Add tab management (multiple open snippets)
+  - [ ] Implement "new tab" functionality
+  - [ ] Add tab close buttons
+  - [ ] Support drag-to-reorder tabs
+  - [ ] Implement unsaved changes indicator (*)
 
 - [ ] **Snippet Features**
   - [ ] Add tags support
-  - [ ] Implement star/favorite
-  - [ ] Add execution count tracking
-  - [ ] Show last executed timestamp
   - [ ] Add duplicate snippet feature
+  - [ ] Create tree view with folders
+  - [ ] Support folder organization
 
 ### Week 12: UX Improvements
 
@@ -434,6 +422,8 @@
   - [ ] Implement virtual scrolling for large outputs
   - [ ] Cache execution results (optional)
   - [ ] Reduce memory footprint
+  - [ ] Implement resource limits (memory/CPU)
+  - [ ] Add execution cancellation
 
 - [ ] **Visual Polish**
   - [ ] Create app icon
@@ -441,6 +431,12 @@
   - [ ] Add loading states
   - [ ] Improve animations/transitions
   - [ ] Ensure consistent spacing/padding
+
+- [ ] **Status Bar Component**
+  - [ ] Show current language (C#)
+  - [ ] Show runtime status (Ready/Executing)
+  - [ ] Show cursor position (line:column)
+  - [ ] Show execution time for last run
 
 - [ ] **Accessibility**
   - [ ] Add keyboard navigation
