@@ -51,6 +51,8 @@ function App() {
   const [output, setOutput] = useState('');
   const [isRunning, setIsRunning] = useState(false);
   const [executionTime, setExecutionTime] = useState<number | null>(null);
+  const executionTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const executionStartRef = useRef<number>(0);
   const [outputHeight, setOutputHeight] = useState(200);
   const [sidebarWidth, setSidebarWidth] = useState(250);
   const [isDraggingOutput, setIsDraggingOutput] = useState(false);
@@ -69,13 +71,26 @@ function App() {
   const handleRun = async () => {
     setIsRunning(true);
     setOutput('Executing...');
-    const startTime = performance.now();
+
+    // Start live timer
+    executionStartRef.current = performance.now();
+    setExecutionTime(0);
+
+    executionTimerRef.current = setInterval(() => {
+      const elapsed = Math.round(performance.now() - executionStartRef.current);
+      setExecutionTime(elapsed);
+    }, 100); // Update every 100ms
 
     try {
       const result = await window.electronAPI.executeCode(code);
-      const endTime = performance.now();
-      const duration = Math.round(endTime - startTime);
-      setExecutionTime(duration);
+
+      // Stop timer and set final time
+      if (executionTimerRef.current) {
+        clearInterval(executionTimerRef.current);
+        executionTimerRef.current = null;
+      }
+      const finalTime = Math.round(performance.now() - executionStartRef.current);
+      setExecutionTime(finalTime);
 
       if (result.exitCode === 0) {
         setOutput(result.stdout || '(no output)');
@@ -91,6 +106,11 @@ function App() {
         setRefreshTrigger((prev) => prev + 1);
       }
     } catch (error) {
+      // Stop timer on error
+      if (executionTimerRef.current) {
+        clearInterval(executionTimerRef.current);
+        executionTimerRef.current = null;
+      }
       setExecutionTime(null);
       setOutput(
         `Failed to execute: ${error instanceof Error ? error.message : String(error)}`
@@ -168,6 +188,10 @@ function App() {
   const handleClearOutput = () => {
     setOutput('');
     setExecutionTime(null);
+    if (executionTimerRef.current) {
+      clearInterval(executionTimerRef.current);
+      executionTimerRef.current = null;
+    }
   };
 
   const handleCopyOutput = async () => {
@@ -224,6 +248,15 @@ function App() {
       };
     }
   }, [isDraggingOutput, isDraggingSidebar]);
+
+  // Cleanup timer on unmount
+  React.useEffect(() => {
+    return () => {
+      if (executionTimerRef.current) {
+        clearInterval(executionTimerRef.current);
+      }
+    };
+  }, []);
 
   return (
     <Layout style={{ height: '100vh', background: '#1e1e1e' }}>
