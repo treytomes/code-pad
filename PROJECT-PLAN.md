@@ -305,11 +305,23 @@
   - [ ] Implement theme switching (light/dark)
   - [ ] Store settings in database
 
-- [ ] **Error Handling**
+- [ ] **Error Handling** ⚠️ HIGH PRIORITY
   - [ ] Global error boundary in React
   - [ ] User-friendly error messages
   - [ ] Crash reporting (local logs)
-  - [ ] Handle missing .NET runtime gracefully
+  - [ ] Handle missing .NET runtime gracefully (detect on startup)
+
+- [ ] **Import/Export**
+  - [ ] Export snippet to .cs file
+  - [ ] Import snippet from .cs file
+  - [ ] Export all snippets (backup)
+
+- [ ] **Polish & Documentation**
+  - [ ] Create application icon (replace default Electron icon)
+  - [ ] Add About dialog (Help > About with version info)
+  - [ ] Update README.md with new features (starred, search, recently opened)
+  - [ ] Test all new features systematically in production build
+  - [ ] Add package.json script improvements
 
 **Deliverable**: Feature-complete MVP ready for internal testing
 
