@@ -3,12 +3,24 @@ import * as electron from 'electron';
 import * as path from 'path';
 import { CSharpExecutor } from '../backend/executors/csharp';
 import { SnippetDatabase } from '../backend/database';
+import { logger, logInfo, logError, logWarn, logDebug } from '../shared/logger';
 
 let mainWindow: electron.BrowserWindow | null = null;
 const csharpExecutor = new CSharpExecutor();
-const snippetDb = new SnippetDatabase();
+let snippetDb: SnippetDatabase;
+
+// Initialize database with error handling
+try {
+  snippetDb = new SnippetDatabase();
+  logInfo('Database initialized successfully');
+} catch (error) {
+  logError('Failed to initialize database', error);
+  electron.app.quit();
+  throw error;
+}
 
 function createWindow() {
+  logInfo('Creating main window');
   mainWindow = new electron.BrowserWindow({
     width: 1200,
     height: 800,
@@ -22,13 +34,17 @@ function createWindow() {
 
   // Load the app
   if (process.env.VITE_DEV_SERVER_URL) {
+    logInfo(`Loading dev server: ${process.env.VITE_DEV_SERVER_URL}`);
     mainWindow.loadURL(process.env.VITE_DEV_SERVER_URL);
     mainWindow.webContents.openDevTools();
   } else {
-    mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'));
+    const htmlPath = path.join(__dirname, '../renderer/index.html');
+    logInfo(`Loading app from file: ${htmlPath}`);
+    mainWindow.loadFile(htmlPath);
   }
 
   mainWindow.on('closed', () => {
+    logInfo('Main window closed');
     mainWindow = null;
   });
 }
@@ -37,6 +53,7 @@ function createWindow() {
 electron.ipcMain.handle(
   'execute-code',
   async (event, code: string, options?: { timeout?: number }) => {
+    logDebug('Execute code request received');
     try {
       const result = await csharpExecutor.execute(
         code,
@@ -46,8 +63,10 @@ electron.ipcMain.handle(
           event.sender.send('execution-output-chunk', { chunk, isError });
         }
       );
+      logDebug(`Code execution completed: exitCode=${result.exitCode}, time=${result.executionTime}ms`);
       return result;
     } catch (error) {
+      logError('Code execution failed', error);
       return {
         stdout: '',
         stderr: error instanceof Error ? error.message : String(error),

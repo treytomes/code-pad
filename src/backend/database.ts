@@ -4,6 +4,20 @@ import { join } from 'path';
 import { mkdirSync, existsSync } from 'fs';
 import { randomUUID } from 'crypto';
 
+// Import logger - but make it optional for tests
+let logInfo: (msg: string, ...args: any[]) => void = console.log;
+let logError: (msg: string, error?: any) => void = console.error;
+let logWarn: (msg: string, ...args: any[]) => void = console.warn;
+
+try {
+  const logger = require('../shared/logger');
+  logInfo = logger.logInfo;
+  logError = logger.logError;
+  logWarn = logger.logWarn;
+} catch (e) {
+  // Logger not available (e.g., in tests), use console
+}
+
 export interface Snippet {
   id: string;
   name: string;
@@ -24,21 +38,30 @@ export class SnippetDatabase {
     const defaultPath = join(homedir(), '.codepad', 'codepad.db');
     const path = dbPath || defaultPath;
 
+    logInfo(`Initializing database at: ${path}`);
+
     // Create directory if needed
     const dir = join(path, '..');
     if (!existsSync(dir)) {
+      logInfo(`Creating database directory: ${dir}`);
       mkdirSync(dir, { recursive: true });
     }
 
-    // Open database
-    this.db = new Database(path);
-    this.db.pragma('journal_mode = WAL'); // Better concurrency
+    try {
+      // Open database
+      this.db = new Database(path);
+      this.db.pragma('journal_mode = WAL'); // Better concurrency
+      logInfo('Database opened successfully');
 
-    // Initialize schema
-    this.initializeSchema();
+      // Initialize schema
+      this.initializeSchema();
 
-    // Run migrations
-    this.runMigrations();
+      // Run migrations
+      this.runMigrations();
+    } catch (error) {
+      logError('Failed to open database', error);
+      throw error;
+    }
   }
 
   private initializeSchema() {
@@ -62,29 +85,44 @@ export class SnippetDatabase {
   }
 
   private runMigrations() {
-    // Check if starred column exists
-    const tableInfo = this.db.prepare("PRAGMA table_info(snippets)").all() as any[];
-    const hasStarred = tableInfo.some(col => col.name === 'starred');
-    const hasLastOpened = tableInfo.some(col => col.name === 'last_opened_at');
+    try {
+      logInfo('Checking for database migrations');
 
-    // Migration 1: Add starred column
-    if (!hasStarred) {
-      console.log('Running migration: Add starred column');
-      this.db.exec(`
-        ALTER TABLE snippets ADD COLUMN starred INTEGER DEFAULT 0;
-        CREATE INDEX IF NOT EXISTS idx_snippets_starred
-          ON snippets(starred DESC, modified_at DESC);
-      `);
-    }
+      // Check if starred column exists
+      const tableInfo = this.db.prepare("PRAGMA table_info(snippets)").all() as any[];
+      const hasStarred = tableInfo.some(col => col.name === 'starred');
+      const hasLastOpened = tableInfo.some(col => col.name === 'last_opened_at');
 
-    // Migration 2: Add last_opened_at column
-    if (!hasLastOpened) {
-      console.log('Running migration: Add last_opened_at column');
-      this.db.exec(`
-        ALTER TABLE snippets ADD COLUMN last_opened_at INTEGER;
-        CREATE INDEX IF NOT EXISTS idx_snippets_last_opened
-          ON snippets(last_opened_at DESC);
-      `);
+      // Migration 1: Add starred column
+      if (!hasStarred) {
+        logInfo('Running migration: Add starred column');
+        this.db.exec(`
+          ALTER TABLE snippets ADD COLUMN starred INTEGER DEFAULT 0;
+          CREATE INDEX IF NOT EXISTS idx_snippets_starred
+            ON snippets(starred DESC, modified_at DESC);
+        `);
+        logInfo('Migration completed: starred column added');
+      }
+
+      // Migration 2: Add last_opened_at column
+      if (!hasLastOpened) {
+        logInfo('Running migration: Add last_opened_at column');
+        this.db.exec(`
+          ALTER TABLE snippets ADD COLUMN last_opened_at INTEGER;
+          CREATE INDEX IF NOT EXISTS idx_snippets_last_opened
+            ON snippets(last_opened_at DESC);
+        `);
+        logInfo('Migration completed: last_opened_at column added');
+      }
+
+      if (!hasStarred || !hasLastOpened) {
+        logInfo('All database migrations completed successfully');
+      } else {
+        logInfo('Database schema is up to date');
+      }
+    } catch (error) {
+      logError('Migration failed', error);
+      throw error;
     }
   }
 
