@@ -23,12 +23,15 @@ function App() {
   const [output, setOutput] = useState('');
   const [isRunning, setIsRunning] = useState(false);
   const [outputHeight, setOutputHeight] = useState(200);
-  const [isDragging, setIsDragging] = useState(false);
+  const [sidebarWidth, setSidebarWidth] = useState(250);
+  const [isDraggingOutput, setIsDraggingOutput] = useState(false);
+  const [isDraggingSidebar, setIsDraggingSidebar] = useState(false);
   const [currentSnippetId, setCurrentSnippetId] = useState<string | null>(null);
   const [saveModalVisible, setSaveModalVisible] = useState(false);
   const [snippetName, setSnippetName] = useState('');
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
+  const layoutRef = useRef<HTMLDivElement>(null);
 
   const handleCodeChange = (newCode: string) => {
     setCode(newCode);
@@ -128,32 +131,47 @@ function App() {
     setOutput('');
   };
 
-  const handleMouseDown = () => {
-    setIsDragging(true);
+  const handleOutputMouseDown = () => {
+    setIsDraggingOutput(true);
+  };
+
+  const handleSidebarMouseDown = () => {
+    setIsDraggingSidebar(true);
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
-    if (!isDragging || !containerRef.current) return;
+    if (isDraggingOutput && containerRef.current) {
+      const containerRect = containerRef.current.getBoundingClientRect();
+      const newHeight = containerRect.bottom - e.clientY;
+      const minHeight = 100;
+      const maxHeight = containerRect.height - 200;
+      setOutputHeight(Math.max(minHeight, Math.min(maxHeight, newHeight)));
+    }
 
-    const containerRect = containerRef.current.getBoundingClientRect();
-    const newHeight = containerRect.bottom - e.clientY;
-    const minHeight = 100;
-    const maxHeight = containerRect.height - 200;
-
-    setOutputHeight(Math.max(minHeight, Math.min(maxHeight, newHeight)));
+    if (isDraggingSidebar && layoutRef.current) {
+      const layoutRect = layoutRef.current.getBoundingClientRect();
+      const newWidth = e.clientX - layoutRect.left;
+      const minWidth = 150;
+      const maxWidth = 500;
+      setSidebarWidth(Math.max(minWidth, Math.min(maxWidth, newWidth)));
+    }
   };
 
   const handleMouseUp = () => {
-    setIsDragging(false);
+    setIsDraggingOutput(false);
+    setIsDraggingSidebar(false);
   };
 
   React.useEffect(() => {
-    if (isDragging) {
+    if (isDraggingOutput || isDraggingSidebar) {
       document.addEventListener('mouseup', handleMouseUp as any);
-      return () =>
+      document.addEventListener('mousemove', handleMouseMove as any);
+      return () => {
         document.removeEventListener('mouseup', handleMouseUp as any);
+        document.removeEventListener('mousemove', handleMouseMove as any);
+      };
     }
-  }, [isDragging]);
+  }, [isDraggingOutput, isDraggingSidebar]);
 
   return (
     <Layout style={{ height: '100vh', background: '#1e1e1e' }}>
@@ -201,19 +219,42 @@ function App() {
         </Space>
       </Header>
 
-      <Layout style={{ background: '#1e1e1e' }}>
+      <Layout ref={layoutRef} style={{ background: '#1e1e1e' }}>
         <Sider
-          width={250}
+          width={sidebarWidth}
           theme="dark"
           style={{
             background: '#252526',
             borderRight: '1px solid #2d2d30',
+            position: 'relative',
           }}
         >
           <SnippetList
             onSelectSnippet={handleSelectSnippet}
             onDeleteSnippet={handleDeleteSnippet}
             refreshTrigger={refreshTrigger}
+          />
+          {/* Sidebar resize handle */}
+          <div
+            onMouseDown={handleSidebarMouseDown}
+            style={{
+              position: 'absolute',
+              right: 0,
+              top: 0,
+              bottom: 0,
+              width: '4px',
+              cursor: 'ew-resize',
+              backgroundColor: 'transparent',
+              zIndex: 10,
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = '#007acc';
+            }}
+            onMouseLeave={(e) => {
+              if (!isDraggingSidebar) {
+                e.currentTarget.style.backgroundColor = 'transparent';
+              }
+            }}
           />
         </Sider>
 
@@ -236,9 +277,9 @@ function App() {
             <CodeEditor value={code} onChange={handleCodeChange} />
           </div>
 
-          {/* Resize handle */}
+          {/* Output panel resize handle */}
           <div
-            onMouseDown={handleMouseDown}
+            onMouseDown={handleOutputMouseDown}
             style={{
               height: '4px',
               backgroundColor: '#2d2d30',
@@ -250,7 +291,7 @@ function App() {
               e.currentTarget.style.backgroundColor = '#007acc';
             }}
             onMouseLeave={(e) => {
-              if (!isDragging) {
+              if (!isDraggingOutput) {
                 e.currentTarget.style.backgroundColor = '#2d2d30';
               }
             }}
