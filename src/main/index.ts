@@ -1,11 +1,11 @@
 // Electron Main Process
-import { app, BrowserWindow } from 'electron';
-import path from 'path';
+import * as electron from 'electron';
+import * as path from 'path';
 
-let mainWindow: BrowserWindow | null = null;
+let mainWindow: electron.BrowserWindow | null = null;
 
 function createWindow() {
-  mainWindow = new BrowserWindow({
+  mainWindow = new electron.BrowserWindow({
     width: 1200,
     height: 800,
     webPreferences: {
@@ -29,18 +29,18 @@ function createWindow() {
   });
 }
 
-app.whenReady().then(() => {
+electron.app.whenReady().then(() => {
   createWindow();
 
-  app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) {
+  electron.app.on('activate', () => {
+    if (electron.BrowserWindow.getAllWindows().length === 0) {
       createWindow();
     }
   });
 });
 
-app.on('window-all-closed', () => {
+electron.app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
-    app.quit();
+    electron.app.quit();
   }
 });

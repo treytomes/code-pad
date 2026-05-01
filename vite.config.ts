@@ -12,6 +12,15 @@ export default defineConfig({
         vite: {
           build: {
             outDir: 'dist/main',
+            minify: false,
+            lib: {
+              entry: 'src/main/index.ts',
+              formats: ['cjs'],
+              fileName: () => 'index.cjs',
+            },
+            rollupOptions: {
+              external: ['electron', 'path'],
+            },
           },
         },
       },
@@ -23,6 +32,15 @@ export default defineConfig({
         vite: {
           build: {
             outDir: 'dist/preload',
+            minify: false,
+            lib: {
+              entry: 'src/preload/index.ts',
+              formats: ['cjs'],
+              fileName: () => 'index.cjs',
+            },
+            rollupOptions: {
+              external: ['electron'],
+            },
           },
         },
       },
