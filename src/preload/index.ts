@@ -50,5 +50,17 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
     incrementExecution: (id: string) =>
       ipcRenderer.invoke('db-increment-execution', id),
+
+    toggleStarred: (id: string) =>
+      ipcRenderer.invoke('db-toggle-starred', id),
+
+    updateLastOpened: (id: string) =>
+      ipcRenderer.invoke('db-update-last-opened', id),
+
+    getStarredSnippets: () =>
+      ipcRenderer.invoke('db-get-starred-snippets'),
+
+    getRecentlyOpened: (limit?: number) =>
+      ipcRenderer.invoke('db-get-recently-opened', limit),
   },
 });

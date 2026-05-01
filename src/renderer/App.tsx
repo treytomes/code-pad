@@ -186,10 +186,18 @@ function App() {
     }
   };
 
-  const handleSelectSnippet = (snippet: Snippet) => {
+  const handleSelectSnippet = async (snippet: Snippet) => {
     setCode(snippet.code);
     setCurrentSnippetId(snippet.id);
     setOutput('');
+
+    // Update last opened timestamp
+    try {
+      await window.electronAPI.db.updateLastOpened(snippet.id);
+      setRefreshTrigger((prev) => prev + 1);
+    } catch (error) {
+      console.error('Failed to update last opened:', error);
+    }
   };
 
   const handleDeleteSnippet = async (id: string) => {

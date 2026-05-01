@@ -162,16 +162,18 @@
   - [x] Add Ant Design theme configuration
   - [x] Set up Tailwind CSS
 
-- [x] **Snippet Explorer Component** ✓
+- [x] **Snippet Explorer Component** ✅ COMPLETE
   - [x] Create list view using Ant Design List ✓
   - [x] Implement snippet selection ✓
   - [x] Add rename functionality (inline edit) ✓
   - [x] Add delete with confirmation ✓
   - [x] Show execution count per snippet ✓
   - [x] Implement language filter ✓
-  - [ ] Create tree view with folders (deferred)
-  - [ ] Show recently opened snippets
-  - [ ] Add starred snippets section
+  - [x] Show recently opened snippets ✓
+  - [x] Add starred/favorite snippets section ✓
+  - [x] Toggle star functionality ✓
+  - [x] Track last opened timestamp ✓
+  - [ ] Create tree view with folders (deferred to Phase 2)
 
 - [x] **Editor Component** ✓
   - [x] Integrate Monaco Editor fully ✓

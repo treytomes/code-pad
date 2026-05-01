@@ -91,6 +91,26 @@ electron.ipcMain.handle(
   }
 );
 
+// Toggle starred status
+electron.ipcMain.handle('db-toggle-starred', async (_event, id: string) => {
+  return snippetDb.toggleStarred(id);
+});
+
+// Update last opened timestamp
+electron.ipcMain.handle('db-update-last-opened', async (_event, id: string) => {
+  return snippetDb.updateLastOpened(id);
+});
+
+// Get starred snippets
+electron.ipcMain.handle('db-get-starred-snippets', async () => {
+  return snippetDb.getStarredSnippets();
+});
+
+// Get recently opened snippets
+electron.ipcMain.handle('db-get-recently-opened', async (_event, limit?: number) => {
+  return snippetDb.getRecentlyOpenedSnippets(limit);
+});
+
 electron.app.whenReady().then(() => {
   createWindow();
 

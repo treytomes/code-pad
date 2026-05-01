@@ -12,6 +12,8 @@ export interface Snippet {
   createdAt: number;
   modifiedAt: number;
   executionCount: number;
+  starred: boolean;
+  lastOpenedAt: number | null;
 }
 
 export class SnippetDatabase {
@@ -45,7 +47,9 @@ export class SnippetDatabase {
         code TEXT NOT NULL,
         created_at INTEGER NOT NULL,
         modified_at INTEGER NOT NULL,
-        execution_count INTEGER DEFAULT 0
+        execution_count INTEGER DEFAULT 0,
+        starred INTEGER DEFAULT 0,
+        last_opened_at INTEGER
       );
 
       CREATE INDEX IF NOT EXISTS idx_snippets_language
@@ -53,6 +57,12 @@ export class SnippetDatabase {
 
       CREATE INDEX IF NOT EXISTS idx_snippets_modified
         ON snippets(modified_at DESC);
+
+      CREATE INDEX IF NOT EXISTS idx_snippets_starred
+        ON snippets(starred DESC, modified_at DESC);
+
+      CREATE INDEX IF NOT EXISTS idx_snippets_last_opened
+        ON snippets(last_opened_at DESC);
     `);
   }
 
@@ -60,15 +70,15 @@ export class SnippetDatabase {
   createSnippet(
     snippet: Omit<
       Snippet,
-      'id' | 'createdAt' | 'modifiedAt' | 'executionCount'
+      'id' | 'createdAt' | 'modifiedAt' | 'executionCount' | 'starred' | 'lastOpenedAt'
     >
   ): Snippet {
     const id = randomUUID();
     const now = Date.now();
 
     const stmt = this.db.prepare(`
-      INSERT INTO snippets (id, name, language, code, created_at, modified_at, execution_count)
-      VALUES (?, ?, ?, ?, ?, ?, 0)
+      INSERT INTO snippets (id, name, language, code, created_at, modified_at, execution_count, starred, last_opened_at)
+      VALUES (?, ?, ?, ?, ?, ?, 0, 0, NULL)
     `);
 
     stmt.run(id, snippet.name, snippet.language, snippet.code, now, now);
@@ -79,6 +89,8 @@ export class SnippetDatabase {
       createdAt: now,
       modifiedAt: now,
       executionCount: 0,
+      starred: false,
+      lastOpenedAt: null,
     };
   }
 
@@ -163,6 +175,53 @@ export class SnippetDatabase {
     return result.changes > 0;
   }
 
+  // Toggle starred status
+  toggleStarred(id: string): boolean {
+    const stmt = this.db.prepare(`
+      UPDATE snippets
+      SET starred = CASE WHEN starred = 0 THEN 1 ELSE 0 END
+      WHERE id = ?
+    `);
+
+    const result = stmt.run(id);
+    return result.changes > 0;
+  }
+
+  // Update last opened timestamp
+  updateLastOpened(id: string): boolean {
+    const stmt = this.db.prepare(`
+      UPDATE snippets
+      SET last_opened_at = ?
+      WHERE id = ?
+    `);
+
+    const result = stmt.run(Date.now(), id);
+    return result.changes > 0;
+  }
+
+  // Get starred snippets
+  getStarredSnippets(): Snippet[] {
+    const stmt = this.db.prepare(`
+      SELECT * FROM snippets
+      WHERE starred = 1
+      ORDER BY modified_at DESC
+    `);
+
+    return stmt.all().map(this.rowToSnippet);
+  }
+
+  // Get recently opened snippets
+  getRecentlyOpenedSnippets(limit: number = 5): Snippet[] {
+    const stmt = this.db.prepare(`
+      SELECT * FROM snippets
+      WHERE last_opened_at IS NOT NULL
+      ORDER BY last_opened_at DESC
+      LIMIT ?
+    `);
+
+    return stmt.all(limit).map(this.rowToSnippet);
+  }
+
   private rowToSnippet(row: any): Snippet {
     return {
       id: row.id,
@@ -172,6 +231,8 @@ export class SnippetDatabase {
       createdAt: row.created_at,
       modifiedAt: row.modified_at,
       executionCount: row.execution_count,
+      starred: row.starred === 1,
+      lastOpenedAt: row.last_opened_at,
     };
   }
 
