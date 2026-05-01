@@ -7,10 +7,58 @@ CodePad now includes rich output visualization that automatically detects and fo
 - **HTML**: Basic HTML rendering
 - **Plain text**: Fallback for simple output
 - **Multiple Sections**: Separate outputs with blank lines for multiple rich visualizations in one execution
+- **.Dump() Extension**: LINQPad-style extension method for easy object output (auto-injected, always available)
 
 ## Testing Rich Output
 
-### 0. Multiple Rich Outputs (NEW!)
+### 0. Using .Dump() Extension Method (RECOMMENDED!)
+
+CodePad includes a LINQPad-style `.Dump()` extension method that's automatically available:
+
+```csharp
+using System;
+using System.Linq;
+
+// Basic dump - outputs JSON tree view
+var person = new { Name = "Alice", Age = 30 };
+person.Dump();
+
+// Labeled dump - adds section header
+person.Dump("Person Info");
+
+// Chaining support - dump intermediate results
+var users = new[] { 
+    new { Id = 1, Name = "Alice" }, 
+    new { Id = 2, Name = "Bob" } 
+};
+var active = users
+    .Dump("All Users")
+    .Where(u => u.Id > 0)
+    .Dump("Filtered Users")
+    .ToArray();
+
+// Works with any type
+42.Dump("The Answer");
+new[] { 1, 2, 3 }.Dump("Numbers");
+```
+
+**Expected**: 
+- Each `.Dump()` creates a new section automatically
+- Labels appear as headers: `=== Person Info ===`
+- JSON tree view for objects/arrays
+- No need for `JsonSerializer.Serialize()` or `Console.WriteLine()`
+- Automatic spacing between dumps
+
+**Benefits over manual JSON output:**
+- **Shorter**: `obj.Dump()` vs `Console.WriteLine(JsonSerializer.Serialize(obj, options))`
+- **Automatic labels**: Built-in section headers
+- **Automatic spacing**: No need to manually add blank lines
+- **Chaining**: Can use in LINQ pipelines
+- **Error handling**: Graceful fallback if serialization fails
+
+### 0b. Multiple Rich Outputs (Manual Method)
+
+You can also manually output multiple sections:
 
 You can now combine multiple rich outputs in a single script by separating them with blank lines:
 
@@ -186,13 +234,17 @@ Console.WriteLine(JsonSerializer.Serialize(data, new JsonSerializerOptions {
 
 ## Default Code
 
-The default snippet demonstrates multiple rich output sections. Press F5 to see:
-1. JSON object with nested structure (tree view)
-2. Pipe-delimited table (sortable grid)
-3. JSON array with statistics (tree view)
-4. Plain text tips and instructions
+The default snippet demonstrates the `.Dump()` extension method. Press F5 to see:
+1. Simple object with `.Dump("Person Details")`
+2. Array with `.Dump("User List")`
+3. LINQ chaining with intermediate `.Dump()` calls
+4. Statistics object with `.Dump("Statistics")`
+5. Plain text tips using `Console.WriteLine()`
 
-Each section is separated by blank lines and rendered with its appropriate visualizer.
+Each `.Dump()` automatically:
+- Outputs JSON tree view
+- Adds section label as header
+- Inserts spacing between sections
 
 ## Implementation Details
 

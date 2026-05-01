@@ -95,13 +95,75 @@ export class CSharpExecutor {
   }
 
   /**
+   * Get the DumpExtensions class code
+   */
+  private getDumpExtensions(): string[] {
+    return [
+      '#region CodePad Extensions',
+      '// Auto-injected by CodePad - provides .Dump() extension method',
+      'using System;',
+      'using System.Text.Json;',
+      'using System.Text.Json.Serialization;',
+      '',
+      'public static class DumpExtensions',
+      '{',
+      '    private static int _dumpCount = 0;',
+      '    ',
+      '    /// <summary>',
+      '    /// Dumps the object as formatted JSON to the console.',
+      '    /// Returns the object for method chaining.',
+      '    /// </summary>',
+      '    /// <param name="obj">The object to dump</param>',
+      '    /// <param name="label">Optional label to display before the output</param>',
+      '    public static T Dump<T>(this T obj, string label = null)',
+      '    {',
+      '        // Add blank line separator (except first dump)',
+      '        if (_dumpCount++ > 0)',
+      '        {',
+      '            Console.WriteLine();',
+      '        }',
+      '        ',
+      '        // Output label if provided',
+      '        if (!string.IsNullOrEmpty(label))',
+      '        {',
+      '            Console.WriteLine($"=== {label} ===");',
+      '        }',
+      '        ',
+      '        // Serialize to JSON',
+      '        try',
+      '        {',
+      '            var json = JsonSerializer.Serialize(obj, new JsonSerializerOptions',
+      '            {',
+      '                WriteIndented = true,',
+      '                ReferenceHandler = ReferenceHandler.IgnoreCycles,',
+      '                DefaultIgnoreCondition = JsonIgnoreCondition.Never',
+      '            });',
+      '            ',
+      '            Console.WriteLine(json);',
+      '        }',
+      '        catch (Exception ex)',
+      '        {',
+      '            // Fallback to ToString() if serialization fails',
+      '            Console.WriteLine($"[Dump Error: {ex.Message}]");',
+      '            Console.WriteLine(obj?.ToString() ?? "null");',
+      '        }',
+      '        ',
+      '        return obj;',
+      '    }',
+      '}',
+      '#endregion',
+      ''
+    ];
+  }
+
+  /**
    * Create temporary .csx file with code
    */
   private async createTempFile(code: string): Promise<string> {
     const fileName = `codepad-${randomUUID()}.csx`;
     const filePath = join(tmpdir(), fileName);
 
-    // Insert auto-flush code AFTER #r directives and using statements
+    // Insert auto-flush code and DumpExtensions AFTER #r directives and using statements
     // to avoid CS1529 (using must precede other elements)
     const lines = code.split('\n');
     let insertIndex = 0;
@@ -125,10 +187,14 @@ export class CSharpExecutor {
       ''
     ];
 
-    lines.splice(insertIndex, 0, ...autoFlushCode);
-    const unbufferedCode = lines.join('\n');
+    // Insert DumpExtensions class
+    const dumpExtensions = this.getDumpExtensions();
 
-    await fs.writeFile(filePath, unbufferedCode, 'utf-8');
+    // Combine: original code up to insertIndex + auto-flush + dump extensions + rest of code
+    lines.splice(insertIndex, 0, ...autoFlushCode, ...dumpExtensions);
+    const processedCode = lines.join('\n');
+
+    await fs.writeFile(filePath, processedCode, 'utf-8');
 
     return filePath;
   }

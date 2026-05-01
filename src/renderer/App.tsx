@@ -25,12 +25,11 @@ const DEFAULT_CODE = `// Welcome to CodePad v0.1.0!
 
 using System;
 using System.Linq;
-using System.Text.Json;
 
-// This demo shows CodePad's rich output visualization
-// Multiple output sections are separated by blank lines
+// CodePad includes a .Dump() extension method (like LINQPad)
+// It automatically outputs objects as JSON with optional labels
 
-// 1. JSON Object - Interactive tree view
+// 1. Simple object with label
 var person = new {
     Name = "John Doe",
     Age = 30,
@@ -42,37 +41,40 @@ var person = new {
     },
     Skills = new[] { "C#", "JavaScript", "Python" }
 };
-Console.WriteLine(JsonSerializer.Serialize(person, new JsonSerializerOptions { WriteIndented = true }));
-Console.WriteLine(); // Blank line separates sections
+person.Dump("Person Details");
 
-// 2. Table Output - Grid view with sorting
-Console.WriteLine("| ID | Name  | Role       | Status |");
-Console.WriteLine("|----|-------|------------|--------|");
-Console.WriteLine("| 1  | Alice | Admin      | Active |");
-Console.WriteLine("| 2  | Bob   | Developer  | Active |");
-Console.WriteLine("| 3  | Carol | Designer   | Away   |");
-Console.WriteLine();
-
-// 3. JSON Array - Tree view with expandable items
-var stats = new {
-    Summary = "User Statistics",
-    TotalUsers = 3,
-    ActiveUsers = 2,
-    Roles = new[] { "Admin", "Developer", "Designer" },
-    LastUpdated = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")
+// 2. Array/collection - renders as tree view
+var users = new[] {
+    new { Id = 1, Name = "Alice", Role = "Admin", Active = true },
+    new { Id = 2, Name = "Bob", Role = "Developer", Active = true },
+    new { Id = 3, Name = "Carol", Role = "Designer", Active = false }
 };
-Console.WriteLine(JsonSerializer.Serialize(stats, new JsonSerializerOptions { WriteIndented = true }));
-Console.WriteLine();
+users.Dump("User List");
 
-// 4. Plain Text Output
-Console.WriteLine("💡 TIP: Each output type is automatically detected!");
-Console.WriteLine("   - JSON: Starts with { or [");
-Console.WriteLine("   - Tables: Uses | or tab separators");
-Console.WriteLine("   - Plain: Everything else");
-Console.WriteLine();
-Console.WriteLine("🚀 Try editing the code and press F5 to see changes!");
+// 3. Chaining support - dump intermediate results
+var activeUsers = users
+    .Where(u => u.Active)
+    .Dump("Active Users Only")
+    .Select(u => u.Name)
+    .ToArray();
 
-// Separate sections with blank lines (Console.WriteLine()) for multiple rich outputs
+// 4. Statistics object
+var stats = new {
+    TotalUsers = users.Length,
+    ActiveCount = users.Count(u => u.Active),
+    Roles = users.Select(u => u.Role).Distinct().ToArray(),
+    Timestamp = DateTime.Now
+};
+stats.Dump("Statistics");
+
+// 💡 Tips:
+// - .Dump() automatically adds spacing between sections
+// - Use .Dump("Label") to add headers
+// - Returns the object for LINQ chaining
+// - Works with any serializable type
+// - You can still use Console.WriteLine() for plain text
+
+Console.WriteLine("✨ Try .Dump() on your own objects!");
 `;
 
 function App() {
