@@ -30,12 +30,17 @@
 - Database migrations system
 - Unit tests with 80%+ coverage (54+ test cases)
 - CS1529 fix for using statement ordering
-- **Error handling: React error boundary & .NET runtime detection**
-- **Import/Export: .cs files and JSON backup**
-- **Updated documentation (README, testing checklist)**
-- **About dialog with version and system info**
-- **Enhanced npm scripts for better DX**
-- **Icon generation guide and assets structure**
+- **Week 7-8 Additions (May 1, 2026):**
+  - Error handling: React ErrorBoundary component with user-friendly errors
+  - Runtime detection: .NET SDK and dotnet-script validation on startup
+  - RuntimeWarning dialog with installation instructions
+  - Import/Export: Single snippets (.cs files) and bulk backup (JSON)
+  - About dialog with version, system info, and GitHub link
+  - Enhanced npm scripts (13 new commands for better DX)
+  - Icon generation guide and assets structure
+  - TESTING-CHECKLIST.md with 297 test items
+  - README updated with feature list and usage guide
+  - Fixed process.versions access in renderer (context isolation)
 
 ### 🚧 In Progress
 - User testing with production build
@@ -311,25 +316,35 @@
   - [ ] Implement theme switching (light/dark)
   - [ ] Store settings in database
 
-- [x] **Error Handling** ✅ COMPLETE
+- [x] **Error Handling** ✅ COMPLETE (May 1, 2026)
   - [x] Global error boundary in React ✓
-  - [x] User-friendly error messages ✓
-  - [x] Crash reporting (local logs) ✓
+  - [x] User-friendly error messages with error details ✓
+  - [x] Crash reporting via electron-log ✓
   - [x] Handle missing .NET runtime gracefully (detect on startup) ✓
+  - [x] RuntimeWarning dialog with installation instructions ✓
 
-- [x] **Import/Export** ✅ COMPLETE
+- [x] **Import/Export** ✅ COMPLETE (May 1, 2026)
   - [x] Export snippet to .cs file ✓
-  - [x] Import snippet from .cs file ✓
-  - [x] Export all snippets (backup) ✓
+  - [x] Import snippet from .cs/.csx file ✓
+  - [x] Export all snippets to JSON backup ✓
+  - [x] File dialogs for save/open locations ✓
 
-- [x] **Polish & Documentation** ✅ COMPLETE
+- [x] **Polish & Documentation** ✅ COMPLETE (May 1, 2026)
   - [x] Icon generation guide and assets structure ✓
   - [x] Add About dialog (Help > About with version info) ✓
-  - [x] Update README.md with new features (starred, search, recently opened) ✓
-  - [x] Create comprehensive testing checklist ✓
-  - [x] Add package.json script improvements ✓
+  - [x] Fix process.versions access (context isolation) ✓
+  - [x] Update README.md with new features and usage guide ✓
+  - [x] Create TESTING-CHECKLIST.md (297 test items) ✓
+  - [x] Add 13 new npm scripts for better DX ✓
+
+**Week 7-8 Status**: Core error handling, import/export, and polish tasks **COMPLETE** ✅
 
 **Deliverable**: Feature-complete MVP ready for internal testing
+
+**Remaining for MVP:**
+- Application Menu (stretch goal for Week 7-8)
+- Settings & Preferences (stretch goal for Week 7-8)
+- Rich Output Implementation (deferred to Phase 2)
 
 **Success Criteria**:
 - [x] Can create and manage snippets ✓ (folder support deferred)
@@ -338,8 +353,11 @@
 - [x] Output displays text and errors ✓ (rich object display deferred)
 - [x] Key keyboard shortcuts work (Ctrl+S, Ctrl+Shift+S, F5, Ctrl+N) ✓
 - [x] Snippets persist between sessions (SQLite) ✓
-- [x] No major bugs or crashes ✓
+- [x] No major bugs or crashes ✓ (error boundary + runtime detection)
 - [x] Unit test coverage > 80% ✓
+- [x] Import/Export functionality ✓ (added in Week 7-8)
+- [x] User-friendly error handling ✓ (added in Week 7-8)
+- [x] About dialog and help resources ✓ (added in Week 7-8)
 
 ---
 
