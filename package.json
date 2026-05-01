@@ -75,5 +75,30 @@
       "eslint --fix",
       "prettier --write"
     ]
+  },
+  "build": {
+    "appId": "com.codepad.app",
+    "productName": "CodePad",
+    "files": [
+      "dist/**/*",
+      "package.json"
+    ],
+    "directories": {
+      "buildResources": "assets",
+      "output": "release"
+    },
+    "extraFiles": [],
+    "win": {
+      "target": "nsis"
+    },
+    "mac": {
+      "target": "dmg"
+    },
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb"
+      ]
+    }
   }
 }
