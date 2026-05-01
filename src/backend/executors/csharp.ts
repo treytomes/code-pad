@@ -89,40 +89,49 @@ export class CSharpExecutor {
       let killed = false;
 
       // Spawn dotnet script process
-      const process: ChildProcess = spawn('dotnet', ['script', scriptPath], {
+      const env = { ...process.env };
+
+      // Add .dotnet/tools to PATH (needed on Linux/macOS where it's not automatic)
+      const dotnetToolsPath = join(
+        env.HOME || env.USERPROFILE || '',
+        '.dotnet',
+        'tools'
+      );
+      const pathSeparator = process.platform === 'win32' ? ';' : ':';
+      env.PATH = `${dotnetToolsPath}${pathSeparator}${env.PATH || ''}`;
+      env.DOTNET_CLI_TELEMETRY_OPTOUT = '1'; // Disable telemetry
+
+      const childProcess: ChildProcess = spawn('dotnet', ['script', scriptPath], {
         cwd: tmpdir(),
-        env: {
-          ...process.env,
-          DOTNET_CLI_TELEMETRY_OPTOUT: '1', // Disable telemetry
-        },
+        env,
       });
 
       // Set timeout
       const timer = setTimeout(() => {
         timedOut = true;
         killed = true;
-        process.kill('SIGTERM');
+        childProcess.kill('SIGTERM');
 
         // Force kill after 2 seconds
         setTimeout(() => {
-          if (!process.killed) {
-            process.kill('SIGKILL');
+          if (!childProcess.killed) {
+            childProcess.kill('SIGKILL');
           }
         }, 2000);
       }, timeout);
 
       // Capture stdout
-      process.stdout?.on('data', (data) => {
+      childProcess.stdout?.on('data', (data) => {
         stdout += data.toString();
       });
 
       // Capture stderr
-      process.stderr?.on('data', (data) => {
+      childProcess.stderr?.on('data', (data) => {
         stderr += data.toString();
       });
 
       // Handle exit
-      process.on('exit', (code) => {
+      childProcess.on('exit', (code) => {
         clearTimeout(timer);
 
         resolve({
@@ -136,7 +145,7 @@ export class CSharpExecutor {
       });
 
       // Handle errors
-      process.on('error', (error) => {
+      childProcess.on('error', (error) => {
         clearTimeout(timer);
 
         resolve({
