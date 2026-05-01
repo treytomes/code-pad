@@ -177,6 +177,23 @@ export function formatTable(headers: string[], rows: string[][]): FormattedOutpu
 }
 
 /**
+ * Split output into sections separated by blank lines
+ * Each section can have its own format (JSON, table, plain text)
+ */
+export function splitOutputSections(output: string): string[] {
+  if (!output || !output.trim()) {
+    return [];
+  }
+
+  // Split on double newlines (blank lines) to separate sections
+  const sections = output.split(/\n\s*\n/);
+
+  return sections
+    .map(section => section.trim())
+    .filter(section => section.length > 0);
+}
+
+/**
  * Main formatting function - auto-detect and format output
  */
 export function formatOutput(output: string): FormattedOutput {

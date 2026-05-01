@@ -5,6 +5,7 @@ import {
   parseTableData,
   formatTable,
   formatOutput,
+  splitOutputSections,
 } from '../../src/backend/output-formatter';
 
 describe('output-formatter', () => {
@@ -128,6 +129,59 @@ describe('output-formatter', () => {
 
       expect(result.format).toBe('plain');
       expect(result.content).toBe(plain);
+    });
+  });
+
+  describe('splitOutputSections', () => {
+    it('should split output on blank lines', () => {
+      const output = 'Section 1\n\nSection 2\n\nSection 3';
+      const sections = splitOutputSections(output);
+
+      expect(sections).toHaveLength(3);
+      expect(sections[0]).toBe('Section 1');
+      expect(sections[1]).toBe('Section 2');
+      expect(sections[2]).toBe('Section 3');
+    });
+
+    it('should handle JSON and table sections', () => {
+      const output = '{"name":"John"}\n\n| Name | Age |\n| John | 30 |';
+      const sections = splitOutputSections(output);
+
+      expect(sections).toHaveLength(2);
+      expect(sections[0]).toBe('{"name":"John"}');
+      expect(sections[1]).toContain('| Name | Age |');
+    });
+
+    it('should trim whitespace from sections', () => {
+      const output = '  Section 1  \n\n  Section 2  ';
+      const sections = splitOutputSections(output);
+
+      expect(sections).toHaveLength(2);
+      expect(sections[0]).toBe('Section 1');
+      expect(sections[1]).toBe('Section 2');
+    });
+
+    it('should filter empty sections', () => {
+      const output = 'Section 1\n\n\n\nSection 2';
+      const sections = splitOutputSections(output);
+
+      expect(sections).toHaveLength(2);
+      expect(sections[0]).toBe('Section 1');
+      expect(sections[1]).toBe('Section 2');
+    });
+
+    it('should return empty array for empty input', () => {
+      expect(splitOutputSections('')).toEqual([]);
+      expect(splitOutputSections('   ')).toEqual([]);
+      expect(splitOutputSections('\n\n')).toEqual([]);
+    });
+
+    it('should handle single section without blank lines', () => {
+      const output = 'Single section\nwith multiple lines\nbut no blank lines';
+      const sections = splitOutputSections(output);
+
+      expect(sections).toHaveLength(1);
+      expect(sections[0]).toBe(output);
     });
   });
 });

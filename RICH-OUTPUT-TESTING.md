@@ -6,8 +6,39 @@ CodePad now includes rich output visualization that automatically detects and fo
 - **Tables**: Grid rendering with headers and pagination
 - **HTML**: Basic HTML rendering
 - **Plain text**: Fallback for simple output
+- **Multiple Sections**: Separate outputs with blank lines for multiple rich visualizations in one execution
 
 ## Testing Rich Output
+
+### 0. Multiple Rich Outputs (NEW!)
+
+You can now combine multiple rich outputs in a single script by separating them with blank lines:
+
+```csharp
+using System;
+using System.Text.Json;
+
+// First section: JSON object
+var person = new { Name = "Alice", Age = 30 };
+Console.WriteLine(JsonSerializer.Serialize(person, new JsonSerializerOptions { WriteIndented = true }));
+Console.WriteLine(); // ← Blank line creates new section
+
+// Second section: Table
+Console.WriteLine("| ID | Name | Status |");
+Console.WriteLine("|----|------|--------|");
+Console.WriteLine("| 1  | Bob  | Active |");
+Console.WriteLine();
+
+// Third section: Plain text
+Console.WriteLine("Done! Check out the separated visualizations above.");
+```
+
+**Expected**: Three separate visualizations with dividers:
+1. JSON tree view (collapsible)
+2. Table with sorting
+3. Plain text output
+
+**Key**: Use `Console.WriteLine()` (blank line) to separate sections!
 
 ### 1. JSON Output
 
@@ -155,11 +186,13 @@ Console.WriteLine(JsonSerializer.Serialize(data, new JsonSerializerOptions {
 
 ## Default Code
 
-The default snippet demonstrates all rich output types. Press F5 to see:
-1. JSON object with nested structure
-2. Array of objects
-3. Pipe-delimited table
-4. Statistics object
+The default snippet demonstrates multiple rich output sections. Press F5 to see:
+1. JSON object with nested structure (tree view)
+2. Pipe-delimited table (sortable grid)
+3. JSON array with statistics (tree view)
+4. Plain text tips and instructions
+
+Each section is separated by blank lines and rendered with its appropriate visualizer.
 
 ## Implementation Details
 

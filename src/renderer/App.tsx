@@ -28,58 +28,51 @@ using System.Linq;
 using System.Text.Json;
 
 // This demo shows CodePad's rich output visualization
-// The output below will render as an interactive JSON tree view
+// Multiple output sections are separated by blank lines
 
-var demo = new {
-    Welcome = "CodePad - Rich Output Demo",
-    Version = "0.1.0",
-    Features = new[] {
-        "JSON tree view with collapsible nodes",
-        "Table rendering for pipe-delimited data",
-        "Auto-format detection",
-        "Syntax highlighting"
+// 1. JSON Object - Interactive tree view
+var person = new {
+    Name = "John Doe",
+    Age = 30,
+    Email = "john@example.com",
+    Address = new {
+        Street = "123 Main St",
+        City = "Springfield",
+        Zip = "12345"
     },
-
-    ExampleData = new {
-        Person = new {
-            Name = "John Doe",
-            Age = 30,
-            Email = "john@example.com",
-            Address = new {
-                Street = "123 Main St",
-                City = "Springfield",
-                Zip = "12345"
-            }
-        },
-
-        Users = new[] {
-            new { Id = 1, Name = "Alice", Role = "Admin", Active = true },
-            new { Id = 2, Name = "Bob", Role = "Developer", Active = true },
-            new { Id = 3, Name = "Carol", Role = "Designer", Active = false }
-        },
-
-        Statistics = new {
-            TotalUsers = 3,
-            ActiveUsers = 2,
-            Roles = new[] { "Admin", "Developer", "Designer" }
-        }
-    },
-
-    TryThese = new[] {
-        "Click nodes to expand/collapse",
-        "Copy this snippet and modify the data",
-        "Try table output: Console.WriteLine(\\\"| Col1 | Col2 |\\\")",
-        "See RICH-OUTPUT-TESTING.md for more examples"
-    }
+    Skills = new[] { "C#", "JavaScript", "Python" }
 };
+Console.WriteLine(JsonSerializer.Serialize(person, new JsonSerializerOptions { WriteIndented = true }));
+Console.WriteLine(); // Blank line separates sections
 
-// Output as JSON - will render as interactive tree view
-Console.WriteLine(JsonSerializer.Serialize(demo, new JsonSerializerOptions {
-    WriteIndented = true
-}));
+// 2. Table Output - Grid view with sorting
+Console.WriteLine("| ID | Name  | Role       | Status |");
+Console.WriteLine("|----|-------|------------|--------|");
+Console.WriteLine("| 1  | Alice | Admin      | Active |");
+Console.WriteLine("| 2  | Bob   | Developer  | Active |");
+Console.WriteLine("| 3  | Carol | Designer   | Away   |");
+Console.WriteLine();
 
-// TIP: Remove the JsonSerializer and just write plain text to see the difference!
-// TIP: Try outputting a table format instead - see docs for examples
+// 3. JSON Array - Tree view with expandable items
+var stats = new {
+    Summary = "User Statistics",
+    TotalUsers = 3,
+    ActiveUsers = 2,
+    Roles = new[] { "Admin", "Developer", "Designer" },
+    LastUpdated = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")
+};
+Console.WriteLine(JsonSerializer.Serialize(stats, new JsonSerializerOptions { WriteIndented = true }));
+Console.WriteLine();
+
+// 4. Plain Text Output
+Console.WriteLine("💡 TIP: Each output type is automatically detected!");
+Console.WriteLine("   - JSON: Starts with { or [");
+Console.WriteLine("   - Tables: Uses | or tab separators");
+Console.WriteLine("   - Plain: Everything else");
+Console.WriteLine();
+Console.WriteLine("🚀 Try editing the code and press F5 to see changes!");
+
+// Separate sections with blank lines (Console.WriteLine()) for multiple rich outputs
 `;
 
 function App() {
