@@ -13,20 +13,44 @@ import type { Snippet } from '../backend/database';
 const { Header, Content, Sider } = Layout;
 
 const DEFAULT_CODE = `// Welcome to CodePad!
-// Try editing this C# code
+// A LINQPad-style code scratchpad for C#
 
-var message = "Hello from CodePad!";
-Console.WriteLine(message);
+// === Basic Output ===
+Console.WriteLine("=== CodePad Demo ===\\n");
 
-var numbers = new[] { 1, 2, 3, 4, 5 };
-var sum = numbers.Sum();
-Console.WriteLine($"Sum: {sum}");
+// Variables and expressions
+var name = "CodePad";
+var version = "0.1.0";
+Console.WriteLine($"Welcome to {name} v{version}!");
+
+// === Collections & LINQ ===
+var numbers = new[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+Console.WriteLine($"\\nNumbers: {string.Join(", ", numbers)}");
+Console.WriteLine($"Sum: {numbers.Sum()}");
+Console.WriteLine($"Average: {numbers.Average():F2}");
+Console.WriteLine($"Evens: {string.Join(", ", numbers.Where(n => n % 2 == 0))}");
+
+// === String Manipulation ===
+var text = "  CodePad is awesome!  ";
+Console.WriteLine($"\\nOriginal: '{text}'");
+Console.WriteLine($"Trimmed: '{text.Trim()}'");
+Console.WriteLine($"Upper: '{text.Trim().ToUpper()}'");
+Console.WriteLine($"Length: {text.Trim().Length}");
+
+// === Date & Time ===
+var now = DateTime.Now;
+Console.WriteLine($"\\nCurrent time: {now:yyyy-MM-dd HH:mm:ss}");
+Console.WriteLine($"Day of week: {now.DayOfWeek}");
+
+// === Try your own code below ===
+Console.WriteLine("\\n--- Edit and run your code here! ---");
 `;
 
 function App() {
   const [code, setCode] = useState(DEFAULT_CODE);
   const [output, setOutput] = useState('');
   const [isRunning, setIsRunning] = useState(false);
+  const [executionTime, setExecutionTime] = useState<number | null>(null);
   const [outputHeight, setOutputHeight] = useState(200);
   const [sidebarWidth, setSidebarWidth] = useState(250);
   const [isDraggingOutput, setIsDraggingOutput] = useState(false);
@@ -45,9 +69,13 @@ function App() {
   const handleRun = async () => {
     setIsRunning(true);
     setOutput('Executing...');
+    const startTime = performance.now();
 
     try {
       const result = await window.electronAPI.executeCode(code);
+      const endTime = performance.now();
+      const duration = Math.round(endTime - startTime);
+      setExecutionTime(duration);
 
       if (result.exitCode === 0) {
         setOutput(result.stdout || '(no output)');
@@ -63,6 +91,7 @@ function App() {
         setRefreshTrigger((prev) => prev + 1);
       }
     } catch (error) {
+      setExecutionTime(null);
       setOutput(
         `Failed to execute: ${error instanceof Error ? error.message : String(error)}`
       );
@@ -138,6 +167,7 @@ function App() {
 
   const handleClearOutput = () => {
     setOutput('');
+    setExecutionTime(null);
   };
 
   const handleCopyOutput = async () => {
@@ -338,17 +368,30 @@ function App() {
                 borderBottom: '1px solid #2d2d30',
               }}
             >
-              <strong
-                style={{
-                  color: '#4ec9b0',
-                  fontSize: '11px',
-                  textTransform: 'uppercase',
-                  letterSpacing: '1px',
-                  fontWeight: 600,
-                }}
-              >
-                Output
-              </strong>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <strong
+                  style={{
+                    color: '#4ec9b0',
+                    fontSize: '11px',
+                    textTransform: 'uppercase',
+                    letterSpacing: '1px',
+                    fontWeight: 600,
+                  }}
+                >
+                  Output
+                </strong>
+                {executionTime !== null && (
+                  <span
+                    style={{
+                      color: '#858585',
+                      fontSize: '11px',
+                      fontFamily: 'monospace',
+                    }}
+                  >
+                    {executionTime}ms
+                  </span>
+                )}
+              </div>
               <Space size="small">
                 <Button
                   type="text"
