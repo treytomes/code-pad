@@ -61,6 +61,26 @@ describe('output-formatter', () => {
       expect(result.metadata?.label).toBe('Person Details');
     });
 
+    it('should convert array of objects to table', () => {
+      const json = '[{"id":1,"name":"Alice"},{"id":2,"name":"Bob"}]';
+      const result = formatJSON(json);
+
+      expect(result.format).toBe('table');
+      expect(result.content).toContain('| id | name |');
+      expect(result.content).toContain('| 1 | Alice |');
+      expect(result.content).toContain('| 2 | Bob |');
+      expect(result.metadata?.type).toBe('table');
+      expect(result.metadata?.length).toBe(2);
+    });
+
+    it('should keep simple arrays as JSON', () => {
+      const json = '[1, 2, 3, 4, 5]';
+      const result = formatJSON(json);
+
+      expect(result.format).toBe('json');
+      expect(result.metadata?.type).toBe('array');
+    });
+
     it('should handle JSON arrays', () => {
       const json = '[1,2,3]';
       const result = formatJSON(json);

@@ -74,8 +74,79 @@ export function detectOutputFormat(output: string): OutputFormat {
 }
 
 /**
+ * Check if an array of objects can be represented as a table
+ */
+function isArrayOfObjects(data: any): boolean {
+  if (!Array.isArray(data) || data.length === 0) {
+    return false;
+  }
+
+  // Check if all items are objects (not arrays, not primitives)
+  const allObjects = data.every(item =>
+    item !== null &&
+    typeof item === 'object' &&
+    !Array.isArray(item)
+  );
+
+  if (!allObjects) {
+    return false;
+  }
+
+  // Get all unique keys from all objects
+  const allKeys = new Set<string>();
+  data.forEach(item => {
+    Object.keys(item).forEach(key => allKeys.add(key));
+  });
+
+  // Should have at least 2 keys to be worth showing as table
+  return allKeys.size >= 2;
+}
+
+/**
+ * Convert array of objects to table format
+ */
+function arrayToTable(data: any[], label?: string): FormattedOutput {
+  // Get all unique keys (column headers)
+  const allKeys = new Set<string>();
+  data.forEach(item => {
+    Object.keys(item).forEach(key => allKeys.add(key));
+  });
+
+  const headers = Array.from(allKeys);
+
+  // Build markdown table
+  const headerRow = '| ' + headers.join(' | ') + ' |';
+  const separatorRow = '|' + headers.map(() => '----').join('|') + '|';
+
+  const dataRows = data.map(item => {
+    const cells = headers.map(key => {
+      const value = item[key];
+      if (value === null) return 'null';
+      if (value === undefined) return '';
+      if (typeof value === 'object') return JSON.stringify(value);
+      return String(value);
+    });
+    return '| ' + cells.join(' | ') + ' |';
+  });
+
+  const tableContent = [headerRow, separatorRow, ...dataRows].join('\n');
+
+  return {
+    format: 'table',
+    content: tableContent,
+    metadata: {
+      type: 'table',
+      length: data.length,
+      properties: headers,
+      label,
+    },
+  };
+}
+
+/**
  * Format JSON with syntax highlighting markers
  * Handles labeled JSON (e.g., "=== Label ===\n{...}")
+ * Converts arrays of objects to tables automatically
  */
 export function formatJSON(json: string, indent: number = 2): FormattedOutput {
   try {
@@ -90,6 +161,13 @@ export function formatJSON(json: string, indent: number = 2): FormattedOutput {
     }
 
     const parsed = JSON.parse(jsonContent);
+
+    // Check if this is an array of objects - render as table
+    if (isArrayOfObjects(parsed)) {
+      return arrayToTable(parsed, label);
+    }
+
+    // Otherwise, render as JSON tree
     const formatted = JSON.stringify(parsed, null, indent);
 
     return {
@@ -98,7 +176,7 @@ export function formatJSON(json: string, indent: number = 2): FormattedOutput {
       metadata: {
         type: Array.isArray(parsed) ? 'array' : 'object',
         length: Array.isArray(parsed) ? parsed.length : Object.keys(parsed).length,
-        label, // Include label in metadata
+        label,
       },
     };
   } catch (_error) {

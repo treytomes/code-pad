@@ -52,6 +52,11 @@ export const TableOutput: React.FC<TableOutputProps> = ({ content, metadata }) =
 
   return (
     <div style={{ padding: '12px' }}>
+      {metadata?.label && (
+        <div style={{ marginBottom: '12px', color: '#4ec9b0', fontSize: '14px', fontWeight: 'bold' }}>
+          {metadata.label}
+        </div>
+      )}
       {metadata && (
         <div style={{ marginBottom: '12px', color: '#858585', fontSize: '12px' }}>
           {metadata.length} rows • {metadata.properties?.length || columns.length} columns
