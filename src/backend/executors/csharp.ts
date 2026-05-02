@@ -159,26 +159,32 @@ export class CSharpExecutor {
     const fileName = `codepad-${randomUUID()}.csx`;
     const filePath = join(tmpdir(), fileName);
 
-    // Insert auto-flush code and DumpExtensions AFTER #r directives and using statements
-    // to avoid CS1529 (using must precede other elements)
-    const lines = code.split('\n');
-    let insertIndex = 0;
+    // For .csx files, we need to inject at the VERY TOP (before any code)
+    // Otherwise DumpExtensions becomes nested inside the implicit script class
 
-    // Find the last #r directive or using statement
+    // Split into directives/usings vs everything else
+    const lines = code.split('\n');
+    let firstCodeLineIndex = 0;
+
+    // Find where actual code begins (skip #r and using statements)
     for (let i = 0; i < lines.length; i++) {
       const trimmed = lines[i].trim();
       if (trimmed.startsWith('#r ') || trimmed.startsWith('using ')) {
-        insertIndex = i + 1;
-      } else if (trimmed && !trimmed.startsWith('//')) {
-        // Stop at first non-comment, non-using, non-#r line
+        firstCodeLineIndex = i + 1;
+      } else if (trimmed.length > 0 && !trimmed.startsWith('//')) {
+        // Found first real code line (not comment, not blank)
         break;
       }
     }
 
-    // IMPORTANT ORDER for .csx files:
-    // 1. DumpExtensions class MUST come BEFORE any executable code
-    // 2. Auto-flush code (executable) comes after
-    // Otherwise DumpExtensions becomes a nested class (CS1109 error)
+    // Build the final code structure:
+    // 1. #r directives and using statements (from user code)
+    // 2. DumpExtensions class (must be top-level, before any script code)
+    // 3. Auto-flush setup (executable, but before user code)
+    // 4. User's actual code
+
+    const directivesAndUsings = lines.slice(0, firstCodeLineIndex);
+    const userCode = lines.slice(firstCodeLineIndex);
 
     const dumpExtensions = this.getDumpExtensions();
 
@@ -189,9 +195,13 @@ export class CSharpExecutor {
       ''
     ];
 
-    // Combine: original code up to insertIndex + DumpExtensions (class) + auto-flush (executable) + rest of code
-    lines.splice(insertIndex, 0, ...dumpExtensions, ...autoFlushCode);
-    const processedCode = lines.join('\n');
+    // Assemble in correct order
+    const processedCode = [
+      ...directivesAndUsings,
+      ...dumpExtensions,
+      ...autoFlushCode,
+      ...userCode
+    ].join('\n');
 
     await fs.writeFile(filePath, processedCode, 'utf-8');
 

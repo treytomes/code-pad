@@ -85,5 +85,14 @@
 
   // Vitest
   "vitest.enable": true,
-  "vitest.commandLine": "npm run test"
+  "vitest.commandLine": "npm run test",
+  "cSpell.words": [
+    "Burndown",
+    "codepad",
+    "LINQ",
+    "Newtonsoft",
+    "NSIS",
+    "numpy",
+    "venv"
+  ]
 }
