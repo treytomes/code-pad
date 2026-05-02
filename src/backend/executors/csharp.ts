@@ -100,22 +100,10 @@ export class CSharpExecutor {
   private getDumpExtensions(): string[] {
     return [
       '#region CodePad Extensions',
-      '// Auto-injected by CodePad - provides .Dump() extension method and auto-flush',
+      '// Auto-injected by CodePad - provides .Dump() extension method',
       'public static class DumpExtensions',
       '{',
       '    private static int _dumpCount = 0;',
-      '    private static bool _initialized = false;',
-      '    ',
-      '    // Auto-flush initialization (called before first dump)',
-      '    private static void EnsureInitialized()',
-      '    {',
-      '        if (!_initialized)',
-      '        {',
-      '            System.Console.SetOut(new System.IO.StreamWriter(System.Console.OpenStandardOutput()) { AutoFlush = true });',
-      '            System.Console.SetError(new System.IO.StreamWriter(System.Console.OpenStandardError()) { AutoFlush = true });',
-      '            _initialized = true;',
-      '        }',
-      '    }',
       '    ',
       '    /// <summary>',
       '    /// Dumps the object as formatted JSON to the console.',
@@ -125,8 +113,6 @@ export class CSharpExecutor {
       '    /// <param name="label">Optional label to display before the output</param>',
       '    public static T Dump<T>(this T obj, string label = null)',
       '    {',
-      '        EnsureInitialized();',
-      '        ',
       '        // Add blank line separator (except first dump)',
       '        if (_dumpCount++ > 0)',
       '        {',
@@ -173,8 +159,8 @@ export class CSharpExecutor {
     const fileName = `codepad-${randomUUID()}.csx`;
     const filePath = join(tmpdir(), fileName);
 
-    // For .csx files, we need to inject at the VERY TOP (before any code)
-    // Otherwise DumpExtensions becomes nested inside the implicit script class
+    // LINQPad approach: Wrap user code in a class/method to avoid top-level statement issues
+    // This keeps extension classes truly top-level
 
     // Split into directives/usings vs everything else
     const lines = code.split('\n');
@@ -191,21 +177,39 @@ export class CSharpExecutor {
       }
     }
 
-    // Build the final code structure:
-    // 1. #r directives and using statements (from user code)
-    // 2. DumpExtensions class (must be top-level, before ANY top-level statements)
-    // 3. User's actual code (auto-flush is now inside DumpExtensions.EnsureInitialized())
-
     const directivesAndUsings = lines.slice(0, firstCodeLineIndex);
     const userCode = lines.slice(firstCodeLineIndex);
 
     const dumpExtensions = this.getDumpExtensions();
 
-    // Assemble in correct order (no separate auto-flush code, it's in DumpExtensions now)
+    // Wrap user code in a class and method (LINQPad style)
+    const wrappedUserCode = [
+      'public class UserQuery',
+      '{',
+      '    public void Main()',
+      '    {',
+      '        // Auto-flush console for streaming output',
+      '        System.Console.SetOut(new System.IO.StreamWriter(System.Console.OpenStandardOutput()) { AutoFlush = true });',
+      '        System.Console.SetError(new System.IO.StreamWriter(System.Console.OpenStandardError()) { AutoFlush = true });',
+      '        ',
+      '        // User code begins here',
+      ...userCode.map(line => '        ' + line), // Indent user code by 8 spaces
+      '    }',
+      '}',
+      '',
+      '// Execute the user query',
+      'new UserQuery().Main();'
+    ];
+
+    // Assemble in correct order:
+    // 1. Directives and usings
+    // 2. DumpExtensions (top-level class)
+    // 3. UserQuery class with Main method (user code inside)
+    // 4. Execute UserQuery.Main()
     const processedCode = [
       ...directivesAndUsings,
       ...dumpExtensions,
-      ...userCode
+      ...wrappedUserCode
     ].join('\n');
 
     await fs.writeFile(filePath, processedCode, 'utf-8');
