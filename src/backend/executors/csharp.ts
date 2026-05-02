@@ -175,7 +175,13 @@ export class CSharpExecutor {
       }
     }
 
-    // Insert auto-flush code after using statements (using fully-qualified names)
+    // IMPORTANT ORDER for .csx files:
+    // 1. DumpExtensions class MUST come BEFORE any executable code
+    // 2. Auto-flush code (executable) comes after
+    // Otherwise DumpExtensions becomes a nested class (CS1109 error)
+
+    const dumpExtensions = this.getDumpExtensions();
+
     const autoFlushCode = [
       '// Auto-flush console output for real-time streaming',
       'System.Console.SetOut(new System.IO.StreamWriter(System.Console.OpenStandardOutput()) { AutoFlush = true });',
@@ -183,11 +189,8 @@ export class CSharpExecutor {
       ''
     ];
 
-    // Insert DumpExtensions class
-    const dumpExtensions = this.getDumpExtensions();
-
-    // Combine: original code up to insertIndex + auto-flush + dump extensions + rest of code
-    lines.splice(insertIndex, 0, ...autoFlushCode, ...dumpExtensions);
+    // Combine: original code up to insertIndex + DumpExtensions (class) + auto-flush (executable) + rest of code
+    lines.splice(insertIndex, 0, ...dumpExtensions, ...autoFlushCode);
     const processedCode = lines.join('\n');
 
     await fs.writeFile(filePath, processedCode, 'utf-8');
