@@ -2,6 +2,8 @@
 
 A cross-platform code scratchpad and rapid prototyping tool inspired by LINQPad. Execute code snippets across multiple programming languages without the overhead of creating full projects.
 
+![CodePad Screenshot](docs/images/screenshot-1.png)
+
 ## Features
 
 ### ✅ Available Now (Phase 1 MVP - ~85% Complete)
