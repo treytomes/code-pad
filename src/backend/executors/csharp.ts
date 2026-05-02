@@ -69,17 +69,17 @@ export class CSharpExecutor {
     const timeout = options.timeout || 30000;
     const startTime = Date.now();
 
-    logDebug(`Starting C# code execution (timeout: ${timeout}ms)`);
+    _logDebug(`Starting C# code execution (timeout: ${timeout}ms)`);
 
     // Create temporary file for code
     const tempFile = await this.createTempFile(code);
-    logDebug(`Created temp file: ${tempFile}`);
+    _logDebug(`Created temp file: ${tempFile}`);
 
     try {
       const result = await this.runDotnetScript(tempFile, timeout, onOutputChunk);
 
       const executionTime = Date.now() - startTime;
-      logDebug(`C# execution completed: exitCode=${result.exitCode}, time=${executionTime}ms, timedOut=${result.timedOut}`);
+      _logDebug(`C# execution completed: exitCode=${result.exitCode}, time=${executionTime}ms, timedOut=${result.timedOut}`);
 
       return {
         ...result,
