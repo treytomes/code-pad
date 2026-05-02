@@ -1,6 +1,7 @@
 // Electron Main Process
 import * as electron from 'electron';
 import * as path from 'path';
+import * as fs from 'fs';
 import { CSharpExecutor } from '../backend/executors/csharp';
 import { SnippetDatabase } from '../backend/database';
 import { checkRuntimeRequirements, RuntimeInfo } from '../backend/runtime-checker';
@@ -11,6 +12,79 @@ import { logInfo, logError, logWarn, logDebug } from '../shared/logger';
 let mainWindow: electron.BrowserWindow | null = null;
 const csharpExecutor = new CSharpExecutor();
 let snippetDb: SnippetDatabase;
+
+// Window state management
+interface WindowState {
+  width: number;
+  height: number;
+  x?: number;
+  y?: number;
+  isMaximized: boolean;
+}
+
+const defaultWindowState: WindowState = {
+  width: 1200,
+  height: 800,
+  isMaximized: false,
+};
+
+function getWindowStatePath(): string {
+  return path.join(electron.app.getPath('userData'), 'window-state.json');
+}
+
+function loadWindowState(): WindowState {
+  try {
+    const statePath = getWindowStatePath();
+    if (fs.existsSync(statePath)) {
+      const data = fs.readFileSync(statePath, 'utf8');
+      const state = JSON.parse(data);
+      logDebug('Loaded window state', state);
+      return { ...defaultWindowState, ...state };
+    }
+  } catch (error) {
+    logWarn('Failed to load window state, using defaults', error);
+  }
+  return defaultWindowState;
+}
+
+function saveWindowState(state: WindowState): void {
+  try {
+    const statePath = getWindowStatePath();
+    fs.writeFileSync(statePath, JSON.stringify(state, null, 2), 'utf8');
+    logDebug('Saved window state', state);
+  } catch (error) {
+    logError('Failed to save window state', error);
+  }
+}
+
+function getCurrentWindowState(): WindowState | null {
+  if (!mainWindow) return null;
+
+  const bounds = mainWindow.getBounds();
+  const isMaximized = mainWindow.isMaximized();
+
+  return {
+    width: bounds.width,
+    height: bounds.height,
+    x: bounds.x,
+    y: bounds.y,
+    isMaximized,
+  };
+}
+
+function saveCurrentWindowState(): void {
+  const state = getCurrentWindowState();
+  if (state) {
+    // Don't save size when maximized - use the pre-maximized size
+    if (!state.isMaximized) {
+      saveWindowState(state);
+    } else {
+      // Just save the maximized flag
+      const currentSaved = loadWindowState();
+      saveWindowState({ ...currentSaved, isMaximized: true });
+    }
+  }
+}
 
 // Initialize database with error handling
 try {
@@ -24,9 +98,15 @@ try {
 
 function createWindow() {
   logInfo('Creating main window');
+
+  // Load saved window state
+  const windowState = loadWindowState();
+
   mainWindow = new electron.BrowserWindow({
-    width: 1200,
-    height: 800,
+    width: windowState.width,
+    height: windowState.height,
+    x: windowState.x,
+    y: windowState.y,
     webPreferences: {
       preload: path.join(__dirname, '../preload/index.js'),
       contextIsolation: true,
@@ -34,6 +114,11 @@ function createWindow() {
       sandbox: true,
     },
   });
+
+  // Restore maximized state
+  if (windowState.isMaximized) {
+    mainWindow.maximize();
+  }
 
   // Load the app
   if (process.env.VITE_DEV_SERVER_URL) {
@@ -45,6 +130,38 @@ function createWindow() {
     logInfo(`Loading app from file: ${htmlPath}`);
     mainWindow.loadFile(htmlPath);
   }
+
+  // Save window state on resize/move/maximize
+  let saveStateTimeout: NodeJS.Timeout | null = null;
+  const debouncedSaveState = () => {
+    if (saveStateTimeout) {
+      clearTimeout(saveStateTimeout);
+    }
+    saveStateTimeout = setTimeout(() => {
+      saveCurrentWindowState();
+    }, 500); // Debounce by 500ms to avoid excessive writes
+  };
+
+  mainWindow.on('resize', debouncedSaveState);
+  mainWindow.on('move', debouncedSaveState);
+  mainWindow.on('maximize', () => {
+    const state = loadWindowState();
+    saveWindowState({ ...state, isMaximized: true });
+  });
+  mainWindow.on('unmaximize', () => {
+    const state = getCurrentWindowState();
+    if (state) {
+      saveWindowState({ ...state, isMaximized: false });
+    }
+  });
+
+  // Save final state before closing
+  mainWindow.on('close', () => {
+    if (saveStateTimeout) {
+      clearTimeout(saveStateTimeout);
+    }
+    saveCurrentWindowState();
+  });
 
   mainWindow.on('closed', () => {
     logInfo('Main window closed');
