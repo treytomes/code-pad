@@ -160,10 +160,40 @@ code-pad/
 
 ## Documentation
 
-- [Requirements](REQUIREMENTS.md) - Detailed feature requirements
-- [Tech Stack](TECH-STACK.md) - Complete technology specifications
-- [Project Plan](PROJECT-PLAN.md) - Development roadmap
-- [CLAUDE.md](CLAUDE.md) - AI assistant guidance
+### Repository Documentation
+- [Project Plan](PROJECT-PLAN.md) - Development roadmap and milestones
+- [CLAUDE.md](CLAUDE.md) - AI assistant guidance for development
+- [CHANGELOG.md](CHANGELOG.md) - Release history
+- [CONTRIBUTING.md](CONTRIBUTING.md) - Contribution guidelines
+
+### Wiki Documentation
+Comprehensive documentation is available in the [project wiki](https://github.com/treytomes/code-pad/wiki):
+
+**Getting Started:**
+- [Home / Getting Started](https://github.com/treytomes/code-pad/wiki/Home)
+
+**Setup Guides:**
+- [Windows Setup](https://github.com/treytomes/code-pad/wiki/Windows-Setup)
+- [WSL Setup](https://github.com/treytomes/code-pad/wiki/WSL-Setup)
+- [WSLg Quick Start](https://github.com/treytomes/code-pad/wiki/WSLg-Quick-Start)
+- [Setup Scripts](https://github.com/treytomes/code-pad/wiki/Setup-Scripts)
+
+**Architecture & Design:**
+- [Architecture Overview](https://github.com/treytomes/code-pad/wiki/Architecture)
+- [Tech Stack](https://github.com/treytomes/code-pad/wiki/Tech-Stack)
+- [Requirements](https://github.com/treytomes/code-pad/wiki/Requirements)
+- [.Dump() Extension Design](https://github.com/treytomes/code-pad/wiki/Dump-Extension-Design)
+
+**Development:**
+- [Logging](https://github.com/treytomes/code-pad/wiki/Logging)
+- [Test Coverage](https://github.com/treytomes/code-pad/wiki/Test-Coverage)
+- [Testing Checklist](https://github.com/treytomes/code-pad/wiki/Testing-Checklist)
+
+**Troubleshooting:**
+- [Electron WSL Issue](https://github.com/treytomes/code-pad/wiki/Electron-WSL-Issue)
+- [Better SQLite3 Fix](https://github.com/treytomes/code-pad/wiki/Better-SQLite3-Fix)
+- [VSCode Debug Fix](https://github.com/treytomes/code-pad/wiki/VSCode-Debug-Fix)
+- [More troubleshooting guides...](https://github.com/treytomes/code-pad/wiki)
 
 ## License
 
