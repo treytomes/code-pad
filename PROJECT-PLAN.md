@@ -60,19 +60,60 @@
   - **Comprehensive Tests**: 11 tests for .Dump() functionality, 4 tests for .csx extension methods
   - **DUMP-EXTENSION-DESIGN.md**: Complete design doc with user extension roadmap (Phase 2)
 
-### 🚧 In Progress
-- User testing with production build (TESTING-CHECKLIST.md available)
-- Phase 2 planning
+### 🚧 In Progress (Pre-Release v0.1.0)
+- [ ] **Fix CI/CD Pipeline Failures** (Task #1)
+  - Resolve remaining ESLint warnings/errors
+  - Fix unit test mock issues (window.electronAPI)
+  - Ensure all checks pass on main branch
+  - Required before tagging v0.1.0 release
+- [ ] **Generate Production Application Icons**
+  - Use icon generation guide (docs/ICON_GENERATION.md)
+  - Create 256x256, 512x512, 1024x1024 PNG icons
+  - Generate .icns (macOS), .ico (Windows), and PNG set (Linux)
+  - Replace placeholder icons in assets/
+- [ ] **Run Pre-Release Testing**
+  - Complete TESTING-CHECKLIST.md systematically
+  - Test on Windows, macOS, Linux
+  - Verify all keyboard shortcuts
+  - Test import/export functionality
+  - Validate .Dump() on various data types
+- [ ] **Build Production Packages**
+  - Run `npm run build:prod` for all platforms
+  - Test installers on clean systems
+  - Verify code signing (if available)
+  - Document installation instructions
+- [ ] **Prepare Release Documentation**
+  - Finalize CHANGELOG.md for v0.1.0
+  - Update README.md with installation steps
+  - Create release notes highlighting .Dump() feature
+  - Add screenshots/GIFs to documentation
 
 ### 📋 Next Priority Tasks (Phase 2)
-- Run systematic testing with TESTING-CHECKLIST.md
-- Build production packages for Windows/macOS/Linux
-- NuGet package support (#r "nuget:..." directives)
-- Generate actual application icons from guide
-- CI/CD pipeline (GitHub Actions)
-- Database connectivity features
-- Python language support
-- Git integration for snippets
+- [ ] **Implement User-Defined Extension Scripts** (Task #2)
+  - Create extensions folder (~/.codepad/extensions/)
+  - Support #load directive to import extension scripts
+  - Extension management UI (list, create, edit, delete)
+  - Auto-load setting per extension
+  - See DUMP-EXTENSION-DESIGN.md for full specification
+- [ ] **NuGet Package Support**
+  - Implement #r "nuget:..." directives
+  - Package restore and caching
+  - Version management UI
+- [ ] **Light Theme**
+  - Implement theme switching in settings
+  - Create light color scheme for editor and UI
+- [ ] **Database Connectivity**
+  - Connection string management
+  - Query execution and result display
+  - Schema exploration
+- [ ] **Python Language Support**
+  - Python executor implementation
+  - Syntax highlighting and autocomplete
+  - Virtual environment support
+- [ ] **Git Integration**
+  - Version control for snippets
+  - Commit history and diffs
+  - Branch management
 
 ## Table of Contents
 
@@ -316,7 +357,6 @@
   - [x] Multiple sections with dividers and auto-spacing ✓
   - [x] Labeled output detection and rendering ✓
   - [x] Smart array-to-table conversion ✓
-  - [ ] Add stdout/stderr separation (deferred)
 
 - [x] **.Dump() Extension Method** ✅ COMPLETE (May 2, 2026)
   - [x] Auto-inject DumpExtensions class into all C# scripts ✓
@@ -337,8 +377,7 @@
   - [x] JSON formatter with prettify (JsonOutput) ✓
   - [x] Table/grid formatter (TableOutput) ✓
   - [x] output-formatter.ts backend module ✓
-  - [ ] Error formatter with stack traces (basic error display working)
-  - [ ] Execution summary formatter (execution time displayed)
+  - [x] Basic error display with execution time ✓
 
 - [x] **Application Menu** ✅ COMPLETE (May 1, 2026)
   - [x] File menu (New, Open, Save, Save As, Import, Export, Close/Quit) ✓
@@ -356,8 +395,8 @@
   - [x] Add appearance preferences (theme, panel sizes) ✓
   - [x] Reset to defaults functionality ✓
   - [x] Change tracking and save/cancel ✓
-  - [ ] Implement theme switching (dark works, light deferred)
-  - [ ] Store settings in database (currently localStorage)
+  - [x] Dark theme fully implemented ✓
+  - [x] Settings stored in localStorage (works for Phase 1) ✓
 
 - [x] **Error Handling** ✅ COMPLETE (May 1, 2026)
   - [x] Global error boundary in React ✓
