@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { List, Button, Empty, Popconfirm, Typography, Select, Input, Space, Divider } from 'antd';
+import { List, Button, Empty, Popconfirm, Typography, Select, Input, Space, Divider, Tabs } from 'antd';
 import {
   DeleteOutlined,
   PlayCircleOutlined,
@@ -12,8 +12,11 @@ import {
   ClockCircleOutlined,
   SearchOutlined,
   CopyOutlined,
+  BookOutlined,
+  FolderOutlined,
 } from '@ant-design/icons';
 import type { Snippet } from '../../../backend/database';
+import { SAMPLES, SAMPLE_CATEGORIES, type SampleSnippet } from '../../../shared/samples';
 
 const { Text } = Typography;
 const { Option } = Select;
@@ -261,6 +264,75 @@ export const SnippetList: React.FC<SnippetListProps> = ({
     </List.Item>
   );
 
+  // Render a sample snippet item
+  const renderSampleItem = (sample: SampleSnippet) => (
+    <List.Item
+      onClick={() => {
+        // Convert sample to snippet format for loading
+        onSelectSnippet({
+          id: sample.id,
+          name: sample.name,
+          language: sample.language,
+          code: sample.code,
+          createdAt: new Date().toISOString(),
+          modifiedAt: new Date().toISOString(),
+          executionCount: 0,
+          starred: false,
+          lastOpened: null,
+        } as Snippet);
+      }}
+      style={{
+        padding: '12px 16px',
+        cursor: 'pointer',
+        borderBottom: '1px solid #2d2d30',
+        transition: 'background 0.2s',
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.background = '#2a2d2e';
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.background = 'transparent';
+      }}
+    >
+      <List.Item.Meta
+        avatar={<BookOutlined style={{ fontSize: '20px', color: '#4ec9b0' }} />}
+        title={
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Text strong style={{ color: '#cccccc', flex: 1 }}>
+              {sample.name}
+            </Text>
+            <Button
+              type="text"
+              size="small"
+              icon={<CopyOutlined />}
+              onClick={(e) => {
+                e.stopPropagation();
+                onDuplicateSnippet({
+                  id: sample.id,
+                  name: `${sample.name} (Copy)`,
+                  language: sample.language,
+                  code: sample.code,
+                  createdAt: new Date().toISOString(),
+                  modifiedAt: new Date().toISOString(),
+                  executionCount: 0,
+                  starred: false,
+                  lastOpened: null,
+                } as Snippet);
+              }}
+              style={{ color: '#858585' }}
+              title="Copy to My Snippets"
+            />
+          </div>
+        }
+        description={
+          <Text type="secondary" style={{ fontSize: '12px', color: '#858585' }}>
+            {sample.description}
+          </Text>
+        }
+      />
+    </List.Item>
+  );
+
   return (
     <div
       style={{
@@ -270,14 +342,27 @@ export const SnippetList: React.FC<SnippetListProps> = ({
         background: '#252526',
       }}
     >
-      <div
-        style={{
-          padding: '8px',
-          borderBottom: '1px solid #2d2d30',
-          background: '#252526',
-        }}
-      >
-        <Space direction="vertical" style={{ width: '100%' }} size="small">
+      <Tabs
+        defaultActiveKey="my-snippets"
+        style={{ height: '100%' }}
+        items={[
+          {
+            key: 'my-snippets',
+            label: (
+              <span>
+                <FolderOutlined /> My Snippets
+              </span>
+            ),
+            children: (
+              <>
+                <div
+                  style={{
+                    padding: '8px',
+                    borderBottom: '1px solid #2d2d30',
+                    background: '#252526',
+                  }}
+                >
+                  <Space direction="vertical" style={{ width: '100%' }} size="small">
           <Select
             placeholder="Filter by language"
             allowClear
@@ -406,6 +491,53 @@ export const SnippetList: React.FC<SnippetListProps> = ({
           renderItem={(snippet) => renderSnippetItem(snippet)}
         />
       </div>
+              </>
+            ),
+          },
+          {
+            key: 'samples',
+            label: (
+              <span>
+                <BookOutlined /> Samples
+              </span>
+            ),
+            children: (
+              <div style={{ height: '100%', overflowY: 'auto', background: '#252526' }}>
+                {SAMPLE_CATEGORIES.map((category) => {
+                  const samples = SAMPLES.filter((s) => s.category === category);
+                  return (
+                    <div key={category}>
+                      <div
+                        style={{
+                          padding: '12px 12px 8px',
+                          borderBottom: '1px solid #2d2d30',
+                          background: '#1e1e1e',
+                        }}
+                      >
+                        <Text strong style={{ color: '#4ec9b0' }}>
+                          {category}
+                        </Text>
+                      </div>
+                      <List
+                        dataSource={samples}
+                        renderItem={renderSampleItem}
+                        split={false}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+            ),
+          },
+        ]}
+        tabBarStyle={{
+          background: '#252526',
+          borderBottom: '1px solid #2d2d30',
+          margin: 0,
+          padding: '0 8px',
+        }}
+        className="snippet-tabs"
+      />
     </div>
   );
 };
