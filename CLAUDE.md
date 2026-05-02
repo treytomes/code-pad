@@ -2,429 +2,657 @@
 
 ## Project Overview
 
-**CodePad** is a cross-platform alternative to LINQPad - a rapid development tool and code scratchpad for .NET developers.
+**CodePad** is a cross-platform code scratchpad inspired by LINQPad - a rapid prototyping tool for C# developers.
 
-### What is LINQPad?
+### Mission
 
-LINQPad is a Windows/.NET tool that serves as "The .NET Programmer's Playground". It allows developers to:
-- Instantly test C#/F#/VB snippets or full programs
-- Query databases using LINQ or SQL
-- Prototype code rapidly without creating full console projects
-- Experience rich output formatting and interactive debugging
-- Reference NuGet packages and custom assemblies
-
-### Our Goal
-
-Create a **cross-platform** (Linux, macOS, Windows) version that supports multiple languages and runtimes:
-- .NET (C#, F#, VB) - **Primary focus for MVP**
-- Python
-- JavaScript/TypeScript (Node.js)
-- Go
-- Rust
-- Java
+Enable developers to write, execute, and visualize code instantly without project setup overhead. Focus on exploration, experimentation, and learning.
 
 ---
 
-## Current Project Status (2026-05-01)
+## Current Status (2026-05-02)
 
-### Phase Complete ✅
-**Phase 0 Week 1 - Foundation**: COMPLETE
+### ✅ Phase 1 Complete - v0.1.0 Pre-Release Ready
 
-### What's Built ✅
-- ✅ Full project documentation (9 files, 1200+ lines)
-- ✅ Build system (TypeScript, Vite, ESLint, Prettier)
-- ✅ All dependencies installed (React 19, Electron 30, Monaco Editor, Ant Design, Zustand, better-sqlite3)
-- ✅ VS Code workspace fully configured (tasks, debugging, extensions)
-- ✅ Source code written (Electron main, preload, React renderer)
-- ✅ Python 3.11 venv for native module builds
-- ✅ WSLg configured with GTK libraries
-- ✅ Project copied to Windows for GUI testing
+**What's Built**:
+- ✅ C# code execution using dotnet build
+- ✅ LINQPad-style .Dump() extension method
+- ✅ Samples tab with 12 categorized examples
+- ✅ Full snippet management (CRUD, star, search)
+- ✅ Window state persistence with off-screen protection
+- ✅ Configurable timeout and Stop button
+- ✅ Monaco Editor with IntelliSense
+- ✅ Settings modal (editor, execution, appearance)
+- ✅ Import/Export functionality
+- ✅ Automated E2E tests (20+ tests with Playwright)
+- ✅ CI/CD pipeline (GitHub Actions)
+- ✅ Complete documentation (README, CHANGELOG, Release Notes, Wiki)
+- ✅ SVG icon and generation scripts
 
-### Known Issues ⚠️
-**CRITICAL**: Electron module loading broken in WSL (see ELECTRON-WSL-ISSUE.md)
-- Symptom: `require('electron')` returns undefined exports even when running inside Electron
-- Impact: Cannot test GUI in WSL
-- Workaround: Use Windows for GUI development (project copied to `C:\Users\TreyTomes\projects\code-pad`)
-- Backend development unaffected: C# execution, database, tests can all be done in WSL
+**Remaining for Release**:
+- Issue #1: CI/CD verification (waiting on current run - likely complete)
+- Issue #4: Build production packages (test installers)
 
-### Next Phase 📋
-**Phase 0 Week 2 - Backend PoCs** (Can be done in WSL):
-1. C# Execution Engine (Days 1-2)
-   - Install: `dotnet tool install -g dotnet-script`
-   - Implement: `src/backend/executors/csharp.ts`
-   - Test: Execute C# code via `dotnet script file.csx`
-2. Database Layer (Days 3-4)
-   - Implement: `src/backend/database.ts`
-   - Schema: snippets, tags, settings tables
-   - Use: better-sqlite3 (already installed)
+**Milestone**: [v0.1.0 - Pre-Release](https://github.com/treytomes/code-pad/milestone/1)  
+**Project Board**: https://github.com/users/treytomes/projects/2
 
 ---
 
-## Project Structure (Actual)
+## Development Workflow: Spec-Driven Development
 
-```
-code-pad/
-├── CLAUDE.md                      # This file - project guidance
-├── START-HERE.md                  # Quick entry point for new sessions
-├── README.md                      # User-facing documentation
-├── REQUIREMENTS.md                # Detailed feature specifications
-├── TECH-STACK.md                  # Technology decisions
-├── PROJECT-PLAN.md                # 4-phase development roadmap
-├── ELECTRON-WSL-ISSUE.md          # Critical Electron blocker documentation
-├── WINDOWS-SETUP.md               # Windows development instructions
-├── WSL-SETUP.md                   # WSL environment documentation
-├── WSLG-QUICK-START.md           # WSLg GUI setup guide
-│
-├── claude-journal/                # Session continuity notes
-│   ├── README.md                  # About the journal
-│   ├── quick-reference.md         # Quick status (read this first!)
-│   └── 2026-05-01-session-summary.md  # Full session log
-│
-├── src/
-│   ├── main/index.ts              # Electron main process (CommonJS)
-│   ├── preload/index.ts           # Context bridge for security
-│   ├── renderer/                  # React frontend (ESM)
-│   │   ├── App.tsx                # Main React component
-│   │   ├── index.tsx              # React entry point
-│   │   ├── components/            # UI components (to be built)
-│   │   ├── stores/                # Zustand state management
-│   │   └── styles/index.css       # Tailwind CSS
-│   ├── backend/                   # Execution engine (to be built)
-│   │   ├── executors/             # Language-specific executors
-│   │   │   └── csharp.ts          # C# executor (Phase 0 Week 2)
-│   │   └── database.ts            # SQLite wrapper (Phase 0 Week 2)
-│   └── shared/types.ts            # TypeScript interfaces
-│
-├── tests/                         # Test suite
-│   ├── unit/                      # Unit tests (Vitest)
-│   ├── integration/               # Integration tests
-│   └── e2e/                       # E2E tests (Playwright)
-│
-├── .vscode/                       # VS Code configuration
-│   ├── tasks.json                 # 12 npm task definitions
-│   ├── launch.json                # Debug configurations
-│   ├── settings.json              # Workspace settings
-│   └── extensions.json            # Recommended extensions
-│
-├── venv/                          # Python 3.11 virtual environment
-├── node_modules/                  # npm dependencies
-├── dist/                          # Build output
-│   ├── main/index.js              # Compiled main process (CommonJS)
-│   ├── preload/index.js           # Compiled preload
-│   └── renderer/                  # Built React app
-├── package.json                   # npm configuration (NO "type": "module")
-├── tsconfig.json                  # TypeScript config (renderer - ESM)
-├── tsconfig.main.json             # TypeScript config (main/backend - CommonJS)
-└── vite.config.ts                 # Vite bundler configuration
-```
+### 🎯 Core Principle
 
----
+**Write specifications BEFORE implementation code.**
 
-## Technology Stack (DECIDED ✅)
+Specifications can be:
+1. **GitHub Issue** with detailed acceptance criteria
+2. **Feature spec document** in `specs/` directory
+3. **Automated tests** that expect the behavior (TDD)
+4. **TypeScript interfaces** defining contracts
 
-### Frontend
-- **Framework**: React 19 with TypeScript
-- **Desktop**: Electron 30 (downgraded from 41 for testing, can upgrade later)
-- **Editor**: Monaco Editor (VS Code's editor component)
-- **UI Components**: Ant Design
-- **State Management**: Zustand
-- **Styling**: Tailwind CSS + CSS Modules
-- **Build Tool**: Vite
+### Why Spec-Driven Development?
 
-### Backend
-- **Runtime**: Node.js 22.11.0 (via nvm)
-- **Language**: TypeScript
-- **Module System**: CommonJS for main/backend, ESM for renderer
-- **Database**: SQLite with better-sqlite3 v9.6.0
-- **C# Execution**: dotnet-script (via `dotnet script` CLI)
+- **Reduces frustration**: Clear requirements before coding eliminates guesswork
+- **Improves collaboration**: Anyone can implement from a good spec
+- **Prevents scope creep**: Spec is the contract
+- **Catches edge cases early**: Thinking through specs reveals corner cases
+- **Easier maintenance**: Specs explain "why" when code only shows "how"
+- **Refactoring confidence**: Tests based on specs survive implementation changes
 
-### Development Tools
-- **Package Manager**: npm
-- **Linting**: ESLint
-- **Formatting**: Prettier
-- **Git Hooks**: Husky + lint-staged
-- **Testing**: Vitest (unit), Playwright (E2E)
+### Workflow for New Features
 
----
+#### 1. **Specification Phase** (Do This First!)
 
-## Important Technical Decisions
-
-### 1. Module Format: CommonJS vs ESM
-**Decision**: Use CommonJS for Electron main/preload, ESM for renderer
-**Reason**: Electron expects CommonJS. ES modules caused module loading issues.
-**Implementation**: 
-- `package.json` has NO `"type": "module"`
-- `tsconfig.main.json` outputs CommonJS
-- `tsconfig.json` outputs ESM for renderer
-
-### 2. better-sqlite3 Version
-**Decision**: Use v9.6.0 instead of latest (v12+)
-**Reason**: AlmaLinux 8 has GCC 8.5 which only supports C++17, not C++20
-**Workaround**: Python 3.11 venv for building native modules
-**Command**: `export PYTHON="$(pwd)/venv/bin/python" && npm install`
-
-### 3. Electron Version
-**Decision**: Currently using Electron 30 (downgraded from 41)
-**Reason**: Testing if version was the issue (it wasn't - WSL issue)
-**Future**: Can upgrade to 41+ once Electron works (test on Windows first)
-
-### 4. Development Environment Split
-**Decision**: Backend dev in WSL, GUI dev on Windows
-**Reason**: Electron module loading broken in WSL (documented in ELECTRON-WSL-ISSUE.md)
-**Workflow**:
-- Edit code: WSL (VS Code Remote-WSL)
-- Backend/tests: WSL (no GUI needed)
-- GUI testing: Windows (copy or sync via Git)
-
----
-
-## Environment-Specific Notes
-
-### WSL (AlmaLinux 8.10)
-**What Works**:
-- ✅ Build system (TypeScript, Vite)
-- ✅ All dependencies
-- ✅ Backend development
-- ✅ Unit tests
-- ✅ Database operations (SQLite)
-- ✅ VS Code Remote-WSL
-
-**What's Blocked**:
-- ❌ Electron GUI (module loading issue)
-- See: ELECTRON-WSL-ISSUE.md for full details
-
-**Setup Requirements**:
-- Python 3.11 venv: `source venv/bin/activate`
-- For npm install: `export PYTHON="$(pwd)/venv/bin/python"`
-- WSLg GUI libraries already installed (gtk3, etc.)
-
-### Windows (C:\Users\TreyTomes\projects\code-pad)
-**What Works**:
-- ✅ Everything (no known blockers)
-- ✅ Electron GUI (expected to work, needs testing)
-
-**Setup**:
-1. `npm install` (no Python venv needed)
-2. `npm run build`
-3. `npm run electron:dev`
-
-See: WINDOWS-SETUP.md for detailed instructions
-
----
-
-## Critical Files for Resuming Work
-
-### Session Continuity
-1. **START-HERE.md** - Read this first! (2 min)
-2. **claude-journal/quick-reference.md** - Quick status and next steps (2 min)
-3. **claude-journal/2026-05-01-session-summary.md** - Complete session log (10 min)
-
-### Technical Reference
-1. **TECH-STACK.md** - All technology decisions explained
-2. **PROJECT-PLAN.md** - Phase 0 Week 2 tasks in detail
-3. **REQUIREMENTS.md** - Feature specifications
-
-### Issue Documentation
-1. **ELECTRON-WSL-ISSUE.md** - Why GUI blocked in WSL, workarounds
-2. **WINDOWS-SETUP.md** - How to set up and run on Windows
-3. **WSL-SETUP.md** - WSL environment details
-
----
-
-## Commands Quick Reference
-
-### Development (WSL)
+**a) Create GitHub Issue**
 ```bash
-# Activate Python venv (for npm install with native modules)
-source venv/bin/activate
-export PYTHON="$(pwd)/venv/bin/python"
-
-# Build
-npm run build                # Full build
-npm run build:main          # Main process only (TypeScript → CommonJS)
-npm run build:renderer      # Renderer only (Vite → ESM bundle)
-
-# Test (no GUI)
-npm test                    # Unit tests with Vitest
-npm run lint               # ESLint
-npm run format             # Prettier
-
-# GUI (BLOCKED in WSL)
-npm run electron:dev       # Won't work, see ELECTRON-WSL-ISSUE.md
+gh issue create --title "Feature: Allow execution timeout to be disabled" \
+                --label enhancement \
+                --milestone "v0.1.0 - Pre-Release"
 ```
 
-### Development (Windows)
-```powershell
-cd C:\Users\TreyTomes\projects\code-pad
+**b) Write Detailed Specification** (in issue or `specs/` for complex features)
 
-# First time setup
-npm install
-npm run build
+Required sections:
+- **User Story**: "As a [role], I want [feature] so that [benefit]"
+- **Acceptance Criteria**: Testable checklist of requirements
+- **Edge Cases**: Null/empty inputs, boundary conditions, error scenarios
+- **API/Interface Contract**: TypeScript interfaces if applicable
+- **UI Mockup**: If UI change (screenshot, description, or ASCII art)
 
-# Run GUI (should work!)
+**Example Issue Template**:
+```markdown
+## User Story
+As a developer running long data processing tasks, I want to disable the execution timeout so that my script can run until completion without being terminated.
+
+## Acceptance Criteria
+- [ ] Settings modal has timeout field accepting 0 (disabled)
+- [ ] When timeout=0, script runs indefinitely until complete
+- [ ] Stop button still works to cancel execution
+- [ ] UI shows "(no timeout)" when timeout=0
+- [ ] Setting persists across app restarts
+
+## Edge Cases
+- [ ] Handles corrupted settings (invalid timeout value)
+- [ ] Works with existing timeouts (migration path)
+- [ ] Stop button terminates even with no timeout
+
+## API Contract
+\`\`\`typescript
+interface ExecutionOptions {
+  timeout?: number; // 0 = disabled, >0 = milliseconds
+}
+\`\`\`
+
+## Related
+- Depends on: #30 (execution timing)
+- Enables: #32 (long-running examples)
+```
+
+**c) For Complex Features: Create Spec Document**
+
+```bash
+# Create specs directory if it doesn't exist
+mkdir -p specs
+
+# Write detailed spec
+cat > specs/execution-timeout-control.md << 'EOF'
+# Execution Timeout Control
+
+## Overview
+Allow users to configure or disable execution timeouts for long-running scripts.
+
+## User Stories
+1. As a data scientist, I want to disable timeouts so my data processing completes
+2. As a learner, I want quick timeouts (5s) so I don't wait for infinite loops
+
+## Requirements
+### Functional
+- FR-1: Settings UI allows timeout configuration (0, 5s-300s)
+- FR-2: Timeout=0 means "run indefinitely"
+- FR-3: Stop button always works regardless of timeout
+- FR-4: Current timeout displayed during execution
+
+### Non-Functional
+- NFR-1: Setting persists in localStorage
+- NFR-2: Default timeout remains 30s
+- NFR-3: UI clearly indicates "no timeout" state
+
+## API Design
+\`\`\`typescript
+// Executor interface
+interface CodeExecutor {
+  execute(code: string, options: ExecutionOptions): Promise<ExecutionResult>;
+  stop(): void; // Always available
+}
+
+interface ExecutionOptions {
+  timeout?: number; // 0=disabled, undefined=default (30000), >0=milliseconds
+}
+\`\`\`
+
+## UI Changes
+- Settings > Execution tab: Timeout input field
+  - Label: "Execution Timeout (0 = disabled)"
+  - Input: Number, min=0, max=300000, step=5000
+  - Help text: "Set to 0 to disable timeout and run indefinitely"
+
+## Test Cases
+| Test ID | Scenario | Expected Result |
+|---------|----------|----------------|
+| TC-1 | timeout=30000, simple code | Completes in <30s |
+| TC-2 | timeout=0, infinite loop + Stop | Stops when user clicks |
+| TC-3 | timeout=5000, 10s script | Times out at 5s |
+| TC-4 | Restart app | Timeout setting restored |
+
+## Implementation Plan
+1. Update ExecutionOptions interface
+2. Modify CSharpExecutor.execute() to handle timeout=0
+3. Update Settings modal UI
+4. Add localStorage persistence
+5. Write E2E tests (4 tests)
+6. Update documentation
+
+## Acceptance
+- [ ] All test cases pass
+- [ ] E2E tests added and passing
+- [ ] Documentation updated
+- [ ] Code reviewed
+- [ ] No regressions in existing tests
+EOF
+```
+
+#### 2. **Test-Driven Development** (Write Tests First)
+
+**Before writing implementation**, write tests that expect the behavior:
+
+```typescript
+// tests/e2e/execution-timeout.spec.ts
+import { test, expect } from '@playwright/test';
+import { launchApp, closeApp, typeInEditor, clickRun, waitForExecutionComplete } from './helpers/electron';
+
+test.describe('Execution Timeout Control', () => {
+  test('should allow timeout to be set to 0 (disabled)', async () => {
+    const { app, window } = await launchApp();
+    
+    try {
+      // Open settings
+      await window.locator('button[title*="Settings"]').click();
+      
+      // Navigate to Execution tab
+      await window.locator('text=Execution').click();
+      
+      // Set timeout to 0
+      const timeoutInput = window.locator('input[type="number"]').first();
+      await timeoutInput.fill('0');
+      
+      // Save settings
+      await window.locator('button:has-text("Save")').click();
+      
+      // Verify setting saved (modal closes)
+      await window.locator('.ant-modal').waitFor({ state: 'hidden' });
+    } finally {
+      await closeApp(app);
+    }
+  });
+
+  test('should run indefinitely when timeout=0', async () => {
+    const { app, window } = await launchApp();
+    
+    try {
+      // TODO: Set timeout to 0 in settings first
+      
+      // Type infinite loop with output
+      const code = `for (int i = 0; i < 100; i++) {
+        Console.WriteLine($"Iteration {i}");
+        System.Threading.Thread.Sleep(100);
+      }`;
+      
+      await typeInEditor(window, code);
+      await clickRun(window);
+      
+      // Wait longer than default timeout (30s) - should still be running
+      await window.waitForTimeout(35000);
+      
+      // Verify still running (Stop button visible)
+      await expect(window.locator('button:has-text("Stop")')).toBeVisible();
+    } finally {
+      await closeApp(app);
+    }
+  });
+});
+```
+
+**Tests should fail initially** - that's expected! They define what success looks like.
+
+#### 3. **Implementation Phase**
+
+Now implement to make the tests pass:
+
+```typescript
+// src/backend/executors/csharp.ts
+export interface ExecutionOptions {
+  timeout?: number; // 0 = disabled, undefined = default (30000), >0 = milliseconds
+}
+
+async execute(code: string, options: ExecutionOptions = {}) {
+  const timeout = options.timeout ?? 30000; // Default to 30s
+  
+  if (timeout === 0) {
+    // No timeout - run indefinitely
+    // Don't set up timeout timer
+  } else {
+    // Set up timeout
+    setTimeout(() => {
+      // Kill process
+    }, timeout);
+  }
+}
+```
+
+**Implementation Rules**:
+- ✅ Implement only what's in the spec
+- ✅ Make tests pass one by one
+- ✅ Refactor for clarity after tests pass
+- ❌ Don't add features not in the spec ("gold plating")
+- ❌ Don't skip edge cases defined in spec
+
+#### 4. **Verification Phase**
+
+**Before closing the issue**:
+- [ ] All automated tests pass
+- [ ] Manual testing confirms UX
+- [ ] Documentation updated (if user-facing)
+- [ ] Code reviewed (or self-reviewed against spec)
+- [ ] No regressions (existing tests still pass)
+
+```bash
+# Run tests
+npm test              # Unit tests
+npm run test:e2e      # E2E tests
+npm run lint          # Linting
+npm run typecheck     # Type checking
+
+# Manual testing
 npm run electron:dev
+# Test the feature interactively
 ```
 
-### VS Code (WSL or Windows)
-```
-Ctrl+Shift+B     # Build project
-F5               # Start debugging
-Ctrl+Shift+P     # Command Palette → "Tasks: Run Task"
-```
+#### 5. **Completion**
 
----
-
-## Development Guidelines
-
-### GitHub Issue Workflow
-
-**IMPORTANT**: Always create a GitHub Issue before beginning work on any feature or bug fix.
-
-**Workflow**:
-1. **Before starting**: Create a GitHub issue describing the work
-   - Use clear, descriptive title
-   - Include acceptance criteria and implementation notes
-   - Add appropriate labels (enhancement, bug, documentation)
-   - Assign to appropriate milestone (v0.1.0, Phase 2, Phase 3, Phase 4)
-   - Reference related issues if applicable
-
-2. **During work**: Reference the issue number in commits
-   - Use format: `feat: Add feature (#28)` or `fix: Fix bug (closes #28)`
-   - Link pull requests to the issue
-
-3. **After completion**: Close the issue
-   - Verify all acceptance criteria met
-   - Update project board status
-   - Link to merged PR or commit
-
-**When to create issues**:
-- ✅ New features or enhancements
-- ✅ Bug fixes
-- ✅ Documentation updates
-- ✅ Refactoring work
-- ✅ Performance improvements
-- ❌ Trivial typo fixes (can skip for obvious typos)
-- ❌ Formatting/linting changes (unless substantial)
-
-**Example**:
 ```bash
-# Create issue first
-gh issue create --title "Persist output panel height" --label enhancement
+# Commit with issue reference
+git add -A
+git commit -m "feat: Add configurable execution timeout (#31)
 
-# Reference in commit
-git commit -m "feat: Persist output panel height across sessions (#28)"
+Implements spec in issue #31 for disabling execution timeout.
 
-# Close when done
-gh issue close 28 --comment "Implemented in commit abc123"
+Changes:
+- Allow timeout=0 in ExecutionOptions (means disabled)
+- Update Settings modal with timeout input field
+- Add E2E tests for timeout control
+- Persist timeout setting in localStorage
+
+Fixes #31"
+
+# Close issue
+gh issue close 31 --comment "Implemented in commit $(git rev-parse HEAD)"
 ```
-
-**Project Board**: https://github.com/users/treytomes/projects/2 (Public - showcases collaboration)  
-**All Issues**: https://github.com/treytomes/code-pad/issues  
-**Repository Projects**: https://github.com/treytomes/code-pad/projects
 
 ---
 
-### Documentation and Wiki Workflow
+## Spec Templates
 
-**IMPORTANT**: All documentation must be added to the GitHub Wiki, not as markdown files in the repository root.
+### GitHub Issue Template (Simple Features)
 
-**Repository Root Files** (only these should exist):
-- ✅ `README.md` - Main project readme
+```markdown
+## User Story
+As a [role], I want [feature] so that [benefit].
+
+## Acceptance Criteria
+- [ ] Criterion 1 (testable)
+- [ ] Criterion 2 (testable)
+- [ ] Criterion 3 (testable)
+
+## Edge Cases
+- [ ] Edge case 1
+- [ ] Edge case 2
+
+## API/Interface (if applicable)
+\`\`\`typescript
+interface Foo {
+  bar: string;
+}
+\`\`\`
+
+## UI Changes (if applicable)
+- Button added to toolbar
+- Modal displays settings form
+- Error message shows on validation failure
+
+## Related
+- Depends on: #XX
+- Blocks: #YY
+- Related: #ZZ
+```
+
+### Feature Spec Document Template (Complex Features)
+
+```markdown
+# Feature Name
+
+## Overview
+Brief description of what this feature does and why it exists.
+
+## User Stories
+1. As a [role], I want [feature] so that [benefit]
+2. As a [role], I want [feature] so that [benefit]
+
+## Requirements
+
+### Functional Requirements
+- FR-1: System shall do X
+- FR-2: User can do Y
+- FR-3: Feature handles Z
+
+### Non-Functional Requirements
+- NFR-1: Performance requirement
+- NFR-2: Security requirement
+- NFR-3: Usability requirement
+
+## API/Interface Design
+\`\`\`typescript
+// Complete type definitions
+interface Feature {
+  method(param: Type): ReturnType;
+}
+\`\`\`
+
+## UI/UX Design
+- Wireframes, mockups, or detailed descriptions
+- User interaction flows
+- Error states and messages
+
+## Data Model
+- Database schema changes
+- Data structures
+- Migration requirements
+
+## Test Cases
+| ID | Scenario | Input | Expected Output |
+|----|----------|-------|-----------------|
+| TC-1 | Happy path | Valid input | Success |
+| TC-2 | Error case | Invalid input | Error message |
+| TC-3 | Edge case | Boundary value | Handles gracefully |
+
+## Implementation Plan
+1. Step 1: Task description
+2. Step 2: Task description
+3. Step 3: Task description
+
+## Dependencies
+- Requires: Feature X
+- Blocks: Feature Y
+- Related: Feature Z
+
+## Acceptance Criteria
+- [ ] All test cases pass
+- [ ] E2E tests written and passing
+- [ ] Documentation updated
+- [ ] Code reviewed
+- [ ] No performance regressions
+- [ ] Accessible (keyboard navigation, screen readers)
+
+## Out of Scope
+- Feature A (deferred to Phase 2)
+- Feature B (won't implement)
+
+## Open Questions
+- Question 1?
+- Question 2?
+```
+
+---
+
+## GitHub Issue Workflow
+
+### Creating Issues
+
+**ALWAYS create an issue before starting work** (except trivial typos).
+
+```bash
+# Create enhancement
+gh issue create --title "feat: Add keyboard shortcut for clear output" \
+                --label enhancement \
+                --milestone "v0.2.0"
+
+# Create bug report
+gh issue create --title "bug: Window position not saved on Linux" \
+                --label bug \
+                --milestone "v0.1.0 - Pre-Release"
+
+# Create documentation task
+gh issue create --title "docs: Document .Dump() usage patterns" \
+                --label documentation \
+                --milestone "v0.1.0 - Pre-Release"
+```
+
+**Issue Labels**:
+- `enhancement` - New feature or improvement
+- `bug` - Something isn't working
+- `documentation` - Documentation updates
+- `testing` - Test additions or fixes
+- `refactor` - Code cleanup or reorganization
+- `performance` - Performance improvements
+- `security` - Security issues
+
+**Issue Milestones**:
+- `v0.1.0 - Pre-Release` - Current release
+- `Phase 2` - Multi-language, NuGet, rich output
+- `Phase 3` - Database connectivity
+- `Phase 4` - Cloud sync
+- `Backlog` - Future considerations
+
+### During Work
+
+**Commit Message Format**:
+```
+<type>: <description> (#issue-number)
+
+<optional body>
+
+<optional footer>
+
+Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
+```
+
+**Types**:
+- `feat:` - New feature
+- `fix:` - Bug fix
+- `docs:` - Documentation changes
+- `test:` - Test additions/changes
+- `refactor:` - Code refactoring
+- `perf:` - Performance improvements
+- `chore:` - Build/tooling changes
+
+**Examples**:
+```bash
+git commit -m "feat: Add Stop button for execution cancellation (#32)
+
+Allows users to immediately terminate long-running scripts.
+
+- Add stop() method to CSharpExecutor
+- Add stopExecution IPC handler
+- Replace Run button with Stop during execution
+- Update E2E tests
+
+Fixes #32"
+```
+
+### Closing Issues
+
+```bash
+# Close when complete
+gh issue close 32 --comment "Implemented in commit abc123. Stop button now cancels execution immediately."
+
+# Close as duplicate
+gh issue close 40 --comment "Duplicate of #32" --reason "not planned"
+
+# Close as won't fix
+gh issue close 41 --comment "Out of scope for v0.1.0, deferred to Phase 2" --reason "not planned"
+```
+
+---
+
+## Documentation and Wiki Workflow
+
+### Repository Root Files (Only These)
+
+- ✅ `README.md` - Project overview, quick start, features
 - ✅ `CHANGELOG.md` - Release history
 - ✅ `CONTRIBUTING.md` - Contribution guidelines
 - ✅ `CLAUDE.md` - AI assistant guidance (this file)
-- ✅ `PROJECT-PLAN.md` - High-level roadmap
 - ✅ `LICENSE` - License file
+- ✅ `PROJECT-PLAN.md` - High-level roadmap
+- ✅ `RELEASE_NOTES_v*.md` - Release notes for specific versions
 
-**Wiki Documentation** (everything else goes here):
-- Setup guides (Windows, WSL, Linux, macOS)
+### Wiki Documentation (Everything Else)
+
+**Wiki URL**: https://github.com/treytomes/code-pad/wiki
+
+**Content Types**:
+- Setup guides (Windows, Linux, macOS, WSL)
 - Architecture and design documents
-- Technical specifications
-- Troubleshooting guides
+- Feature specifications (for complex features)
 - API documentation
+- Troubleshooting guides
 - Developer guides
 - Historical/archived documents
 
-**Workflow**:
-1. **Before creating documentation**: Check if similar content exists in the wiki
-2. **Create or update wiki pages**: https://github.com/treytomes/code-pad/wiki
-3. **Link from README if needed**: Add links to wiki pages in README.md
-4. **Never commit documentation to repo root**: Always use wiki
-
 **Adding to Wiki**:
 ```bash
-# Clone wiki repository
+# Clone wiki
 git clone git@github.com:treytomes/code-pad.wiki.git /tmp/code-pad-wiki
 cd /tmp/code-pad-wiki
 
-# Create new page (use Title-Case-With-Hyphens.md format)
-# Example: Setup-Guide-Windows.md, Architecture-Overview.md
+# Create page (use Title-Case-With-Hyphens.md)
+cat > Feature-Name-Guide.md << 'EOF'
+# Feature Name Guide
 
-# Write content
-cat > New-Feature-Guide.md << 'EOF'
-# New Feature Guide
+## Overview
+...
+
+## Usage
+...
+
+## Examples
 ...
 EOF
 
 # Commit and push
 git add .
-git commit -m "Add guide for new feature"
+git commit -m "Add guide for feature name"
 git push
 ```
 
-**Example Wiki Pages**:
-- Home.md (Getting Started)
-- Architecture.md (System architecture)
-- Tech-Stack.md (Technology choices)
-- Windows-Setup.md (Setup guide)
-- Troubleshooting.md (Common issues)
-
-**Wiki URL**: https://github.com/treytomes/code-pad/wiki
-
-**Why Wiki?**
-- Cleaner repository root
-- Better navigation and search
-- Built-in version history
-- Easier to maintain and update
-- More accessible for contributors
+**Naming Convention**:
+- `Title-Case-With-Hyphens.md`
+- Examples: `Windows-Setup.md`, `Architecture-Overview.md`, `Troubleshooting-WSL.md`
 
 ---
 
-### Unit Testing and Code Coverage
+## Testing Requirements
 
-**CRITICAL**: All new code MUST include comprehensive unit tests.
+### Test Coverage Targets
 
-**Coverage Requirements**:
-- Backend modules: **80%+ coverage** (executors, database, utilities)
-- React components: **70%+ coverage** (UI logic, event handlers)
-- Utilities/helpers: **90%+ coverage** (pure functions, no side effects)
+- **Backend modules**: 80%+ coverage
+- **React components**: 70%+ coverage
+- **Utilities/helpers**: 90%+ coverage
 
-**Test Frameworks**:
-- **Vitest** for unit/integration tests (`npm test`)
-- **React Testing Library** for component tests
-- **Playwright** for E2E tests (`npm run test:e2e`)
+### Test Types
 
-**Testing Best Practices**:
-1. **Write tests FIRST** or immediately after implementation
-2. **Test behavior, not implementation** - Focus on what code does, not how
-3. **Cover edge cases** - Errors, timeouts, boundary conditions
-4. **Keep tests fast** - Mock external dependencies, use test databases
-5. **Make tests deterministic** - No flaky tests, no timing dependencies
-6. **Use descriptive test names** - Should explain what and why
+1. **Unit Tests** (Vitest)
+   - Pure logic, no side effects
+   - Backend executors, utilities
+   - Run with: `npm test`
 
-**Example Test Structure**:
+2. **Integration Tests** (Vitest)
+   - Database operations
+   - IPC communication
+   - File system operations
+
+3. **E2E Tests** (Playwright + Electron)
+   - Full user workflows
+   - UI interactions
+   - Run with: `npm run test:e2e` (builds first)
+
+### Test-Driven Development (TDD)
+
+**Write tests BEFORE implementation**:
+
+```typescript
+// 1. Write test that expects the behavior
+test('should execute code with timeout=0', async () => {
+  const result = await executor.execute(code, { timeout: 0 });
+  // This will fail initially - that's expected!
+});
+
+// 2. Run test (it fails)
+npm test
+
+// 3. Implement feature to make test pass
+// ... write code ...
+
+// 4. Run test again (it passes)
+npm test
+
+// 5. Refactor if needed (tests still pass)
+```
+
+### Test Structure
+
 ```typescript
 describe('FeatureName', () => {
-  describe('happyPath', () => {
-    it('should do expected thing with valid input', () => {});
+  // Setup
+  beforeEach(() => {
+    // Initialize test environment
   });
-  
+
+  afterEach(() => {
+    // Cleanup
+  });
+
+  describe('happyPath', () => {
+    it('should handle valid input correctly', () => {
+      // Test expected behavior
+    });
+  });
+
   describe('edgeCases', () => {
     it('should handle empty input', () => {});
     it('should handle null/undefined', () => {});
-    it('should timeout after threshold', () => {});
+    it('should handle boundary values', () => {});
   });
-  
+
   describe('errorHandling', () => {
     it('should throw on invalid input', () => {});
     it('should log errors appropriately', () => {});
@@ -432,128 +660,298 @@ describe('FeatureName', () => {
 });
 ```
 
-**Running Tests**:
+### Running Tests
+
 ```bash
-# Run all tests
+# All unit tests
 npm test
 
-# Run specific test file
-npm test -- csharp.test.ts
+# Specific test file
+npm test -- filename.test.ts
 
-# Run tests in watch mode
+# Watch mode
 npm test -- --watch
 
-# Generate coverage report
-npm test -- --coverage
+# Coverage report
+npm run test:coverage
 
-# Run tests with UI
-npm test -- --ui
+# E2E tests (builds first)
+npm run test:e2e
+
+# E2E tests with UI
+npm run test:e2e:ui
+
+# All tests (unit + E2E)
+npm run test:all
 ```
-
-**Coverage Reporting**:
-- Coverage reports generated in `coverage/` directory
-- View HTML report: Open `coverage/index.html` in browser
-- CI/CD should fail if coverage drops below thresholds
-
-**Before Committing**:
-1. ✅ All tests passing
-2. ✅ Coverage meets requirements
-3. ✅ No console errors/warnings in tests
-4. ✅ Tests run in < 30 seconds (unit tests)
 
 ---
 
-### Code Style
-- **TypeScript**: Strict mode enabled
-- **Formatting**: Prettier with 2-space tabs, semicolons, single quotes
-- **Linting**: ESLint with React and TypeScript rules
-- **Commits**: Use conventional commits, include `Co-Authored-By: Claude`
+## Code Quality Standards
 
-### Security Best Practices
-- ✅ Context isolation enabled in Electron
-- ✅ Node integration disabled in renderer
-- ✅ Sandbox enabled for renderer
-- ✅ Preload script uses context bridge (no direct Node.js access)
-- 🔜 Code execution in isolated worker processes (Phase 0 Week 2)
-- 🔜 Resource limits and timeouts for user code
+### TypeScript
 
-### Testing Strategy
-- **Unit tests**: Vitest for pure logic (backend, utilities)
-- **Integration tests**: Database operations, C# execution
-- **E2E tests**: Playwright for full user workflows (GUI)
-- **Target**: 70%+ code coverage by Phase 2
+- **Strict mode enabled**
+- **No `any` types** (use `unknown` and type guards)
+- **Explicit return types** for public functions
+- **Interfaces over types** for objects
+- **Const assertions** for literal types
 
----
+### Formatting
 
-## Next Session Checklist
+- **Prettier** for consistent formatting
+- **2-space indentation**
+- **Semicolons**
+- **Single quotes**
+- **Trailing commas** in multiline
 
-When resuming work, do this:
+### Linting
 
-1. ✅ Read `START-HERE.md` (2 min)
-2. ✅ Read `claude-journal/quick-reference.md` (2 min)
-3. ✅ Check git status: `git status && git log --oneline -5`
-4. ✅ Review Phase 0 Week 2 tasks in `PROJECT-PLAN.md`
-5. ✅ Decide: Backend dev (WSL) or GUI testing (Windows)
-
-**If Testing GUI on Windows**:
-```powershell
-cd C:\Users\TreyTomes\projects\code-pad
-npm install
-npm run electron:dev
-```
-
-**If Continuing Backend in WSL**:
 ```bash
-cd /home/trey/projects/code-pad
-dotnet tool install -g dotnet-script  # If not installed
-# Start Phase 0 Week 2: C# execution engine
+# Run linter
+npm run lint
+
+# Fix auto-fixable issues
+npm run lint:fix
+
+# Check formatting
+npm run format:check
+
+# Format all files
+npm run format
+```
+
+### Pre-commit Checks
+
+Husky + lint-staged runs automatically:
+- ESLint on staged TypeScript files
+- Prettier formatting on staged files
+- Tests must pass (configured in CI)
+
+---
+
+## Security Best Practices
+
+### Electron Security
+
+- ✅ **Context isolation enabled**
+- ✅ **Node integration disabled** in renderer
+- ✅ **Sandbox enabled** for renderer process
+- ✅ **Preload script** uses context bridge only
+- ✅ **No remote module** usage
+- ✅ **IPC validation** on all handlers
+
+### Code Execution
+
+- ✅ **Sandboxed execution** (spawned processes)
+- ✅ **Timeout enforcement** (configurable)
+- ✅ **Stop button** for manual termination
+- ✅ **Temp file cleanup** after execution
+- ✅ **Process isolation** (no shared state)
+
+### Data Storage
+
+- ✅ **SQLite transactions** for data integrity
+- ✅ **Input validation** on all user data
+- ✅ **Prepared statements** (no SQL injection)
+- ✅ **Settings validation** on load
+
+---
+
+## Project Board & Milestones
+
+**Project Board**: https://github.com/users/treytomes/projects/2 (Public)
+
+**Columns**:
+- **Todo** - Not started
+- **In Progress** - Currently being worked on
+- **Review** - Awaiting review/testing
+- **Done** - Completed
+
+**Milestones**:
+- **v0.1.0 - Pre-Release** - Current release (C# only, core features)
+- **Phase 2** - Multi-language, NuGet, rich output
+- **Phase 3** - Database connectivity, plugins
+- **Phase 4** - Cloud sync, collaboration
+
+**Issue Tracking**:
+```bash
+# List open issues for current milestone
+gh issue list --milestone "v0.1.0 - Pre-Release" --state open
+
+# List all issues
+gh issue list
+
+# View specific issue
+gh issue view 42
+
+# Update issue milestone
+gh issue edit 42 --milestone "Phase 2"
+
+# Add labels
+gh issue edit 42 --add-label "enhancement,testing"
 ```
 
 ---
 
-## Key Differentiators from LINQPad
+## Development Commands
 
-1. ✅ **Multi-language support** - C# first, then Python, JS, Go, Rust, Java
-2. ✅ **Cross-platform** - Electron runs on Linux, macOS, Windows
-3. ✅ **Open source** - MIT license, community-driven
-4. ✅ **Modern UI** - React + Monaco Editor + Ant Design
-5. 🔜 **Cloud integration** - Optional sync/sharing (Phase 4)
+### Build
+
+```bash
+# Full build
+npm run build
+
+# Main process only (TypeScript → CommonJS)
+npm run build:main
+
+# Renderer only (Vite → ESM bundle)
+npm run build:renderer
+
+# Production build (clean + build + package)
+npm run build:prod
+```
+
+### Development
+
+```bash
+# Start dev server (renderer only)
+npm run dev
+
+# Build and run Electron app
+npm run electron:dev
+
+# Start app (assumes already built)
+npm start
+```
+
+### Testing
+
+```bash
+# Unit tests
+npm test
+
+# Unit tests (watch mode)
+npm run test:watch
+
+# Unit tests with coverage
+npm run test:coverage
+
+# E2E tests (builds first)
+npm run test:e2e
+
+# E2E tests with UI
+npm run test:e2e:ui
+
+# All tests
+npm run test:all
+```
+
+### Quality Checks
+
+```bash
+# Lint
+npm run lint
+
+# Lint with auto-fix
+npm run lint:fix
+
+# Type check (no emit)
+npm run typecheck
+
+# Format check
+npm run format:check
+
+# Format all files
+npm run format
+```
+
+### Utilities
+
+```bash
+# Clean build artifacts
+npm run clean
+
+# View logs (WSL/Linux)
+npm run logs
+
+# View logs (Windows)
+npm run logs:windows
+
+# Clear logs (WSL/Linux)
+npm run logs:clear
+
+# Clear logs (Windows)
+npm run logs:clear:windows
+```
 
 ---
 
-## Git Repository
+## AI Assistant Guidelines
 
-**Location**: `/home/trey/projects/code-pad` (WSL)  
-**Branch**: main  
-**Commits**: 13 total (as of 2026-05-01)  
-**Status**: All changes committed, repository clean  
-**Windows Copy**: `C:\Users\TreyTomes\projects\code-pad` (not a git repo)
+### For Claude Code Resuming Work
 
-**Last Commit**: `baf963a - Add START-HERE.md for easy session resumption`
+1. **Read GitHub Issues**: Check open issues in current milestone
+2. **Check CI Status**: Review latest GitHub Actions runs
+3. **Review Recent Commits**: `git log --oneline -10`
+4. **Check Project Board**: See what's in progress
+5. **Follow Spec-Driven Process**: 
+   - Read spec/issue FIRST
+   - Write tests BEFORE implementation
+   - Implement to make tests pass
+   - Verify against acceptance criteria
+
+### For New Features
+
+1. **Create GitHub issue with spec** (or read existing issue)
+2. **Write tests that expect the behavior** (TDD)
+3. **Implement to make tests pass**
+4. **Verify acceptance criteria met**
+5. **Update documentation** if user-facing
+6. **Close issue** with commit reference
+
+### For Bug Fixes
+
+1. **Create or read bug issue** with reproduction steps
+2. **Write failing test** that reproduces the bug
+3. **Fix the bug** (test now passes)
+4. **Verify fix** doesn't break existing tests
+5. **Close issue** with fix details
+
+### For Refactoring
+
+1. **Ensure tests exist** for the code being refactored
+2. **Run tests** (all pass before refactoring)
+3. **Refactor code**
+4. **Run tests again** (all still pass)
+5. **Commit** with clear rationale for refactoring
+
+### Quality Checklist Before Committing
+
+- [ ] All tests pass (`npm run test:all`)
+- [ ] No linting errors (`npm run lint`)
+- [ ] TypeScript compiles (`npm run typecheck`)
+- [ ] Code formatted (`npm run format`)
+- [ ] Commit message follows convention
+- [ ] Issue referenced in commit message
+- [ ] Acceptance criteria met (if implementing spec)
 
 ---
 
-## Important Reminders
+## Repository Information
 
-### For AI Assistants Resuming Work
+**URL**: https://github.com/treytomes/code-pad  
+**Issues**: https://github.com/treytomes/code-pad/issues  
+**Wiki**: https://github.com/treytomes/code-pad/wiki  
+**Project Board**: https://github.com/users/treytomes/projects/2  
+**License**: MIT
 
-1. **Read the journal first**: `claude-journal/quick-reference.md` has the current status
-2. **Check for blockers**: ELECTRON-WSL-ISSUE.md documents the GUI blocker
-3. **Don't redo completed work**: Phase 0 Week 1 is DONE
-4. **Next focus**: Phase 0 Week 2 (C# execution + database) OR test Electron on Windows
-5. **Build works**: No need to reconfigure anything, just continue development
-
-### For Humans Resuming Work
-
-1. **Start with START-HERE.md** - Quick overview and decision tree
-2. **All documentation is complete** - Don't create new planning docs
-3. **Backend can proceed** - GUI blocker doesn't affect C# executor or database work
-4. **Windows testing recommended** - Confirm Electron works before continuing GUI work
+**Current Branch**: main  
+**Current Version**: v0.1.0-pre  
+**Status**: 🟢 Ready for release build and testing
 
 ---
 
-**Last Updated**: 2026-05-01  
-**Project Status**: Phase 0 Week 1 Complete ✅  
-**Next Phase**: Phase 0 Week 2 - Backend PoCs  
-**Blockers**: Electron GUI in WSL (use Windows)  
-**Overall Status**: 🟢 Excellent - Ready to proceed
+**Last Updated**: 2026-05-02  
+**Project Status**: v0.1.0 Pre-Release - Ready for Production Build  
+**Next Steps**: Build production packages, final testing, tag release

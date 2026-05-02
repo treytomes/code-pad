@@ -19,7 +19,8 @@ All Claude Code instances working on this project share this configuration, ensu
 ├── memory/                             # Project memory (shared context)
 │   ├── architecture-decisions.md      # Key architectural choices
 │   ├── patterns-to-follow.md          # Code patterns and conventions
-│   └── common-pitfalls.md             # Known issues and gotchas
+│   ├── common-pitfalls.md             # Known issues and gotchas
+│   └── spec-driven-development.md     # Specification-first workflow
 ├── skills/                             # Custom slash commands
 │   ├── release-check.md               # /release-check
 │   ├── test-suite.md                  # /test-suite
@@ -44,12 +45,21 @@ Documents key architectural decisions and their rationale:
 
 ### patterns-to-follow.md
 Established code patterns and conventions:
+- Spec-driven development workflow (NEW!)
 - Naming conventions
 - File organization
 - Component structure
 - Error handling patterns
 - Testing patterns
 - Performance patterns
+
+### spec-driven-development.md
+Specification-first development workflow (NEW!):
+- Why: Reduces frustration, improves collaboration
+- Workflow: Spec → Tests → Implementation → Verification
+- Templates: GitHub Issue and feature spec documents
+- Examples: Real implementations from v0.1.0
+- When to use: Any feature taking >30 minutes
 
 ### common-pitfalls.md
 Known issues and anti-patterns to avoid:

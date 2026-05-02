@@ -1,6 +1,89 @@
 # Patterns to Follow
 
-Code patterns and conventions established for CodePad.
+Code patterns, conventions, and development workflows established for CodePad.
+
+## Development Workflow: Spec-Driven Development
+
+### Core Principle
+**Write specifications BEFORE implementation code.**
+
+### New Feature Workflow
+
+1. **Specification Phase** (Do This First!)
+   - Create GitHub Issue with acceptance criteria
+   - For complex features: Write detailed spec in `specs/` directory
+   - Define TypeScript interfaces/contracts
+   - Write test stubs that expect the behavior
+
+2. **Test-Driven Development**
+   - Write tests BEFORE implementing
+   - Tests should fail initially (red)
+   - Implement to make tests pass (green)
+   - Refactor for clarity (refactor)
+
+3. **Implementation Phase**
+   - Implement only what's in the spec
+   - Make tests pass one by one
+   - Don't add features not in spec
+
+4. **Verification Phase**
+   - All tests pass
+   - Manual testing confirms UX
+   - Documentation updated
+   - No regressions
+
+5. **Completion**
+   - Commit with issue reference
+   - Close issue with commit hash
+
+### Example: Timeout Control Feature
+
+**Step 1: Specification (GitHub Issue)**
+```markdown
+## User Story
+As a developer running long scripts, I want to disable the timeout
+so that my script can run until completion.
+
+## Acceptance Criteria
+- [ ] Settings modal accepts timeout=0 (disabled)
+- [ ] When timeout=0, script runs indefinitely
+- [ ] Stop button still works
+- [ ] Setting persists across restarts
+
+## API Contract
+\`\`\`typescript
+interface ExecutionOptions {
+  timeout?: number; // 0 = disabled
+}
+\`\`\`
+```
+
+**Step 2: Write Test First (TDD)**
+```typescript
+test('should run indefinitely when timeout=0', async () => {
+  const result = await executor.execute(code, { timeout: 0 });
+  // Test fails initially - implement to make it pass
+});
+```
+
+**Step 3: Implement**
+```typescript
+async execute(code: string, options: ExecutionOptions = {}) {
+  const timeout = options.timeout ?? 30000;
+  if (timeout === 0) {
+    // Run indefinitely
+  } else {
+    // Set timeout
+  }
+}
+```
+
+**Step 4: Verify & Close**
+```bash
+npm test  # All tests pass
+git commit -m "feat: Add configurable timeout (#31)"
+gh issue close 31
+```
 
 ## Naming Conventions
 
