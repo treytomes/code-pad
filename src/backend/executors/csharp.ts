@@ -159,6 +159,9 @@ export class CSharpExecutor {
     const fileName = `codepad-${randomUUID()}.csx`;
     const filePath = join(tmpdir(), fileName);
 
+    // Also save to a debug location for inspection
+    const debugPath = join(tmpdir(), 'codepad-last-execution.csx');
+
     // LINQPad approach: Wrap user code in a class/method to avoid top-level statement issues
     // This keeps extension classes truly top-level
 
@@ -213,6 +216,14 @@ export class CSharpExecutor {
     ].join('\n');
 
     await fs.writeFile(filePath, processedCode, 'utf-8');
+
+    // Save debug copy for inspection
+    try {
+      await fs.writeFile(debugPath, processedCode, 'utf-8');
+      console.log(`[DEBUG] Generated code saved to: ${debugPath}`);
+    } catch (_e) {
+      // Ignore debug save errors
+    }
 
     return filePath;
   }
