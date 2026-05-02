@@ -18,6 +18,7 @@
 **All tasks are now tracked in GitHub Issues:**
 - 📋 [View All Issues](https://github.com/treytomes/code-pad/issues)
 - 🎯 [View Milestones](https://github.com/treytomes/code-pad/milestones)
+- 📊 [View Project Board](https://github.com/users/treytomes/projects/2) (Public - showcases collaboration)
 
 **Milestones:**
 1. **v0.1.0 - Pre-Release** (5 issues) - [View Milestone](https://github.com/treytomes/code-pad/milestone/1)

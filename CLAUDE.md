@@ -318,8 +318,9 @@ git commit -m "feat: Persist output panel height across sessions (#28)"
 gh issue close 28 --comment "Implemented in commit abc123"
 ```
 
-**Project Board**: https://github.com/users/treytomes/projects/2  
-**All Issues**: https://github.com/treytomes/code-pad/issues
+**Project Board**: https://github.com/users/treytomes/projects/2 (Public - showcases collaboration)  
+**All Issues**: https://github.com/treytomes/code-pad/issues  
+**Repository Projects**: https://github.com/treytomes/code-pad/projects
 
 ---
 
