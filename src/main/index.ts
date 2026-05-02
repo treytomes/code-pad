@@ -266,6 +266,12 @@ electron.ipcMain.handle(
   }
 );
 
+electron.ipcMain.handle('stop-execution', async () => {
+  logInfo('Stop execution request received');
+  csharpExecutor.stop();
+  return { success: true };
+});
+
 // Database IPC Handlers
 electron.ipcMain.handle('db-create-snippet', async (_event, snippet) => {
   return snippetDb.createSnippet(snippet);

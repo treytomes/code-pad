@@ -9,6 +9,7 @@ import {
   ImportOutlined,
   DownloadOutlined,
   QuestionCircleOutlined,
+  StopOutlined,
 } from '@ant-design/icons';
 import { CodeEditor } from './components/Editor';
 import { SnippetList } from './components/SnippetList';
@@ -78,8 +79,8 @@ Console.WriteLine("✨ Try .Dump() on your own objects!");
 `;
 
 function App() {
-  // Load saved panel dimensions from localStorage
-  const loadSavedDimensions = () => {
+  // Load saved settings from localStorage
+  const loadSavedSettings = () => {
     try {
       const stored = localStorage.getItem('codepad-settings');
       if (stored) {
@@ -87,15 +88,16 @@ function App() {
         return {
           outputHeight: settings.outputHeight ?? 200,
           sidebarWidth: settings.sidebarWidth ?? 250,
+          timeout: settings.timeout ?? 30000,
         };
       }
     } catch (e) {
-      console.error('Failed to load saved dimensions:', e);
+      console.error('Failed to load saved settings:', e);
     }
-    return { outputHeight: 200, sidebarWidth: 250 };
+    return { outputHeight: 200, sidebarWidth: 250, timeout: 30000 };
   };
 
-  const savedDimensions = loadSavedDimensions();
+  const savedSettings = loadSavedSettings();
 
   const [code, setCode] = useState(DEFAULT_CODE);
   const [output, setOutput] = useState('');
@@ -103,8 +105,9 @@ function App() {
   const [executionTime, setExecutionTime] = useState<number | null>(null);
   const executionTimerRef = useRef<NodeJS.Timeout | null>(null);
   const executionStartRef = useRef<number>(0);
-  const [outputHeight, setOutputHeight] = useState(savedDimensions.outputHeight);
-  const [sidebarWidth, setSidebarWidth] = useState(savedDimensions.sidebarWidth);
+  const [outputHeight, setOutputHeight] = useState(savedSettings.outputHeight);
+  const [sidebarWidth, setSidebarWidth] = useState(savedSettings.sidebarWidth);
+  const [timeout, setTimeout] = useState(savedSettings.timeout);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const savedCodeRef = useRef<string>(DEFAULT_CODE);
   const [isDraggingOutput, setIsDraggingOutput] = useState(false);
@@ -122,6 +125,16 @@ function App() {
     setCode(newCode);
     // Check if code has changed from saved version
     setHasUnsavedChanges(newCode !== savedCodeRef.current);
+  };
+
+  const handleStop = async () => {
+    try {
+      await window.electronAPI.stopExecution();
+      message.info('Execution stopped');
+    } catch (error) {
+      console.error('Failed to stop execution:', error);
+      message.error('Failed to stop execution');
+    }
   };
 
   const handleRun = async () => {
@@ -143,7 +156,7 @@ function App() {
     });
 
     try {
-      const result = await window.electronAPI.executeCode(code);
+      const result = await window.electronAPI.executeCode(code, { timeout });
 
       // Stop timer and set final time
       if (executionTimerRef.current) {
@@ -668,9 +681,15 @@ function App() {
           >
             Export All
           </Button>
-          <Button type="primary" onClick={handleRun} loading={isRunning}>
-            Run Code
-          </Button>
+          {!isRunning ? (
+            <Button type="primary" onClick={handleRun}>
+              Run Code
+            </Button>
+          ) : (
+            <Button danger onClick={handleStop} icon={<StopOutlined />}>
+              Stop
+            </Button>
+          )}
         </Space>
         <Button
           type="text"

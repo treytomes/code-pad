@@ -35,11 +35,29 @@ export interface ExecutionResult {
 }
 
 export interface ExecutionOptions {
-  timeout?: number; // milliseconds, default 30000 (30s)
+  timeout?: number; // milliseconds, default 30000 (30s), or 0 to disable timeout
   workingDirectory?: string;
 }
 
 export class CSharpExecutor {
+  private currentProcess: ChildProcess | null = null;
+
+  /**
+   * Stop the currently running execution
+   */
+  stop(): void {
+    if (this.currentProcess) {
+      this.currentProcess.kill('SIGTERM');
+
+      // Force kill after 2 seconds
+      setTimeout(() => {
+        if (this.currentProcess && !this.currentProcess.killed) {
+          this.currentProcess.kill('SIGKILL');
+        }
+      }, 2000);
+    }
+  }
+
   /**
    * Find dotnet executable path
    */
@@ -366,19 +384,25 @@ export class CSharpExecutor {
           env,
         });
 
-        // Set timeout
-        const timer = setTimeout(() => {
-          timedOut = true;
-          killed = true;
-          childProcess.kill('SIGTERM');
+        // Store reference for stop() method
+        this.currentProcess = childProcess;
 
-          // Force kill after 2 seconds
-          setTimeout(() => {
-            if (!childProcess.killed) {
-              childProcess.kill('SIGKILL');
-            }
-          }, 2000);
-        }, timeout);
+        // Set timeout (if not disabled)
+        let timer: NodeJS.Timeout | null = null;
+        if (timeout > 0) {
+          timer = setTimeout(() => {
+            timedOut = true;
+            killed = true;
+            childProcess.kill('SIGTERM');
+
+            // Force kill after 2 seconds
+            setTimeout(() => {
+              if (!childProcess.killed) {
+                childProcess.kill('SIGKILL');
+              }
+            }, 2000);
+          }, timeout);
+        }
 
         // Capture stdout
         childProcess.stdout?.on('data', (data) => {
@@ -404,7 +428,8 @@ export class CSharpExecutor {
 
         // Handle exit
         childProcess.on('exit', async (code) => {
-          clearTimeout(timer);
+          if (timer) clearTimeout(timer);
+          this.currentProcess = null;
 
           // Cleanup project directory
           try {
@@ -419,13 +444,14 @@ export class CSharpExecutor {
             exitCode: code || 0,
             executionTime: 0, // Set by caller
             timedOut,
-            error: killed ? 'Execution timed out' : undefined,
+            error: killed ? 'Execution timed out or was stopped' : undefined,
           });
         });
 
         // Handle errors
         childProcess.on('error', (error) => {
-          clearTimeout(timer);
+          if (timer) clearTimeout(timer);
+          this.currentProcess = null;
 
           let errorMessage = error.message;
 

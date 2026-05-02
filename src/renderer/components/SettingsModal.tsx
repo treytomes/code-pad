@@ -149,16 +149,16 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ visible, onClose }
     <Form layout="vertical" style={{ marginTop: '16px' }}>
       <Form.Item label="Execution Timeout">
         <InputNumber
-          min={5000}
+          min={0}
           max={300000}
           step={5000}
           value={settings.timeout}
-          onChange={(value) => updateSetting('timeout', value || 30000)}
+          onChange={(value) => updateSetting('timeout', value ?? 30000)}
           addonAfter="ms"
           style={{ width: '100%' }}
         />
         <div style={{ marginTop: '4px', color: '#858585', fontSize: '12px' }}>
-          Maximum execution time (5s - 300s)
+          Maximum execution time. Set to 0 to disable timeout (run indefinitely). Use Stop button to cancel.
         </div>
       </Form.Item>
 
