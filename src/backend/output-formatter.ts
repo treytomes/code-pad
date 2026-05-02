@@ -20,11 +20,19 @@ export interface FormattedOutput {
 export function detectOutputFormat(output: string): OutputFormat {
   const trimmed = output.trim();
 
+  // Check for labeled output (e.g., "=== Label ===\n{...}")
+  // Strip label lines before format detection
+  let contentToCheck = trimmed;
+  const labelMatch = trimmed.match(/^===\s+.+?\s+===\s*\n(.+)/s);
+  if (labelMatch) {
+    contentToCheck = labelMatch[1].trim();
+  }
+
   // Check for JSON
-  if ((trimmed.startsWith('{') && trimmed.endsWith('}')) ||
-      (trimmed.startsWith('[') && trimmed.endsWith(']'))) {
+  if ((contentToCheck.startsWith('{') && contentToCheck.endsWith('}')) ||
+      (contentToCheck.startsWith('[') && contentToCheck.endsWith(']'))) {
     try {
-      JSON.parse(trimmed);
+      JSON.parse(contentToCheck);
       return 'json';
     } catch {
       // Not valid JSON
@@ -66,10 +74,21 @@ export function detectOutputFormat(output: string): OutputFormat {
 
 /**
  * Format JSON with syntax highlighting markers
+ * Handles labeled JSON (e.g., "=== Label ===\n{...}")
  */
 export function formatJSON(json: string, indent: number = 2): FormattedOutput {
   try {
-    const parsed = JSON.parse(json);
+    // Check for label and extract it
+    let label: string | undefined;
+    let jsonContent = json;
+
+    const labelMatch = json.match(/^===\s+(.+?)\s+===\s*\n(.+)/s);
+    if (labelMatch) {
+      label = labelMatch[1];
+      jsonContent = labelMatch[2].trim();
+    }
+
+    const parsed = JSON.parse(jsonContent);
     const formatted = JSON.stringify(parsed, null, indent);
 
     return {
@@ -78,6 +97,7 @@ export function formatJSON(json: string, indent: number = 2): FormattedOutput {
       metadata: {
         type: Array.isArray(parsed) ? 'array' : 'object',
         length: Array.isArray(parsed) ? parsed.length : Object.keys(parsed).length,
+        label, // Include label in metadata
       },
     };
   } catch (_error) {

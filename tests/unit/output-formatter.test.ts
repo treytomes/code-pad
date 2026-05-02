@@ -20,6 +20,11 @@ describe('output-formatter', () => {
       expect(detectOutputFormat(jsonArray)).toBe('json');
     });
 
+    it('should detect labeled JSON', () => {
+      const labeledJson = '=== User Data ===\n{"name": "John", "age": 30}';
+      expect(detectOutputFormat(labeledJson)).toBe('json');
+    });
+
     it('should detect table with pipes', () => {
       const table = '| Name | Age |\n| John | 30 |\n| Jane | 25 |';
       expect(detectOutputFormat(table)).toBe('table');
@@ -45,6 +50,15 @@ describe('output-formatter', () => {
       expect(result.content).toContain('"name"');
       expect(result.content).toContain('"age"');
       expect(result.metadata?.type).toBe('object');
+    });
+
+    it('should handle labeled JSON', () => {
+      const json = '=== Person Details ===\n{"name":"John","age":30}';
+      const result = formatJSON(json);
+
+      expect(result.format).toBe('json');
+      expect(result.content).toContain('"name"');
+      expect(result.metadata?.label).toBe('Person Details');
     });
 
     it('should handle JSON arrays', () => {

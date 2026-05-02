@@ -131,6 +131,11 @@ export const JsonOutput: React.FC<JsonOutputProps> = ({ content, metadata }) => 
         background: '#1e1e1e',
       }}
     >
+      {metadata?.label && (
+        <div style={{ marginBottom: '12px', color: '#4ec9b0', fontSize: '14px', fontWeight: 'bold' }}>
+          {metadata.label}
+        </div>
+      )}
       {metadata && (
         <div style={{ marginBottom: '12px', color: '#858585', fontSize: '12px' }}>
           <Text type="secondary">
