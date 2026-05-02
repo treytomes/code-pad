@@ -274,25 +274,42 @@ export class CSharpExecutor {
       const outputExe = scriptPath.replace('.cs', '.exe');
 
       try {
-        // Step 1: Compile the .cs file using 'dotnet build' with inline csproj
+        // Step 1: Create a simple project directory structure
+        // dotnet build expects .csproj and .cs to be in same directory
+        const projectDir = join(tmpdir(), `codepad-project-${randomUUID()}`);
+        await fs.mkdir(projectDir, { recursive: true });
+
+        const projectName = 'CodePadScript';
+        const csFileName = 'Program.cs';
+        const csFilePath = join(projectDir, csFileName);
+        const csprojPath = join(projectDir, `${projectName}.csproj`);
+
+        // Copy the temp .cs file to the project directory
+        const originalCode = await fs.readFile(scriptPath, 'utf-8');
+        await fs.writeFile(csFilePath, originalCode, 'utf-8');
+
+        // Create a proper .csproj file
         const csprojContent = `<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>disable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
 </Project>`;
 
-        const csprojPath = scriptPath.replace('.cs', '.csproj');
         await fs.writeFile(csprojPath, csprojContent, 'utf-8');
+
+        _logDebug(`Created project at: ${projectDir}`);
+        _logDebug(`Compiling ${csFileName}`);
 
         // Compile
         const compileResult = await new Promise<{ stdout: string; stderr: string; exitCode: number }>((compileResolve) => {
           let compileStdout = '';
           let compileStderr = '';
 
-          const compileProcess = spawn('dotnet', ['build', csprojPath, '-o', tmpdir()], {
-            cwd: tmpdir(),
+          const compileProcess = spawn('dotnet', ['build', csprojPath, '-o', join(projectDir, 'bin')], {
+            cwd: projectDir,
             env,
           });
 
@@ -313,11 +330,25 @@ export class CSharpExecutor {
           });
         });
 
-        // If compilation failed, return the compile error
+        // If compilation failed, return the compile error with detailed info
         if (compileResult.exitCode !== 0) {
+          logError('Compilation failed', {
+            exitCode: compileResult.exitCode,
+            stdout: compileResult.stdout,
+            stderr: compileResult.stderr
+          });
+
+          // Combine stdout and stderr for full error context
+          const fullError = [
+            'Compilation failed:',
+            '',
+            compileResult.stderr.trim(),
+            compileResult.stdout.trim()
+          ].filter(Boolean).join('\n');
+
           resolve({
-            stdout: compileResult.stdout.trim(),
-            stderr: compileResult.stderr.trim(),
+            stdout: '',
+            stderr: fullError,
             exitCode: compileResult.exitCode,
             executionTime: 0,
             timedOut: false,
@@ -327,8 +358,11 @@ export class CSharpExecutor {
         }
 
         // Step 2: Execute the compiled DLL
-        const childProcess: ChildProcess = spawn('dotnet', [outputDll], {
-          cwd: tmpdir(),
+        const compiledDll = join(projectDir, 'bin', `${projectName}.dll`);
+        _logDebug(`Executing: ${compiledDll}`);
+
+        const childProcess: ChildProcess = spawn('dotnet', [compiledDll], {
+          cwd: projectDir,
           env,
         });
 
@@ -369,8 +403,15 @@ export class CSharpExecutor {
         });
 
         // Handle exit
-        childProcess.on('exit', (code) => {
+        childProcess.on('exit', async (code) => {
           clearTimeout(timer);
+
+          // Cleanup project directory
+          try {
+            await fs.rm(projectDir, { recursive: true, force: true });
+          } catch (_e) {
+            // Ignore cleanup errors
+          }
 
           resolve({
             stdout: stdout.trim(),
