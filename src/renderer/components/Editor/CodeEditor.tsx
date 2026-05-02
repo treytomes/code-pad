@@ -26,8 +26,16 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
 
     // Configure C# language features
     monaco.languages.registerCompletionItemProvider('csharp', {
-      provideCompletionItems: () => {
-        const suggestions = [
+      provideCompletionItems: (model, position) => {
+        const word = model.getWordUntilPosition(position);
+        const range = {
+          startLineNumber: position.lineNumber,
+          endLineNumber: position.lineNumber,
+          startColumn: word.startColumn,
+          endColumn: word.endColumn,
+        };
+
+        const suggestions: monaco.languages.CompletionItem[] = [
           {
             label: 'Console.WriteLine',
             kind: monaco.languages.CompletionItemKind.Method,
@@ -35,6 +43,7 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
             insertTextRules:
               monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
             documentation: 'Writes a line to the console',
+            range,
           },
           {
             label: 'var',
@@ -43,6 +52,7 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
             insertTextRules:
               monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
             documentation: 'Declares an implicitly-typed local variable',
+            range,
           },
         ];
         return { suggestions };

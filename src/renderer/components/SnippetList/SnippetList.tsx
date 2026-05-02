@@ -275,11 +275,11 @@ export const SnippetList: React.FC<SnippetListProps> = ({
           name: sample.name,
           language: sample.language,
           code: sample.code,
-          createdAt: new Date().toISOString(),
-          modifiedAt: new Date().toISOString(),
+          createdAt: Date.now(),
+          modifiedAt: Date.now(),
           executionCount: 0,
           starred: false,
-          lastOpened: null,
+          lastOpenedAt: null,
         } as Snippet);
       }}
       style={{
@@ -313,11 +313,11 @@ export const SnippetList: React.FC<SnippetListProps> = ({
                   name: `${sample.name} (Copy)`,
                   language: sample.language,
                   code: sample.code,
-                  createdAt: new Date().toISOString(),
-                  modifiedAt: new Date().toISOString(),
+                  createdAt: Date.now(),
+                  modifiedAt: Date.now(),
                   executionCount: 0,
                   starred: false,
-                  lastOpened: null,
+                  lastOpenedAt: null,
                 } as Snippet);
               }}
               style={{ color: '#858585' }}
