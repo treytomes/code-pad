@@ -276,6 +276,53 @@ Ctrl+Shift+P     # Command Palette → "Tasks: Run Task"
 
 ## Development Guidelines
 
+### GitHub Issue Workflow
+
+**IMPORTANT**: Always create a GitHub Issue before beginning work on any feature or bug fix.
+
+**Workflow**:
+1. **Before starting**: Create a GitHub issue describing the work
+   - Use clear, descriptive title
+   - Include acceptance criteria and implementation notes
+   - Add appropriate labels (enhancement, bug, documentation)
+   - Assign to appropriate milestone (v0.1.0, Phase 2, Phase 3, Phase 4)
+   - Reference related issues if applicable
+
+2. **During work**: Reference the issue number in commits
+   - Use format: `feat: Add feature (#28)` or `fix: Fix bug (closes #28)`
+   - Link pull requests to the issue
+
+3. **After completion**: Close the issue
+   - Verify all acceptance criteria met
+   - Update project board status
+   - Link to merged PR or commit
+
+**When to create issues**:
+- ✅ New features or enhancements
+- ✅ Bug fixes
+- ✅ Documentation updates
+- ✅ Refactoring work
+- ✅ Performance improvements
+- ❌ Trivial typo fixes (can skip for obvious typos)
+- ❌ Formatting/linting changes (unless substantial)
+
+**Example**:
+```bash
+# Create issue first
+gh issue create --title "Persist output panel height" --label enhancement
+
+# Reference in commit
+git commit -m "feat: Persist output panel height across sessions (#28)"
+
+# Close when done
+gh issue close 28 --comment "Implemented in commit abc123"
+```
+
+**Project Board**: https://github.com/users/treytomes/projects/2  
+**All Issues**: https://github.com/treytomes/code-pad/issues
+
+---
+
 ### Unit Testing and Code Coverage
 
 **CRITICAL**: All new code MUST include comprehensive unit tests.

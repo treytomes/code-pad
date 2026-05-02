@@ -78,14 +78,33 @@ Console.WriteLine("✨ Try .Dump() on your own objects!");
 `;
 
 function App() {
+  // Load saved panel dimensions from localStorage
+  const loadSavedDimensions = () => {
+    try {
+      const stored = localStorage.getItem('codepad-settings');
+      if (stored) {
+        const settings = JSON.parse(stored);
+        return {
+          outputHeight: settings.outputHeight ?? 200,
+          sidebarWidth: settings.sidebarWidth ?? 250,
+        };
+      }
+    } catch (e) {
+      console.error('Failed to load saved dimensions:', e);
+    }
+    return { outputHeight: 200, sidebarWidth: 250 };
+  };
+
+  const savedDimensions = loadSavedDimensions();
+
   const [code, setCode] = useState(DEFAULT_CODE);
   const [output, setOutput] = useState('');
   const [isRunning, setIsRunning] = useState(false);
   const [executionTime, setExecutionTime] = useState<number | null>(null);
   const executionTimerRef = useRef<NodeJS.Timeout | null>(null);
   const executionStartRef = useRef<number>(0);
-  const [outputHeight, setOutputHeight] = useState(200);
-  const [sidebarWidth, setSidebarWidth] = useState(250);
+  const [outputHeight, setOutputHeight] = useState(savedDimensions.outputHeight);
+  const [sidebarWidth, setSidebarWidth] = useState(savedDimensions.sidebarWidth);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const savedCodeRef = useRef<string>(DEFAULT_CODE);
   const [isDraggingOutput, setIsDraggingOutput] = useState(false);
@@ -358,8 +377,27 @@ function App() {
   };
 
   const handleMouseUp = () => {
+    const wasDraggingOutput = isDraggingOutput;
+    const wasDraggingSidebar = isDraggingSidebar;
+
     setIsDraggingOutput(false);
     setIsDraggingSidebar(false);
+
+    // Save panel dimensions to localStorage when resize completes
+    if (wasDraggingOutput || wasDraggingSidebar) {
+      try {
+        const stored = localStorage.getItem('codepad-settings');
+        const settings = stored ? JSON.parse(stored) : {};
+        const updatedSettings = {
+          ...settings,
+          outputHeight,
+          sidebarWidth,
+        };
+        localStorage.setItem('codepad-settings', JSON.stringify(updatedSettings));
+      } catch (e) {
+        console.error('Failed to save panel dimensions:', e);
+      }
+    }
   };
 
   React.useEffect(() => {
