@@ -100,10 +100,22 @@ export class CSharpExecutor {
   private getDumpExtensions(): string[] {
     return [
       '#region CodePad Extensions',
-      '// Auto-injected by CodePad - provides .Dump() extension method',
+      '// Auto-injected by CodePad - provides .Dump() extension method and auto-flush',
       'public static class DumpExtensions',
       '{',
       '    private static int _dumpCount = 0;',
+      '    private static bool _initialized = false;',
+      '    ',
+      '    // Auto-flush initialization (called before first dump)',
+      '    private static void EnsureInitialized()',
+      '    {',
+      '        if (!_initialized)',
+      '        {',
+      '            System.Console.SetOut(new System.IO.StreamWriter(System.Console.OpenStandardOutput()) { AutoFlush = true });',
+      '            System.Console.SetError(new System.IO.StreamWriter(System.Console.OpenStandardError()) { AutoFlush = true });',
+      '            _initialized = true;',
+      '        }',
+      '    }',
       '    ',
       '    /// <summary>',
       '    /// Dumps the object as formatted JSON to the console.',
@@ -113,6 +125,8 @@ export class CSharpExecutor {
       '    /// <param name="label">Optional label to display before the output</param>',
       '    public static T Dump<T>(this T obj, string label = null)',
       '    {',
+      '        EnsureInitialized();',
+      '        ',
       '        // Add blank line separator (except first dump)',
       '        if (_dumpCount++ > 0)',
       '        {',
@@ -179,27 +193,18 @@ export class CSharpExecutor {
 
     // Build the final code structure:
     // 1. #r directives and using statements (from user code)
-    // 2. DumpExtensions class (must be top-level, before any script code)
-    // 3. Auto-flush setup (executable, but before user code)
-    // 4. User's actual code
+    // 2. DumpExtensions class (must be top-level, before ANY top-level statements)
+    // 3. User's actual code (auto-flush is now inside DumpExtensions.EnsureInitialized())
 
     const directivesAndUsings = lines.slice(0, firstCodeLineIndex);
     const userCode = lines.slice(firstCodeLineIndex);
 
     const dumpExtensions = this.getDumpExtensions();
 
-    const autoFlushCode = [
-      '// Auto-flush console output for real-time streaming',
-      'System.Console.SetOut(new System.IO.StreamWriter(System.Console.OpenStandardOutput()) { AutoFlush = true });',
-      'System.Console.SetError(new System.IO.StreamWriter(System.Console.OpenStandardError()) { AutoFlush = true });',
-      ''
-    ];
-
-    // Assemble in correct order
+    // Assemble in correct order (no separate auto-flush code, it's in DumpExtensions now)
     const processedCode = [
       ...directivesAndUsings,
       ...dumpExtensions,
-      ...autoFlushCode,
       ...userCode
     ].join('\n');
 
