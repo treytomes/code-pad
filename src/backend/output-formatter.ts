@@ -11,6 +11,7 @@ export interface FormattedOutput {
     type?: string;
     length?: number;
     properties?: string[];
+    label?: string;
   };
 }
 
