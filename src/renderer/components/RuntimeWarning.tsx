@@ -61,9 +61,7 @@ export const RuntimeWarning: React.FC = () => {
       closable={false}
     >
       <div style={{ textAlign: 'center', padding: '20px 0' }}>
-        <WarningOutlined
-          style={{ fontSize: '48px', color: '#faad14', marginBottom: '16px' }}
-        />
+        <WarningOutlined style={{ fontSize: '48px', color: '#faad14', marginBottom: '16px' }} />
         <Title level={3}>Runtime Requirements Missing</Title>
 
         <div style={{ textAlign: 'left', marginTop: '24px' }}>
@@ -72,19 +70,14 @@ export const RuntimeWarning: React.FC = () => {
               message=".NET SDK Not Found"
               description={
                 <>
-                  <Paragraph>
-                    CodePad requires the .NET SDK to execute C# code.
-                  </Paragraph>
+                  <Paragraph>CodePad requires the .NET SDK to execute C# code.</Paragraph>
                   <Paragraph>
                     <strong>To install:</strong>
                   </Paragraph>
                   <ol style={{ marginLeft: '20px' }}>
                     <li>
                       Download from{' '}
-                      <Link
-                        href="https://dotnet.microsoft.com/download"
-                        target="_blank"
-                      >
+                      <Link href="https://dotnet.microsoft.com/download" target="_blank">
                         https://dotnet.microsoft.com/download
                       </Link>
                     </li>
@@ -118,16 +111,12 @@ export const RuntimeWarning: React.FC = () => {
               message="dotnet-script Not Found"
               description={
                 <>
-                  <Paragraph>
-                    CodePad uses dotnet-script to run C# code as scripts.
-                  </Paragraph>
+                  <Paragraph>CodePad uses dotnet-script to run C# code as scripts.</Paragraph>
                   <Paragraph>
                     <strong>To install:</strong>
                   </Paragraph>
                   <ol style={{ marginLeft: '20px' }}>
-                    <li>
-                      Open a terminal or command prompt
-                    </li>
+                    <li>Open a terminal or command prompt</li>
                     <li>
                       Run: <Text code>dotnet tool install -g dotnet-script</Text>
                     </li>
@@ -156,8 +145,8 @@ export const RuntimeWarning: React.FC = () => {
           )}
 
           <Paragraph style={{ marginTop: '16px', fontSize: '12px', color: '#858585' }}>
-            You can continue using CodePad, but C# code execution will not work
-            until these requirements are installed.
+            You can continue using CodePad, but C# code execution will not work until these
+            requirements are installed.
           </Paragraph>
         </div>
       </div>

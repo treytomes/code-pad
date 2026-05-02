@@ -30,8 +30,10 @@ export function detectOutputFormat(output: string): OutputFormat {
   }
 
   // Check for JSON
-  if ((contentToCheck.startsWith('{') && contentToCheck.endsWith('}')) ||
-      (contentToCheck.startsWith('[') && contentToCheck.endsWith(']'))) {
+  if (
+    (contentToCheck.startsWith('{') && contentToCheck.endsWith('}')) ||
+    (contentToCheck.startsWith('[') && contentToCheck.endsWith(']'))
+  ) {
     try {
       JSON.parse(contentToCheck);
       return 'json';
@@ -42,8 +44,12 @@ export function detectOutputFormat(output: string): OutputFormat {
 
   // Check for HTML
   if (trimmed.startsWith('<') && trimmed.endsWith('>')) {
-    if (trimmed.includes('<!DOCTYPE') || trimmed.includes('<html') ||
-        trimmed.includes('<div') || trimmed.includes('<table')) {
+    if (
+      trimmed.includes('<!DOCTYPE') ||
+      trimmed.includes('<html') ||
+      trimmed.includes('<div') ||
+      trimmed.includes('<table')
+    ) {
       return 'html';
     }
   }
@@ -57,12 +63,11 @@ export function detectOutputFormat(output: string): OutputFormat {
 
     if (tabCount > 0 || pipeCount > 1) {
       // Check if subsequent lines have similar structure
-      const hasConsistentSeparators = lines.slice(1, Math.min(5, lines.length))
-        .every(line => {
-          const lineTabs = (line.match(/\t/g) || []).length;
-          const linePipes = (line.match(/\|/g) || []).length;
-          return lineTabs === tabCount || linePipes === pipeCount;
-        });
+      const hasConsistentSeparators = lines.slice(1, Math.min(5, lines.length)).every((line) => {
+        const lineTabs = (line.match(/\t/g) || []).length;
+        const linePipes = (line.match(/\|/g) || []).length;
+        return lineTabs === tabCount || linePipes === pipeCount;
+      });
 
       if (hasConsistentSeparators) {
         return 'table';
@@ -82,10 +87,8 @@ function isArrayOfObjects(data: any): boolean {
   }
 
   // Check if all items are objects (not arrays, not primitives)
-  const allObjects = data.every(item =>
-    item !== null &&
-    typeof item === 'object' &&
-    !Array.isArray(item)
+  const allObjects = data.every(
+    (item) => item !== null && typeof item === 'object' && !Array.isArray(item)
   );
 
   if (!allObjects) {
@@ -94,8 +97,8 @@ function isArrayOfObjects(data: any): boolean {
 
   // Get all unique keys from all objects
   const allKeys = new Set<string>();
-  data.forEach(item => {
-    Object.keys(item).forEach(key => allKeys.add(key));
+  data.forEach((item) => {
+    Object.keys(item).forEach((key) => allKeys.add(key));
   });
 
   // Should have at least 2 keys to be worth showing as table
@@ -108,8 +111,8 @@ function isArrayOfObjects(data: any): boolean {
 function arrayToTable(data: any[], label?: string): FormattedOutput {
   // Get all unique keys (column headers)
   const allKeys = new Set<string>();
-  data.forEach(item => {
-    Object.keys(item).forEach(key => allKeys.add(key));
+  data.forEach((item) => {
+    Object.keys(item).forEach((key) => allKeys.add(key));
   });
 
   const headers = Array.from(allKeys);
@@ -118,8 +121,8 @@ function arrayToTable(data: any[], label?: string): FormattedOutput {
   const headerRow = '| ' + headers.join(' | ') + ' |';
   const separatorRow = '|' + headers.map(() => '----').join('|') + '|';
 
-  const dataRows = data.map(item => {
-    const cells = headers.map(key => {
+  const dataRows = data.map((item) => {
+    const cells = headers.map((key) => {
       const value = item[key];
       if (value === null) return 'null';
       if (value === undefined) return '';
@@ -195,7 +198,10 @@ export function parseTableData(output: string): {
   rows: string[][];
   separator: string;
 } | null {
-  const lines = output.trim().split('\n').filter(line => line.trim());
+  const lines = output
+    .trim()
+    .split('\n')
+    .filter((line) => line.trim());
 
   if (lines.length < 2) {
     return null;
@@ -218,22 +224,23 @@ export function parseTableData(output: string): {
   // Parse headers
   const headers = firstLine
     .split(separator)
-    .map(h => h.trim())
-    .filter(h => h.length > 0);
+    .map((h) => h.trim())
+    .filter((h) => h.length > 0);
 
   // Skip separator line if exists (markdown-style tables)
   let dataStartIndex = 1;
-  if (lines.length > 1 && lines[1].includes('---') || lines[1].includes('===')) {
+  if ((lines.length > 1 && lines[1].includes('---')) || lines[1].includes('===')) {
     dataStartIndex = 2;
   }
 
   // Parse rows
-  const rows = lines.slice(dataStartIndex).map(line =>
-    line
-      .split(separator)
-      .map(cell => cell.trim())
-      .filter(cell => cell.length > 0) // Remove empty cells from leading/trailing separators
-      .slice(0, headers.length) // Only take as many cells as headers
+  const rows = lines.slice(dataStartIndex).map(
+    (line) =>
+      line
+        .split(separator)
+        .map((cell) => cell.trim())
+        .filter((cell) => cell.length > 0) // Remove empty cells from leading/trailing separators
+        .slice(0, headers.length) // Only take as many cells as headers
   );
 
   return { headers, rows, separator };
@@ -244,23 +251,16 @@ export function parseTableData(output: string): {
  */
 export function formatTable(headers: string[], rows: string[][]): FormattedOutput {
   const columnWidths = headers.map((header, colIdx) => {
-    const cellWidths = rows.map(row => (row[colIdx] || '').length);
+    const cellWidths = rows.map((row) => (row[colIdx] || '').length);
     return Math.max(header.length, ...cellWidths, 3); // Minimum width of 3
   });
 
   const formatRow = (cells: string[]) =>
-    '| ' +
-    cells
-      .map((cell, idx) => cell.padEnd(columnWidths[idx]))
-      .join(' | ') +
-    ' |';
+    '| ' + cells.map((cell, idx) => cell.padEnd(columnWidths[idx])).join(' | ') + ' |';
 
   const headerRow = formatRow(headers);
-  const separatorRow =
-    '| ' +
-    columnWidths.map(width => '-'.repeat(width)).join(' | ') +
-    ' |';
-  const dataRows = rows.map(row => formatRow(row));
+  const separatorRow = '| ' + columnWidths.map((width) => '-'.repeat(width)).join(' | ') + ' |';
+  const dataRows = rows.map((row) => formatRow(row));
 
   const content = [headerRow, separatorRow, ...dataRows].join('\n');
 
@@ -287,9 +287,7 @@ export function splitOutputSections(output: string): string[] {
   // Split on double newlines (blank lines) to separate sections
   const sections = output.split(/\n\s*\n/);
 
-  return sections
-    .map(section => section.trim())
-    .filter(section => section.length > 0);
+  return sections.map((section) => section.trim()).filter((section) => section.length > 0);
 }
 
 /**

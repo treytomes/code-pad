@@ -5,7 +5,11 @@ import * as fs from 'fs';
 import { CSharpExecutor } from '../backend/executors/csharp';
 import { SnippetDatabase } from '../backend/database';
 import { checkRuntimeRequirements, RuntimeInfo } from '../backend/runtime-checker';
-import { exportSnippetToFile, importSnippetFromFile, exportAllSnippets } from '../backend/import-export';
+import {
+  exportSnippetToFile,
+  importSnippetFromFile,
+  exportAllSnippets,
+} from '../backend/import-export';
 import { createApplicationMenu } from './menu';
 import { logInfo, logError, logWarn, logDebug } from '../shared/logger';
 
@@ -76,7 +80,7 @@ function validateWindowBounds(state: WindowState): WindowState {
     };
 
     // Check if window intersects with any display
-    const isVisible = displays.some(display => {
+    const isVisible = displays.some((display) => {
       const { x, y, width: dWidth, height: dHeight } = display.bounds;
       // Check if any part of the window is visible on this display
       return (
@@ -251,7 +255,9 @@ electron.ipcMain.handle(
           event.sender.send('execution-output-chunk', { chunk, isError });
         }
       );
-      logDebug(`Code execution completed: exitCode=${result.exitCode}, time=${result.executionTime}ms`);
+      logDebug(
+        `Code execution completed: exitCode=${result.exitCode}, time=${result.executionTime}ms`
+      );
       return result;
     } catch (error) {
       logError('Code execution failed', error);
@@ -282,12 +288,9 @@ electron.ipcMain.handle('db-get-snippet', async (_event, id: string) => {
   return snippetDb.getSnippet(id);
 });
 
-electron.ipcMain.handle(
-  'db-update-snippet',
-  async (_event, id: string, updates) => {
-    return snippetDb.updateSnippet(id, updates);
-  }
-);
+electron.ipcMain.handle('db-update-snippet', async (_event, id: string, updates) => {
+  return snippetDb.updateSnippet(id, updates);
+});
 
 electron.ipcMain.handle('db-delete-snippet', async (_event, id: string) => {
   return snippetDb.deleteSnippet(id);
@@ -297,12 +300,9 @@ electron.ipcMain.handle('db-list-snippets', async (_event, language?: string) =>
   return snippetDb.listSnippets(language);
 });
 
-electron.ipcMain.handle(
-  'db-increment-execution',
-  async (_event, id: string) => {
-    return snippetDb.incrementExecutionCount(id);
-  }
-);
+electron.ipcMain.handle('db-increment-execution', async (_event, id: string) => {
+  return snippetDb.incrementExecutionCount(id);
+});
 
 // Toggle starred status
 electron.ipcMain.handle('db-toggle-starred', async (_event, id: string) => {

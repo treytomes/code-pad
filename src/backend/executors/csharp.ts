@@ -97,7 +97,9 @@ export class CSharpExecutor {
       const result = await this.runDotnetScript(tempFile, timeout, onOutputChunk);
 
       const executionTime = Date.now() - startTime;
-      _logDebug(`C# execution completed: exitCode=${result.exitCode}, time=${executionTime}ms, timedOut=${result.timedOut}`);
+      _logDebug(
+        `C# execution completed: exitCode=${result.exitCode}, time=${executionTime}ms, timedOut=${result.timedOut}`
+      );
 
       return {
         ...result,
@@ -166,7 +168,7 @@ export class CSharpExecutor {
       '    }',
       '}',
       '#endregion',
-      ''
+      '',
     ];
   }
 
@@ -217,19 +219,16 @@ export class CSharpExecutor {
       '        System.Console.SetError(new System.IO.StreamWriter(System.Console.OpenStandardError()) { AutoFlush = true });',
       '        ',
       '        // User code begins here',
-      ...userCode.map(line => '        ' + line), // Indent user code by 8 spaces
+      ...userCode.map((line) => '        ' + line), // Indent user code by 8 spaces
       '    }',
-      '}'
+      '}',
     ];
 
     // Assemble in correct order:
     // 1. Directives and usings
     // 2. DumpExtensions (top-level class - not nested!)
     // 3. Program class with Main() entry point containing user code
-    const processedCode = [
-      ...directivesAndUsings,
-      ...wrappedProgram
-    ].join('\n');
+    const processedCode = [...directivesAndUsings, ...wrappedProgram].join('\n');
 
     await fs.writeFile(filePath, processedCode, 'utf-8');
 
@@ -293,22 +292,22 @@ export class CSharpExecutor {
         const _outputExe = scriptPath.replace('.cs', '.exe');
 
         try {
-        // Step 1: Create a simple project directory structure
-        // dotnet build expects .csproj and .cs to be in same directory
-        const projectDir = join(tmpdir(), `codepad-project-${randomUUID()}`);
-        await fs.mkdir(projectDir, { recursive: true });
+          // Step 1: Create a simple project directory structure
+          // dotnet build expects .csproj and .cs to be in same directory
+          const projectDir = join(tmpdir(), `codepad-project-${randomUUID()}`);
+          await fs.mkdir(projectDir, { recursive: true });
 
-        const projectName = 'CodePadScript';
-        const csFileName = 'Program.cs';
-        const csFilePath = join(projectDir, csFileName);
-        const csprojPath = join(projectDir, `${projectName}.csproj`);
+          const projectName = 'CodePadScript';
+          const csFileName = 'Program.cs';
+          const csFilePath = join(projectDir, csFileName);
+          const csprojPath = join(projectDir, `${projectName}.csproj`);
 
-        // Copy the temp .cs file to the project directory
-        const originalCode = await fs.readFile(scriptPath, 'utf-8');
-        await fs.writeFile(csFilePath, originalCode, 'utf-8');
+          // Copy the temp .cs file to the project directory
+          const originalCode = await fs.readFile(scriptPath, 'utf-8');
+          await fs.writeFile(csFilePath, originalCode, 'utf-8');
 
-        // Create a proper .csproj file
-        const csprojContent = `<Project Sdk="Microsoft.NET.Sdk">
+          // Create a proper .csproj file
+          const csprojContent = `<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net8.0</TargetFramework>
@@ -317,160 +316,169 @@ export class CSharpExecutor {
   </PropertyGroup>
 </Project>`;
 
-        await fs.writeFile(csprojPath, csprojContent, 'utf-8');
+          await fs.writeFile(csprojPath, csprojContent, 'utf-8');
 
-        _logDebug(`Created project at: ${projectDir}`);
-        _logDebug(`Compiling ${csFileName}`);
+          _logDebug(`Created project at: ${projectDir}`);
+          _logDebug(`Compiling ${csFileName}`);
 
-        // Compile
-        const compileResult = await new Promise<{ stdout: string; stderr: string; exitCode: number }>((compileResolve) => {
-          let compileStdout = '';
-          let compileStderr = '';
+          // Compile
+          const compileResult = await new Promise<{
+            stdout: string;
+            stderr: string;
+            exitCode: number;
+          }>((compileResolve) => {
+            let compileStdout = '';
+            let compileStderr = '';
 
-          const compileProcess = spawn('dotnet', ['build', csprojPath, '-o', join(projectDir, 'bin')], {
+            const compileProcess = spawn(
+              'dotnet',
+              ['build', csprojPath, '-o', join(projectDir, 'bin')],
+              {
+                cwd: projectDir,
+                env,
+              }
+            );
+
+            compileProcess.stdout?.on('data', (data) => {
+              compileStdout += data.toString();
+            });
+
+            compileProcess.stderr?.on('data', (data) => {
+              compileStderr += data.toString();
+            });
+
+            compileProcess.on('exit', (code) => {
+              compileResolve({ stdout: compileStdout, stderr: compileStderr, exitCode: code || 0 });
+            });
+
+            compileProcess.on('error', (error) => {
+              compileResolve({ stdout: '', stderr: error.message, exitCode: -1 });
+            });
+          });
+
+          // If compilation failed, return the compile error with detailed info
+          if (compileResult.exitCode !== 0) {
+            logError('Compilation failed', {
+              exitCode: compileResult.exitCode,
+              stdout: compileResult.stdout,
+              stderr: compileResult.stderr,
+            });
+
+            // Combine stdout and stderr for full error context
+            const fullError = [
+              'Compilation failed:',
+              '',
+              compileResult.stderr.trim(),
+              compileResult.stdout.trim(),
+            ]
+              .filter(Boolean)
+              .join('\n');
+
+            resolve({
+              stdout: '',
+              stderr: fullError,
+              exitCode: compileResult.exitCode,
+              executionTime: 0,
+              timedOut: false,
+              error: 'Compilation failed',
+            });
+            return;
+          }
+
+          // Step 2: Execute the compiled DLL
+          const compiledDll = join(projectDir, 'bin', `${projectName}.dll`);
+          _logDebug(`Executing: ${compiledDll}`);
+
+          const childProcess: ChildProcess = spawn('dotnet', [compiledDll], {
             cwd: projectDir,
             env,
           });
 
-          compileProcess.stdout?.on('data', (data) => {
-            compileStdout += data.toString();
-          });
+          // Store reference for stop() method
+          this.currentProcess = childProcess;
 
-          compileProcess.stderr?.on('data', (data) => {
-            compileStderr += data.toString();
-          });
+          // Set timeout (if not disabled)
+          let timer: NodeJS.Timeout | null = null;
+          if (timeout > 0) {
+            timer = setTimeout(() => {
+              timedOut = true;
+              killed = true;
+              childProcess.kill('SIGTERM');
 
-          compileProcess.on('exit', (code) => {
-            compileResolve({ stdout: compileStdout, stderr: compileStderr, exitCode: code || 0 });
-          });
-
-          compileProcess.on('error', (error) => {
-            compileResolve({ stdout: '', stderr: error.message, exitCode: -1 });
-          });
-        });
-
-        // If compilation failed, return the compile error with detailed info
-        if (compileResult.exitCode !== 0) {
-          logError('Compilation failed', {
-            exitCode: compileResult.exitCode,
-            stdout: compileResult.stdout,
-            stderr: compileResult.stderr
-          });
-
-          // Combine stdout and stderr for full error context
-          const fullError = [
-            'Compilation failed:',
-            '',
-            compileResult.stderr.trim(),
-            compileResult.stdout.trim()
-          ].filter(Boolean).join('\n');
-
-          resolve({
-            stdout: '',
-            stderr: fullError,
-            exitCode: compileResult.exitCode,
-            executionTime: 0,
-            timedOut: false,
-            error: 'Compilation failed'
-          });
-          return;
-        }
-
-        // Step 2: Execute the compiled DLL
-        const compiledDll = join(projectDir, 'bin', `${projectName}.dll`);
-        _logDebug(`Executing: ${compiledDll}`);
-
-        const childProcess: ChildProcess = spawn('dotnet', [compiledDll], {
-          cwd: projectDir,
-          env,
-        });
-
-        // Store reference for stop() method
-        this.currentProcess = childProcess;
-
-        // Set timeout (if not disabled)
-        let timer: NodeJS.Timeout | null = null;
-        if (timeout > 0) {
-          timer = setTimeout(() => {
-            timedOut = true;
-            killed = true;
-            childProcess.kill('SIGTERM');
-
-            // Force kill after 2 seconds
-            setTimeout(() => {
-              if (!childProcess.killed) {
-                childProcess.kill('SIGKILL');
-              }
-            }, 2000);
-          }, timeout);
-        }
-
-        // Capture stdout
-        childProcess.stdout?.on('data', (data) => {
-          const chunk = data.toString();
-          stdout += chunk;
-
-          // Emit chunk for streaming
-          if (onOutputChunk) {
-            onOutputChunk(chunk, false);
-          }
-        });
-
-        // Capture stderr
-        childProcess.stderr?.on('data', (data) => {
-          const chunk = data.toString();
-          stderr += chunk;
-
-          // Emit chunk for streaming
-          if (onOutputChunk) {
-            onOutputChunk(chunk, true);
-          }
-        });
-
-        // Handle exit
-        childProcess.on('exit', async (code) => {
-          if (timer) clearTimeout(timer);
-          this.currentProcess = null;
-
-          // Cleanup project directory
-          try {
-            await fs.rm(projectDir, { recursive: true, force: true });
-          } catch (_e) {
-            // Ignore cleanup errors
+              // Force kill after 2 seconds
+              setTimeout(() => {
+                if (!childProcess.killed) {
+                  childProcess.kill('SIGKILL');
+                }
+              }, 2000);
+            }, timeout);
           }
 
-          resolve({
-            stdout: stdout.trim(),
-            stderr: stderr.trim(),
-            exitCode: code || 0,
-            executionTime: 0, // Set by caller
-            timedOut,
-            error: killed ? 'Execution timed out or was stopped' : undefined,
+          // Capture stdout
+          childProcess.stdout?.on('data', (data) => {
+            const chunk = data.toString();
+            stdout += chunk;
+
+            // Emit chunk for streaming
+            if (onOutputChunk) {
+              onOutputChunk(chunk, false);
+            }
           });
-        });
 
-        // Handle errors
-        childProcess.on('error', (error) => {
-          if (timer) clearTimeout(timer);
-          this.currentProcess = null;
+          // Capture stderr
+          childProcess.stderr?.on('data', (data) => {
+            const chunk = data.toString();
+            stderr += chunk;
 
-          let errorMessage = error.message;
-
-          // Provide helpful error message for ENOENT (command not found)
-          if (error.message.includes('ENOENT')) {
-            errorMessage = `dotnet command not found. Please ensure .NET SDK is installed and available in PATH.\n\nError: ${error.message}\n\nCurrent PATH: ${env.PATH?.substring(0, 200)}...`;
-          }
-
-          resolve({
-            stdout: stdout.trim(),
-            stderr: stderr.trim(),
-            exitCode: -1,
-            executionTime: 0,
-            timedOut: false,
-            error: errorMessage,
+            // Emit chunk for streaming
+            if (onOutputChunk) {
+              onOutputChunk(chunk, true);
+            }
           });
-        });
 
+          // Handle exit
+          childProcess.on('exit', async (code) => {
+            if (timer) clearTimeout(timer);
+            this.currentProcess = null;
+
+            // Cleanup project directory
+            try {
+              await fs.rm(projectDir, { recursive: true, force: true });
+            } catch (_e) {
+              // Ignore cleanup errors
+            }
+
+            resolve({
+              stdout: stdout.trim(),
+              stderr: stderr.trim(),
+              exitCode: code || 0,
+              executionTime: 0, // Set by caller
+              timedOut,
+              error: killed ? 'Execution timed out or was stopped' : undefined,
+            });
+          });
+
+          // Handle errors
+          childProcess.on('error', (error) => {
+            if (timer) clearTimeout(timer);
+            this.currentProcess = null;
+
+            let errorMessage = error.message;
+
+            // Provide helpful error message for ENOENT (command not found)
+            if (error.message.includes('ENOENT')) {
+              errorMessage = `dotnet command not found. Please ensure .NET SDK is installed and available in PATH.\n\nError: ${error.message}\n\nCurrent PATH: ${env.PATH?.substring(0, 200)}...`;
+            }
+
+            resolve({
+              stdout: stdout.trim(),
+              stderr: stderr.trim(),
+              exitCode: -1,
+              executionTime: 0,
+              timedOut: false,
+              error: errorMessage,
+            });
+          });
         } catch (error: any) {
           // Handle compilation errors
           resolve({

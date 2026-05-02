@@ -60,10 +60,7 @@ async function checkDotnetScript(): Promise<{ available: boolean; version?: stri
 export async function checkRuntimeRequirements(): Promise<RuntimeInfo> {
   logInfo('Checking runtime requirements...');
 
-  const [dotnet, dotnetScript] = await Promise.all([
-    checkDotnetSdk(),
-    checkDotnetScript(),
-  ]);
+  const [dotnet, dotnetScript] = await Promise.all([checkDotnetSdk(), checkDotnetScript()]);
 
   const info: RuntimeInfo = {
     hasDotnet: dotnet.available,

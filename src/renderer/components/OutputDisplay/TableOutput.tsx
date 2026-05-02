@@ -17,8 +17,8 @@ export const TableOutput: React.FC<TableOutputProps> = ({ content, metadata }) =
     const parseRow = (line: string) =>
       line
         .split('|')
-        .map(cell => cell.trim())
-        .filter(cell => cell.length > 0);
+        .map((cell) => cell.trim())
+        .filter((cell) => cell.length > 0);
 
     const headerCells = parseRow(lines[0]);
     const cols = headerCells.map((header, index) => ({
@@ -53,7 +53,9 @@ export const TableOutput: React.FC<TableOutputProps> = ({ content, metadata }) =
   return (
     <div style={{ padding: '12px' }}>
       {metadata?.label && (
-        <div style={{ marginBottom: '12px', color: '#4ec9b0', fontSize: '14px', fontWeight: 'bold' }}>
+        <div
+          style={{ marginBottom: '12px', color: '#4ec9b0', fontSize: '14px', fontWeight: 'bold' }}
+        >
           {metadata.label}
         </div>
       )}

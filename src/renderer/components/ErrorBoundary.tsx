@@ -55,15 +55,10 @@ export class ErrorBoundary extends Component<Props, State> {
           title="Something went wrong"
           subTitle={
             <div style={{ textAlign: 'left', maxWidth: '600px', margin: '0 auto' }}>
-              <p>
-                CodePad encountered an unexpected error. This has been logged
-                for debugging.
-              </p>
+              <p>CodePad encountered an unexpected error. This has been logged for debugging.</p>
               {this.state.error && (
                 <details style={{ marginTop: '16px' }}>
-                  <summary style={{ cursor: 'pointer', fontWeight: 'bold' }}>
-                    Error Details
-                  </summary>
+                  <summary style={{ cursor: 'pointer', fontWeight: 'bold' }}>Error Details</summary>
                   <pre
                     style={{
                       marginTop: '8px',

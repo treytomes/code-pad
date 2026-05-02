@@ -28,8 +28,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   exportSnippet: (snippetName: string, code: string) =>
     ipcRenderer.invoke('export-snippet', snippetName, code),
   importSnippet: () => ipcRenderer.invoke('import-snippet'),
-  exportAllSnippets: (snippets: any[]) =>
-    ipcRenderer.invoke('export-all-snippets', snippets),
+  exportAllSnippets: (snippets: any[]) => ipcRenderer.invoke('export-all-snippets', snippets),
 
   // Subscribe to output chunks during execution
   onOutputChunk: (callback: (chunk: string, isError: boolean) => void) => {
@@ -58,38 +57,26 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   // Database operations
   db: {
-    createSnippet: (snippet: {
-      name: string;
-      language: string;
-      code: string;
-    }) => ipcRenderer.invoke('db-create-snippet', snippet),
+    createSnippet: (snippet: { name: string; language: string; code: string }) =>
+      ipcRenderer.invoke('db-create-snippet', snippet),
 
     getSnippet: (id: string) => ipcRenderer.invoke('db-get-snippet', id),
 
-    updateSnippet: (
-      id: string,
-      updates: { name?: string; code?: string }
-    ) => ipcRenderer.invoke('db-update-snippet', id, updates),
+    updateSnippet: (id: string, updates: { name?: string; code?: string }) =>
+      ipcRenderer.invoke('db-update-snippet', id, updates),
 
-    deleteSnippet: (id: string) =>
-      ipcRenderer.invoke('db-delete-snippet', id),
+    deleteSnippet: (id: string) => ipcRenderer.invoke('db-delete-snippet', id),
 
-    listSnippets: (language?: string) =>
-      ipcRenderer.invoke('db-list-snippets', language),
+    listSnippets: (language?: string) => ipcRenderer.invoke('db-list-snippets', language),
 
-    incrementExecution: (id: string) =>
-      ipcRenderer.invoke('db-increment-execution', id),
+    incrementExecution: (id: string) => ipcRenderer.invoke('db-increment-execution', id),
 
-    toggleStarred: (id: string) =>
-      ipcRenderer.invoke('db-toggle-starred', id),
+    toggleStarred: (id: string) => ipcRenderer.invoke('db-toggle-starred', id),
 
-    updateLastOpened: (id: string) =>
-      ipcRenderer.invoke('db-update-last-opened', id),
+    updateLastOpened: (id: string) => ipcRenderer.invoke('db-update-last-opened', id),
 
-    getStarredSnippets: () =>
-      ipcRenderer.invoke('db-get-starred-snippets'),
+    getStarredSnippets: () => ipcRenderer.invoke('db-get-starred-snippets'),
 
-    getRecentlyOpened: (limit?: number) =>
-      ipcRenderer.invoke('db-get-recently-opened', limit),
+    getRecentlyOpened: (limit?: number) => ipcRenderer.invoke('db-get-recently-opened', limit),
   },
 });

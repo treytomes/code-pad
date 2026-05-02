@@ -40,8 +40,7 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
             label: 'Console.WriteLine',
             kind: monaco.languages.CompletionItemKind.Method,
             insertText: 'Console.WriteLine($1);',
-            insertTextRules:
-              monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+            insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
             documentation: 'Writes a line to the console',
             range,
           },
@@ -49,8 +48,7 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
             label: 'var',
             kind: monaco.languages.CompletionItemKind.Keyword,
             insertText: 'var ${1:name} = ${2:value};',
-            insertTextRules:
-              monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+            insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
             documentation: 'Declares an implicitly-typed local variable',
             range,
           },

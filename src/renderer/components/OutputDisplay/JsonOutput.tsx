@@ -12,7 +12,11 @@ interface JsonOutputProps {
 function parseJsonToTree(data: any, key: string = 'root'): DataNode {
   if (data === null) {
     return {
-      title: <span><Text type="secondary">{key}:</Text> <Text style={{ color: '#6d9cbe' }}>null</Text></span>,
+      title: (
+        <span>
+          <Text type="secondary">{key}:</Text> <Text style={{ color: '#6d9cbe' }}>null</Text>
+        </span>
+      ),
       key,
       isLeaf: true,
     };
@@ -20,7 +24,11 @@ function parseJsonToTree(data: any, key: string = 'root'): DataNode {
 
   if (data === undefined) {
     return {
-      title: <span><Text type="secondary">{key}:</Text> <Text style={{ color: '#858585' }}>undefined</Text></span>,
+      title: (
+        <span>
+          <Text type="secondary">{key}:</Text> <Text style={{ color: '#858585' }}>undefined</Text>
+        </span>
+      ),
       key,
       isLeaf: true,
     };
@@ -33,7 +41,8 @@ function parseJsonToTree(data: any, key: string = 'root'): DataNode {
     return {
       title: (
         <span>
-          <Text type="secondary">{key}:</Text> <Text style={{ color: '#ce9178' }}>&ldquo;{data}&rdquo;</Text>
+          <Text type="secondary">{key}:</Text>{' '}
+          <Text style={{ color: '#ce9178' }}>&ldquo;{data}&rdquo;</Text>
         </span>
       ),
       key,
@@ -57,7 +66,8 @@ function parseJsonToTree(data: any, key: string = 'root'): DataNode {
     return {
       title: (
         <span>
-          <Text type="secondary">{key}:</Text> <Text style={{ color: '#569cd6' }}>{data.toString()}</Text>
+          <Text type="secondary">{key}:</Text>{' '}
+          <Text style={{ color: '#569cd6' }}>{data.toString()}</Text>
         </span>
       ),
       key,
@@ -67,14 +77,13 @@ function parseJsonToTree(data: any, key: string = 'root'): DataNode {
 
   // Arrays
   if (Array.isArray(data)) {
-    const children = data.map((item, index) =>
-      parseJsonToTree(item, `${key}[${index}]`)
-    );
+    const children = data.map((item, index) => parseJsonToTree(item, `${key}[${index}]`));
 
     return {
       title: (
         <span>
-          <Text type="secondary">{key}:</Text> <Text style={{ color: '#4ec9b0' }}>Array[{data.length}]</Text>
+          <Text type="secondary">{key}:</Text>{' '}
+          <Text style={{ color: '#4ec9b0' }}>Array[{data.length}]</Text>
         </span>
       ),
       key,
@@ -85,14 +94,13 @@ function parseJsonToTree(data: any, key: string = 'root'): DataNode {
   // Objects
   if (type === 'object') {
     const entries = Object.entries(data);
-    const children = entries.map(([objKey, value]) =>
-      parseJsonToTree(value, `${key}.${objKey}`)
-    );
+    const children = entries.map(([objKey, value]) => parseJsonToTree(value, `${key}.${objKey}`));
 
     return {
       title: (
         <span>
-          <Text type="secondary">{key}:</Text> <Text style={{ color: '#4ec9b0' }}>Object{`{${entries.length}}`}</Text>
+          <Text type="secondary">{key}:</Text>{' '}
+          <Text style={{ color: '#4ec9b0' }}>Object{`{${entries.length}}`}</Text>
         </span>
       ),
       key,
@@ -102,7 +110,11 @@ function parseJsonToTree(data: any, key: string = 'root'): DataNode {
 
   // Fallback
   return {
-    title: <span><Text type="secondary">{key}:</Text> {String(data)}</span>,
+    title: (
+      <span>
+        <Text type="secondary">{key}:</Text> {String(data)}
+      </span>
+    ),
     key,
     isLeaf: true,
   };
@@ -118,7 +130,9 @@ export const JsonOutput: React.FC<JsonOutputProps> = ({ content, metadata }) => 
   } catch (error) {
     return (
       <div style={{ padding: '12px', color: '#f48771' }}>
-        <Text type="danger">Invalid JSON: {error instanceof Error ? error.message : String(error)}</Text>
+        <Text type="danger">
+          Invalid JSON: {error instanceof Error ? error.message : String(error)}
+        </Text>
         <pre style={{ marginTop: '8px', color: '#cccccc' }}>{content}</pre>
       </div>
     );
@@ -132,14 +146,17 @@ export const JsonOutput: React.FC<JsonOutputProps> = ({ content, metadata }) => 
       }}
     >
       {metadata?.label && (
-        <div style={{ marginBottom: '12px', color: '#4ec9b0', fontSize: '14px', fontWeight: 'bold' }}>
+        <div
+          style={{ marginBottom: '12px', color: '#4ec9b0', fontSize: '14px', fontWeight: 'bold' }}
+        >
           {metadata.label}
         </div>
       )}
       {metadata && (
         <div style={{ marginBottom: '12px', color: '#858585', fontSize: '12px' }}>
           <Text type="secondary">
-            {metadata.type === 'array' ? 'Array' : 'Object'} • {metadata.length} {metadata.type === 'array' ? 'items' : 'properties'}
+            {metadata.type === 'array' ? 'Array' : 'Object'} • {metadata.length}{' '}
+            {metadata.type === 'array' ? 'items' : 'properties'}
           </Text>
         </div>
       )}

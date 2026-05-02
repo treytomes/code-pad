@@ -16,13 +16,7 @@ export const AboutDialog: React.FC<AboutDialogProps> = ({ visible, onClose }) =>
   const nodeVersion = window.electronAPI.versions.node;
 
   return (
-    <Modal
-      open={visible}
-      onCancel={onClose}
-      footer={null}
-      width={500}
-      centered
-    >
+    <Modal open={visible} onCancel={onClose} footer={null} width={500} centered>
       <div style={{ textAlign: 'center', padding: '20px 0' }}>
         <CodeOutlined style={{ fontSize: '64px', color: '#007acc', marginBottom: '16px' }} />
 
@@ -38,9 +32,9 @@ export const AboutDialog: React.FC<AboutDialogProps> = ({ visible, onClose }) =>
 
         <div style={{ textAlign: 'left' }}>
           <Paragraph>
-            A cross-platform code scratchpad and rapid prototyping tool inspired by LINQPad.
-            Execute code snippets across multiple programming languages without the overhead
-            of creating full projects.
+            A cross-platform code scratchpad and rapid prototyping tool inspired by LINQPad. Execute
+            code snippets across multiple programming languages without the overhead of creating
+            full projects.
           </Paragraph>
 
           <Paragraph strong style={{ marginTop: '16px', marginBottom: '8px' }}>
@@ -58,7 +52,10 @@ export const AboutDialog: React.FC<AboutDialogProps> = ({ visible, onClose }) =>
           <Divider />
 
           <div style={{ marginBottom: '16px' }}>
-            <Text type="secondary" style={{ fontSize: '12px', display: 'block', marginBottom: '8px' }}>
+            <Text
+              type="secondary"
+              style={{ fontSize: '12px', display: 'block', marginBottom: '8px' }}
+            >
               Built with:
             </Text>
             <Space wrap>
@@ -74,10 +71,7 @@ export const AboutDialog: React.FC<AboutDialogProps> = ({ visible, onClose }) =>
 
           <div style={{ textAlign: 'center' }}>
             <Space direction="vertical" size="small">
-              <Link
-                href="https://github.com/treytomes/code-pad"
-                target="_blank"
-              >
+              <Link href="https://github.com/treytomes/code-pad" target="_blank">
                 <GithubOutlined style={{ marginRight: '8px' }} />
                 View on GitHub
               </Link>

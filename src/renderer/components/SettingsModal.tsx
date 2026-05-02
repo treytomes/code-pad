@@ -87,7 +87,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ visible, onClose }
   };
 
   const updateSetting = <K extends keyof Settings>(key: K, value: Settings[K]) => {
-    setSettings(prev => ({ ...prev, [key]: value }));
+    setSettings((prev) => ({ ...prev, [key]: value }));
     setHasChanges(true);
   };
 
@@ -105,10 +105,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ visible, onClose }
       </Form.Item>
 
       <Form.Item label="Tab Size">
-        <Select
-          value={settings.tabSize}
-          onChange={(value) => updateSetting('tabSize', value)}
-        >
+        <Select value={settings.tabSize} onChange={(value) => updateSetting('tabSize', value)}>
           <Option value={2}>2 spaces</Option>
           <Option value={4}>4 spaces</Option>
           <Option value={8}>8 spaces</Option>
@@ -160,7 +157,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ visible, onClose }
           style={{ width: '100%' }}
         />
         <div style={{ marginTop: '4px', color: '#858585', fontSize: '12px' }}>
-          Maximum execution time. Set to 0 to disable timeout (run indefinitely). Use Stop button to cancel.
+          Maximum execution time. Set to 0 to disable timeout (run indefinitely). Use Stop button to
+          cancel.
         </div>
       </Form.Item>
 
@@ -179,11 +177,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ visible, onClose }
   const appearanceTab = (
     <Form layout="vertical" style={{ marginTop: '16px' }}>
       <Form.Item label="Theme">
-        <Select
-          value={settings.theme}
-          onChange={(value) => updateSetting('theme', value)}
-          disabled
-        >
+        <Select value={settings.theme} onChange={(value) => updateSetting('theme', value)} disabled>
           <Option value="dark">Dark (VS Code)</Option>
           <Option value="light">Light (Coming Soon)</Option>
         </Select>

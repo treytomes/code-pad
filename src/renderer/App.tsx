@@ -171,8 +171,10 @@ function App() {
 
       // Show error if execution failed
       if (result.exitCode !== 0) {
-        setOutput((prev) =>
-          prev + `\n\nError (exit code ${result.exitCode}):\n${result.stderr || result.error || 'Unknown error'}`
+        setOutput(
+          (prev) =>
+            prev +
+            `\n\nError (exit code ${result.exitCode}):\n${result.stderr || result.error || 'Unknown error'}`
         );
       } else if (!result.stdout && !result.stderr) {
         setOutput((prev) => prev || '(no output)');
@@ -194,9 +196,7 @@ function App() {
       // Clean up output subscription
       cleanup();
 
-      setOutput(
-        `Failed to execute: ${error instanceof Error ? error.message : String(error)}`
-      );
+      setOutput(`Failed to execute: ${error instanceof Error ? error.message : String(error)}`);
     } finally {
       setIsRunning(false);
     }
@@ -253,9 +253,7 @@ function App() {
   const handleSelectSnippet = async (snippet: Snippet) => {
     // Warn if there are unsaved changes
     if (hasUnsavedChanges) {
-      const confirmed = window.confirm(
-        'You have unsaved changes. Do you want to discard them?'
-      );
+      const confirmed = window.confirm('You have unsaved changes. Do you want to discard them?');
       if (!confirmed) {
         return;
       }
@@ -326,9 +324,7 @@ function App() {
   const handleNewSnippet = () => {
     // Warn if there are unsaved changes
     if (hasUnsavedChanges) {
-      const confirmed = window.confirm(
-        'You have unsaved changes. Do you want to discard them?'
-      );
+      const confirmed = window.confirm('You have unsaved changes. Do you want to discard them?');
       if (!confirmed) {
         return;
       }
@@ -509,13 +505,15 @@ function App() {
     cleanups.push(window.electronAPI.onMenuEvent('menu-new-snippet', handleNewSnippet));
 
     // Save
-    cleanups.push(window.electronAPI.onMenuEvent('menu-save', () => {
-      if (currentSnippetId) {
-        handleSaveExisting();
-      } else {
-        handleSaveNew();
-      }
-    }));
+    cleanups.push(
+      window.electronAPI.onMenuEvent('menu-save', () => {
+        if (currentSnippetId) {
+          handleSaveExisting();
+        } else {
+          handleSaveNew();
+        }
+      })
+    );
 
     // Save As
     cleanups.push(window.electronAPI.onMenuEvent('menu-save-as', handleSaveAs));
@@ -530,11 +528,13 @@ function App() {
     cleanups.push(window.electronAPI.onMenuEvent('menu-export-all', handleExportAll));
 
     // Run
-    cleanups.push(window.electronAPI.onMenuEvent('menu-run', () => {
-      if (!isRunning) {
-        handleRun();
-      }
-    }));
+    cleanups.push(
+      window.electronAPI.onMenuEvent('menu-run', () => {
+        if (!isRunning) {
+          handleRun();
+        }
+      })
+    );
 
     // Clear Output
     cleanups.push(window.electronAPI.onMenuEvent('menu-clear-output', handleClearOutput));
@@ -546,7 +546,7 @@ function App() {
     cleanups.push(window.electronAPI.onMenuEvent('menu-settings', () => setSettingsVisible(true)));
 
     return () => {
-      cleanups.forEach(cleanup => cleanup());
+      cleanups.forEach((cleanup) => cleanup());
     };
   }, [currentSnippetId, isRunning, code]);
 
@@ -624,18 +624,10 @@ function App() {
         </h1>
         <div style={{ flex: 1 }} />
         <Space>
-          <Button
-            icon={<PlusOutlined />}
-            onClick={handleNewSnippet}
-            title="New Snippet (Ctrl+N)"
-          >
+          <Button icon={<PlusOutlined />} onClick={handleNewSnippet} title="New Snippet (Ctrl+N)">
             New
           </Button>
-          <Button
-            icon={<ImportOutlined />}
-            onClick={handleImport}
-            title="Import from .cs file"
-          >
+          <Button icon={<ImportOutlined />} onClick={handleImport} title="Import from .cs file">
             Import
           </Button>
           {currentSnippetId ? (
@@ -649,18 +641,10 @@ function App() {
               >
                 {hasUnsavedChanges ? 'Save *' : 'Save'}
               </Button>
-              <Button
-                icon={<SaveOutlined />}
-                onClick={handleSaveAs}
-                title="Save As (Ctrl+Shift+S)"
-              >
+              <Button icon={<SaveOutlined />} onClick={handleSaveAs} title="Save As (Ctrl+Shift+S)">
                 Save As...
               </Button>
-              <Button
-                icon={<ExportOutlined />}
-                onClick={handleExport}
-                title="Export to .cs file"
-              >
+              <Button icon={<ExportOutlined />} onClick={handleExport} title="Export to .cs file">
                 Export
               </Button>
             </>

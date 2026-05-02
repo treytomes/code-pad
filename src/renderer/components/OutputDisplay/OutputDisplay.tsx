@@ -3,7 +3,11 @@ import { Divider } from 'antd';
 import { JsonOutput } from './JsonOutput';
 import { TableOutput } from './TableOutput';
 import { PlainOutput } from './PlainOutput';
-import { formatOutput, FormattedOutput, splitOutputSections } from '../../../backend/output-formatter';
+import {
+  formatOutput,
+  FormattedOutput,
+  splitOutputSections,
+} from '../../../backend/output-formatter';
 
 interface OutputDisplayProps {
   output: string;
@@ -54,7 +58,7 @@ export const OutputDisplay: React.FC<OutputDisplayProps> = ({ output }) => {
       return [formatOutput(output)];
     }
 
-    return outputSections.map(section => formatOutput(section));
+    return outputSections.map((section) => formatOutput(section));
   }, [output]);
 
   if (sections.length === 0 || (sections.length === 1 && !sections[0].content)) {

@@ -107,11 +107,7 @@ export async function exportAllSnippets(
       snippets,
     };
 
-    await fs.writeFile(
-      result.filePath,
-      JSON.stringify(exportData, null, 2),
-      'utf-8'
-    );
+    await fs.writeFile(result.filePath, JSON.stringify(exportData, null, 2), 'utf-8');
     logInfo(`All snippets exported to: ${result.filePath}`);
 
     return { success: true, filePath: result.filePath };

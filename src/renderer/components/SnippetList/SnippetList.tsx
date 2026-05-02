@@ -1,5 +1,16 @@
 import React, { useEffect, useState, useMemo, useCallback } from 'react';
-import { List, Button, Empty, Popconfirm, Typography, Select, Input, Space, Divider, Tabs } from 'antd';
+import {
+  List,
+  Button,
+  Empty,
+  Popconfirm,
+  Typography,
+  Select,
+  Input,
+  Space,
+  Divider,
+  Tabs,
+} from 'antd';
 import {
   DeleteOutlined,
   PlayCircleOutlined,
@@ -40,9 +51,7 @@ export const SnippetList: React.FC<SnippetListProps> = ({
   const [starredSnippets, setStarredSnippets] = useState<Snippet[]>([]);
   const [recentSnippets, setRecentSnippets] = useState<Snippet[]>([]);
   const [loading, setLoading] = useState(false);
-  const [languageFilter, setLanguageFilter] = useState<string | undefined>(
-    undefined
-  );
+  const [languageFilter, setLanguageFilter] = useState<string | undefined>(undefined);
   const [searchText, setSearchText] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState('');
@@ -113,14 +122,18 @@ export const SnippetList: React.FC<SnippetListProps> = ({
       return snippetList;
     }
     const search = searchText.toLowerCase();
-    return snippetList.filter(snippet =>
-      snippet.name.toLowerCase().includes(search)
-    );
+    return snippetList.filter((snippet) => snippet.name.toLowerCase().includes(search));
   };
 
   // Memoized filtered lists
-  const filteredStarred = useMemo(() => filterBySearch(starredSnippets), [starredSnippets, searchText]);
-  const filteredRecent = useMemo(() => filterBySearch(recentSnippets), [recentSnippets, searchText]);
+  const filteredStarred = useMemo(
+    () => filterBySearch(starredSnippets),
+    [starredSnippets, searchText]
+  );
+  const filteredRecent = useMemo(
+    () => filterBySearch(recentSnippets),
+    [recentSnippets, searchText]
+  );
   const filteredSnippets = useMemo(() => filterBySearch(snippets), [snippets, searchText]);
 
   const renderSnippetItem = (snippet: Snippet) => (
@@ -142,9 +155,7 @@ export const SnippetList: React.FC<SnippetListProps> = ({
       onClick={() => onSelectSnippet(snippet)}
     >
       <List.Item.Meta
-        avatar={
-          <CodeOutlined style={{ fontSize: '20px', color: '#858585' }} />
-        }
+        avatar={<CodeOutlined style={{ fontSize: '20px', color: '#858585' }} />}
         title={
           <div
             style={{
@@ -241,10 +252,7 @@ export const SnippetList: React.FC<SnippetListProps> = ({
         }
         description={
           <div>
-            <Text
-              type="secondary"
-              style={{ fontSize: '12px', color: '#858585' }}
-            >
+            <Text type="secondary" style={{ fontSize: '12px', color: '#858585' }}>
               {snippet.language}
             </Text>
             {snippet.executionCount > 0 && (
@@ -364,134 +372,138 @@ export const SnippetList: React.FC<SnippetListProps> = ({
                   }}
                 >
                   <Space direction="vertical" style={{ width: '100%' }} size="small">
-          <Select
-            placeholder="Filter by language"
-            allowClear
-            style={{ width: '100%' }}
-            onChange={setLanguageFilter}
-            value={languageFilter}
-          >
-            <Option value="csharp">C#</Option>
-            <Option value="python">Python</Option>
-            <Option value="javascript">JavaScript</Option>
-          </Select>
-          <Input
-            placeholder="Search snippets..."
-            prefix={<SearchOutlined style={{ color: '#858585' }} />}
-            allowClear
-            value={searchText}
-            onChange={(e) => setSearchText(e.target.value)}
-            style={{
-              backgroundColor: '#3c3c3c',
-              borderColor: '#2d2d30',
-              color: '#cccccc',
-            }}
-          />
-        </Space>
-      </div>
+                    <Select
+                      placeholder="Filter by language"
+                      allowClear
+                      style={{ width: '100%' }}
+                      onChange={setLanguageFilter}
+                      value={languageFilter}
+                    >
+                      <Option value="csharp">C#</Option>
+                      <Option value="python">Python</Option>
+                      <Option value="javascript">JavaScript</Option>
+                    </Select>
+                    <Input
+                      placeholder="Search snippets..."
+                      prefix={<SearchOutlined style={{ color: '#858585' }} />}
+                      allowClear
+                      value={searchText}
+                      onChange={(e) => setSearchText(e.target.value)}
+                      style={{
+                        backgroundColor: '#3c3c3c',
+                        borderColor: '#2d2d30',
+                        color: '#cccccc',
+                      }}
+                    />
+                  </Space>
+                </div>
 
-      <div style={{ flex: 1, overflowY: 'auto', background: '#252526' }}>
-        {/* Starred Snippets Section */}
-        {filteredStarred.length > 0 && (
-          <>
-            <div
-              style={{
-                padding: '12px 12px 8px',
-                borderBottom: '1px solid #2d2d30',
-              }}
-            >
-              <Text
-                strong
-                style={{
-                  color: '#ffc107',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                }}
-              >
-                <StarFilled /> Starred
-                {searchText && (
-                  <Text style={{ fontSize: '12px', color: '#858585', marginLeft: '8px' }}>
-                    ({filteredStarred.length}/{starredSnippets.length})
-                  </Text>
-                )}
-              </Text>
-            </div>
-            <List
-              dataSource={filteredStarred}
-              renderItem={(snippet) => renderSnippetItem(snippet)}
-              split={false}
-            />
-            <Divider style={{ margin: '8px 0', backgroundColor: '#2d2d30' }} />
-          </>
-        )}
+                <div style={{ flex: 1, overflowY: 'auto', background: '#252526' }}>
+                  {/* Starred Snippets Section */}
+                  {filteredStarred.length > 0 && (
+                    <>
+                      <div
+                        style={{
+                          padding: '12px 12px 8px',
+                          borderBottom: '1px solid #2d2d30',
+                        }}
+                      >
+                        <Text
+                          strong
+                          style={{
+                            color: '#ffc107',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                          }}
+                        >
+                          <StarFilled /> Starred
+                          {searchText && (
+                            <Text style={{ fontSize: '12px', color: '#858585', marginLeft: '8px' }}>
+                              ({filteredStarred.length}/{starredSnippets.length})
+                            </Text>
+                          )}
+                        </Text>
+                      </div>
+                      <List
+                        dataSource={filteredStarred}
+                        renderItem={(snippet) => renderSnippetItem(snippet)}
+                        split={false}
+                      />
+                      <Divider style={{ margin: '8px 0', backgroundColor: '#2d2d30' }} />
+                    </>
+                  )}
 
-        {/* Recently Opened Section */}
-        {filteredRecent.length > 0 && (
-          <>
-            <div
-              style={{
-                padding: '12px 12px 8px',
-                borderBottom: '1px solid #2d2d30',
-              }}
-            >
-              <Text
-                strong
-                style={{
-                  color: '#569cd6',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                }}
-              >
-                <ClockCircleOutlined /> Recently Opened
-                {searchText && (
-                  <Text style={{ fontSize: '12px', color: '#858585', marginLeft: '8px' }}>
-                    ({filteredRecent.length}/{recentSnippets.length})
-                  </Text>
-                )}
-              </Text>
-            </div>
-            <List
-              dataSource={filteredRecent}
-              renderItem={(snippet) => renderSnippetItem(snippet)}
-              split={false}
-            />
-            <Divider style={{ margin: '8px 0', backgroundColor: '#2d2d30' }} />
-          </>
-        )}
+                  {/* Recently Opened Section */}
+                  {filteredRecent.length > 0 && (
+                    <>
+                      <div
+                        style={{
+                          padding: '12px 12px 8px',
+                          borderBottom: '1px solid #2d2d30',
+                        }}
+                      >
+                        <Text
+                          strong
+                          style={{
+                            color: '#569cd6',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                          }}
+                        >
+                          <ClockCircleOutlined /> Recently Opened
+                          {searchText && (
+                            <Text style={{ fontSize: '12px', color: '#858585', marginLeft: '8px' }}>
+                              ({filteredRecent.length}/{recentSnippets.length})
+                            </Text>
+                          )}
+                        </Text>
+                      </div>
+                      <List
+                        dataSource={filteredRecent}
+                        renderItem={(snippet) => renderSnippetItem(snippet)}
+                        split={false}
+                      />
+                      <Divider style={{ margin: '8px 0', backgroundColor: '#2d2d30' }} />
+                    </>
+                  )}
 
-        {/* All Snippets Section */}
-        <div
-          style={{
-            padding: '12px 12px 8px',
-            borderBottom: '1px solid #2d2d30',
-          }}
-        >
-          <Text strong style={{ color: '#cccccc' }}>
-            All Snippets
-            {searchText && (
-              <Text style={{ fontSize: '12px', color: '#858585', marginLeft: '8px' }}>
-                ({filteredSnippets.length}/{snippets.length})
-              </Text>
-            )}
-          </Text>
-        </div>
-        <List
-          loading={loading}
-          dataSource={filteredSnippets}
-          locale={{
-            emptyText: (
-              <Empty
-                image={Empty.PRESENTED_IMAGE_SIMPLE}
-                description={searchText ? `No snippets found matching "${searchText}"` : "No snippets yet"}
-              />
-            ),
-          }}
-          split={false}
-          renderItem={(snippet) => renderSnippetItem(snippet)}
-        />
-      </div>
+                  {/* All Snippets Section */}
+                  <div
+                    style={{
+                      padding: '12px 12px 8px',
+                      borderBottom: '1px solid #2d2d30',
+                    }}
+                  >
+                    <Text strong style={{ color: '#cccccc' }}>
+                      All Snippets
+                      {searchText && (
+                        <Text style={{ fontSize: '12px', color: '#858585', marginLeft: '8px' }}>
+                          ({filteredSnippets.length}/{snippets.length})
+                        </Text>
+                      )}
+                    </Text>
+                  </div>
+                  <List
+                    loading={loading}
+                    dataSource={filteredSnippets}
+                    locale={{
+                      emptyText: (
+                        <Empty
+                          image={Empty.PRESENTED_IMAGE_SIMPLE}
+                          description={
+                            searchText
+                              ? `No snippets found matching "${searchText}"`
+                              : 'No snippets yet'
+                          }
+                        />
+                      ),
+                    }}
+                    split={false}
+                    renderItem={(snippet) => renderSnippetItem(snippet)}
+                  />
+                </div>
               </>
             ),
           },
@@ -519,11 +531,7 @@ export const SnippetList: React.FC<SnippetListProps> = ({
                           {category}
                         </Text>
                       </div>
-                      <List
-                        dataSource={samples}
-                        renderItem={renderSampleItem}
-                        split={false}
-                      />
+                      <List dataSource={samples} renderItem={renderSampleItem} split={false} />
                     </div>
                   );
                 })}

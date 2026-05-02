@@ -90,9 +90,9 @@ export class SnippetDatabase {
       logInfo('Checking for database migrations');
 
       // Check if starred column exists
-      const tableInfo = this.db.prepare("PRAGMA table_info(snippets)").all() as any[];
-      const hasStarred = tableInfo.some(col => col.name === 'starred');
-      const hasLastOpened = tableInfo.some(col => col.name === 'last_opened_at');
+      const tableInfo = this.db.prepare('PRAGMA table_info(snippets)').all() as any[];
+      const hasStarred = tableInfo.some((col) => col.name === 'starred');
+      const hasLastOpened = tableInfo.some((col) => col.name === 'last_opened_at');
 
       // Migration 1: Add starred column
       if (!hasStarred) {
@@ -166,10 +166,7 @@ export class SnippetDatabase {
   }
 
   // Update
-  updateSnippet(
-    id: string,
-    updates: Partial<Pick<Snippet, 'name' | 'code'>>
-  ): boolean {
+  updateSnippet(id: string, updates: Partial<Pick<Snippet, 'name' | 'code'>>): boolean {
     const sets: string[] = [];
     const values: any[] = [];
 
@@ -212,14 +209,10 @@ export class SnippetDatabase {
     let stmt;
 
     if (language) {
-      stmt = this.db.prepare(
-        'SELECT * FROM snippets WHERE language = ? ORDER BY modified_at DESC'
-      );
+      stmt = this.db.prepare('SELECT * FROM snippets WHERE language = ? ORDER BY modified_at DESC');
       return stmt.all(language).map(this.rowToSnippet);
     } else {
-      stmt = this.db.prepare(
-        'SELECT * FROM snippets ORDER BY modified_at DESC'
-      );
+      stmt = this.db.prepare('SELECT * FROM snippets ORDER BY modified_at DESC');
       return stmt.all().map(this.rowToSnippet);
     }
   }
