@@ -31,7 +31,8 @@
     "logs": "bash scripts/view-logs.sh",
     "logs:windows": "scripts\\view-logs.bat",
     "logs:clear": "rm -f ~/.config/codepad/logs/*.log ~/Library/Logs/codepad/*.log",
-    "logs:clear:windows": "del /q \"%APPDATA%\\codepad\\logs\\*.log\" 2>nul || echo Cleared"
+    "logs:clear:windows": "del /q \"%APPDATA%\\codepad\\logs\\*.log\" 2>nul || echo Cleared",
+    "generate-icons": "node scripts/generate-icons.js"
   },
   "keywords": [
     "code",
@@ -107,16 +108,21 @@
     },
     "extraFiles": [],
     "win": {
-      "target": "nsis"
+      "target": "nsis",
+      "icon": "assets/icon.ico"
     },
     "mac": {
-      "target": "dmg"
+      "target": "dmg",
+      "icon": "assets/icon.icns",
+      "category": "public.app-category.developer-tools"
     },
     "linux": {
       "target": [
         "AppImage",
         "deb"
-      ]
+      ],
+      "icon": "assets/icon.png",
+      "category": "Development"
     }
   }
 }
