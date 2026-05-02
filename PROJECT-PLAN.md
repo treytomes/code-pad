@@ -7,9 +7,10 @@
 
 ---
 
-## Current Status (May 1, 2026)
+## Current Status (May 2, 2026)
 
 **Phase 1 MVP: 100% COMPLETE** 🎉🎉🎉
+**Phase 1.5: .Dump() Extension: 100% COMPLETE** 🚀🚀🚀
 
 ### ✅ Completed Features
 - Full C# code execution with dotnet-script
@@ -48,6 +49,16 @@
   - **Duplicate Snippet**: One-click duplication with automatic naming
   - **Enhanced Default Code**: Showcases JSON, tables, LINQ with helpful tips
   - **GitHub Repository**: Public repo created at https://github.com/treytomes/code-pad
+- **Phase 1.5 Additions (May 2, 2026):** 🚀🚀🚀 .DUMP() EXTENSION
+  - **.Dump() Extension Method**: LINQPad-style extension auto-injected into all scripts
+  - **Auto-injection**: DumpExtensions class automatically available, no imports needed
+  - **Labeled Output**: obj.Dump("Label") adds styled headers to sections
+  - **Chaining Support**: Returns object for LINQ pipeline integration
+  - **Smart Visualization**: Arrays of objects → tables, single objects → JSON trees
+  - **Proper C# Compilation**: Uses dotnet build with Program.Main() for correct class nesting
+  - **Multiple Rich Outputs**: Automatic spacing and section separation
+  - **Comprehensive Tests**: 11 tests for .Dump() functionality, 4 tests for .csx extension methods
+  - **DUMP-EXTENSION-DESIGN.md**: Complete design doc with user extension roadmap (Phase 2)
 
 ### 🚧 In Progress
 - User testing with production build (TESTING-CHECKLIST.md available)
@@ -302,7 +313,24 @@
   - [x] Add HTML rendering support ✓
   - [x] Syntax highlighting for JSON output (VS Code colors) ✓
   - [x] OutputDisplay smart router component ✓
+  - [x] Multiple sections with dividers and auto-spacing ✓
+  - [x] Labeled output detection and rendering ✓
+  - [x] Smart array-to-table conversion ✓
   - [ ] Add stdout/stderr separation (deferred)
+
+- [x] **.Dump() Extension Method** ✅ COMPLETE (May 2, 2026)
+  - [x] Auto-inject DumpExtensions class into all C# scripts ✓
+  - [x] LINQPad-style obj.Dump() and obj.Dump("Label") syntax ✓
+  - [x] Chaining support (returns object) ✓
+  - [x] Automatic JSON serialization with error handling ✓
+  - [x] Circular reference protection (ReferenceHandler.IgnoreCycles) ✓
+  - [x] Automatic spacing between dumps ✓
+  - [x] Label parsing and styled header rendering ✓
+  - [x] Fix CS1109 error (extension methods in top-level class) ✓
+  - [x] Switch from dotnet-script to dotnet build for proper compilation ✓
+  - [x] Program.Main() wrapper for correct C# structure ✓
+  - [x] Comprehensive test suite (15 tests) ✓
+  - [x] DUMP-EXTENSION-DESIGN.md with Phase 2 user extension roadmap ✓
 
 - [x] **Output Formatters** ✅ COMPLETE (May 1, 2026)
   - [x] Plain text formatter (PlainOutput) ✓
