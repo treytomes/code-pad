@@ -107,7 +107,7 @@ function App() {
   const executionStartRef = useRef<number>(0);
   const [outputHeight, setOutputHeight] = useState(savedSettings.outputHeight);
   const [sidebarWidth, setSidebarWidth] = useState(savedSettings.sidebarWidth);
-  const [timeout, setTimeout] = useState(savedSettings.timeout);
+  const [timeout, _setTimeout] = useState(savedSettings.timeout);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const savedCodeRef = useRef<string>(DEFAULT_CODE);
   const [isDraggingOutput, setIsDraggingOutput] = useState(false);
@@ -861,7 +861,7 @@ function App() {
                     fontStyle: 'italic',
                   }}
                 >
-                  Click "Run Code" to execute
+                  Click &ldquo;Run Code&rdquo; to execute
                 </div>
               )}
             </div>

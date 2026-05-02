@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Modal, Typography, Button, Alert, Spin } from 'antd';
+import { Modal, Typography, Button, Alert } from 'antd';
 import { WarningOutlined, CheckCircleOutlined } from '@ant-design/icons';
 
 const { Title, Paragraph, Link, Text } = Typography;
@@ -16,10 +16,6 @@ export const RuntimeWarning: React.FC = () => {
   const [visible, setVisible] = useState(false);
   const [checking, setChecking] = useState(true);
   const [runtimeInfo, setRuntimeInfo] = useState<RuntimeInfo | null>(null);
-
-  useEffect(() => {
-    checkRuntime();
-  }, []);
 
   const checkRuntime = async () => {
     setChecking(true);
@@ -38,6 +34,12 @@ export const RuntimeWarning: React.FC = () => {
     }
   };
 
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    checkRuntime();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   if (checking) {
     return null;
   }
@@ -52,7 +54,7 @@ export const RuntimeWarning: React.FC = () => {
       onCancel={() => setVisible(false)}
       footer={[
         <Button key="close" type="primary" onClick={() => setVisible(false)}>
-          I'll Install Later
+          I&apos;ll Install Later
         </Button>,
       ]}
       width={600}

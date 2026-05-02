@@ -44,12 +44,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ visible, onClose }
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
   const [hasChanges, setHasChanges] = useState(false);
 
-  useEffect(() => {
-    if (visible) {
-      loadSettings();
-    }
-  }, [visible]);
-
   const loadSettings = () => {
     // TODO: Load from database
     const stored = localStorage.getItem('codepad-settings');
@@ -61,6 +55,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ visible, onClose }
       }
     }
   };
+
+  useEffect(() => {
+    if (visible) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      loadSettings();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visible]);
 
   const handleSave = () => {
     try {

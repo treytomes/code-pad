@@ -33,7 +33,7 @@ function parseJsonToTree(data: any, key: string = 'root'): DataNode {
     return {
       title: (
         <span>
-          <Text type="secondary">{key}:</Text> <Text style={{ color: '#ce9178' }}>"{data}"</Text>
+          <Text type="secondary">{key}:</Text> <Text style={{ color: '#ce9178' }}>&ldquo;{data}&rdquo;</Text>
         </span>
       ),
       key,

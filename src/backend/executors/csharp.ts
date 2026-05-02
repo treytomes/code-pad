@@ -273,25 +273,26 @@ export class CSharpExecutor {
     timeout: number,
     onOutputChunk?: (chunk: string, isError: boolean) => void
   ): Promise<ExecutionResult> {
-    return new Promise(async (resolve) => {
-      let stdout = '';
-      let stderr = '';
-      let timedOut = false;
-      let killed = false;
+    return new Promise((resolve) => {
+      const runAsync = async () => {
+        let stdout = '';
+        let stderr = '';
+        let timedOut = false;
+        let killed = false;
 
-      const env = { ...process.env };
-      const pathSeparator = process.platform === 'win32' ? ';' : ':';
-      const dotnetCommonPaths = this.findDotnetPath();
+        const env = { ...process.env };
+        const _pathSeparator = process.platform === 'win32' ? ';' : ':';
+        const dotnetCommonPaths = this.findDotnetPath();
 
-      env.PATH = `${dotnetCommonPaths}${env.PATH || ''}`;
-      env.DOTNET_CLI_TELEMETRY_OPTOUT = '1';
+        env.PATH = `${dotnetCommonPaths}${env.PATH || ''}`;
+        env.DOTNET_CLI_TELEMETRY_OPTOUT = '1';
 
-      // Use dotnet build to compile the .cs file into an assembly
-      // This is more reliable than dotnet-script and works with our Program.Main() structure
-      const outputDll = scriptPath.replace('.cs', '.dll');
-      const outputExe = scriptPath.replace('.cs', '.exe');
+        // Use dotnet build to compile the .cs file into an assembly
+        // This is more reliable than dotnet-script and works with our Program.Main() structure
+        const _outputDll = scriptPath.replace('.cs', '.dll');
+        const _outputExe = scriptPath.replace('.cs', '.exe');
 
-      try {
+        try {
         // Step 1: Create a simple project directory structure
         // dotnet build expects .csproj and .cs to be in same directory
         const projectDir = join(tmpdir(), `codepad-project-${randomUUID()}`);
@@ -470,17 +471,21 @@ export class CSharpExecutor {
           });
         });
 
-      } catch (error: any) {
-        // Handle compilation errors
-        resolve({
-          stdout: '',
-          stderr: error.message || 'Unknown compilation error',
-          exitCode: -1,
-          executionTime: 0,
-          timedOut: false,
-          error: error.message,
-        });
-      }
+        } catch (error: any) {
+          // Handle compilation errors
+          resolve({
+            stdout: '',
+            stderr: error.message || 'Unknown compilation error',
+            exitCode: -1,
+            executionTime: 0,
+            timedOut: false,
+            error: error.message,
+          });
+        }
+      };
+
+      // Call the async function
+      runAsync();
     });
   }
 }

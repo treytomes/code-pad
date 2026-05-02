@@ -33,6 +33,12 @@ export default [
         document: 'readonly',
         navigator: 'readonly',
         localStorage: 'readonly',
+        NodeJS: 'readonly',
+        Electron: 'readonly',
+        HTMLDivElement: 'readonly',
+        HTMLElement: 'readonly',
+        KeyboardEvent: 'readonly',
+        performance: 'readonly',
       },
     },
     plugins: {

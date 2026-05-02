@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { List, Button, Empty, Popconfirm, Typography, Select, Input, Space, Divider, Tabs } from 'antd';
 import {
   DeleteOutlined,
@@ -47,7 +47,7 @@ export const SnippetList: React.FC<SnippetListProps> = ({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState('');
 
-  const loadSnippets = async () => {
+  const loadSnippets = useCallback(async () => {
     setLoading(true);
     try {
       const [list, starred, recent] = await Promise.all([
@@ -63,11 +63,12 @@ export const SnippetList: React.FC<SnippetListProps> = ({
     } finally {
       setLoading(false);
     }
-  };
+  }, [languageFilter]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadSnippets();
-  }, [languageFilter, refreshTrigger]);
+  }, [loadSnippets, refreshTrigger]);
 
   const handleDelete = async (id: string) => {
     await onDeleteSnippet(id);
