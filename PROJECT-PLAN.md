@@ -1,20 +1,37 @@
 # CodePad - Project Plan
 
-**Version**: 1.0  
-**Date**: 2026-05-01  
-**Target Release**: MVP in 3-4 months  
-**Primary Language**: C# (MVP), Python (Phase 2)
+**Version**: 2.0  
+**Date**: 2026-05-02  
+**Target Release**: MVP Complete, v0.1.0 Pre-Release in Progress  
+**Primary Language**: C# (MVP Complete), Python (Phase 2)
 
 ---
 
 ## Current Status (May 2, 2026)
 
-**Phase 1 MVP: 100% COMPLETE** 🎉🎉🎉
-**Phase 1.5: .Dump() Extension: 100% COMPLETE** 🚀🚀🚀
+**Phase 1 MVP: 100% COMPLETE** 🎉🎉🎉  
+**Phase 1.5: .Dump() Extension: 100% COMPLETE** 🚀🚀🚀  
+**Pre-Release v0.1.0: In Progress**
 
-### ✅ Completed Features
-- Full C# code execution with dotnet-script
-- Monaco Editor with syntax highlighting
+### Project Management
+
+**All tasks are now tracked in GitHub Issues:**
+- 📋 [View All Issues](https://github.com/treytomes/code-pad/issues)
+- 🎯 [View Milestones](https://github.com/treytomes/code-pad/milestones)
+
+**Milestones:**
+1. **v0.1.0 - Pre-Release** (5 issues) - [View Milestone](https://github.com/treytomes/code-pad/milestone/1)
+2. **Phase 2 - Polish & Enhancement** (14 issues) - [View Milestone](https://github.com/treytomes/code-pad/milestone/2)
+3. **Phase 3 - Advanced Features** (3 issues) - [View Milestone](https://github.com/treytomes/code-pad/milestone/3)
+4. **Phase 4 - Public Release** (5 issues) - [View Milestone](https://github.com/treytomes/code-pad/milestone/4)
+
+---
+
+## ✅ Completed Features (Phase 1 & 1.5)
+
+### Core MVP Features
+- Full C# code execution with dotnet compilation
+- Monaco Editor with syntax highlighting and IntelliSense
 - Real-time streaming output
 - SQLite database for snippet persistence
 - CRUD operations for snippets (create, read, update, delete)
@@ -30,860 +47,147 @@
 - Comprehensive logging with electron-log
 - Database migrations system
 - Unit tests with 80%+ coverage (54+ test cases)
-- CS1529 fix for using statement ordering
-- **Week 7-8 Additions (May 1, 2026):** 🎉🎉🎉 ALL COMPLETE
-  - Error handling: React ErrorBoundary component with user-friendly errors
-  - Runtime detection: .NET SDK and dotnet-script validation on startup
-  - RuntimeWarning dialog with installation instructions
-  - Import/Export: Single snippets (.cs files) and bulk backup (JSON)
-  - About dialog with version, system info, and GitHub link
-  - Enhanced npm scripts (13 new commands for better DX)
-  - Icon generation guide and assets structure
-  - TESTING-CHECKLIST.md with 297 test items
-  - README updated with feature list and usage guide
-  - Fixed process.versions access in renderer (context isolation)
-  - **Rich Output**: JSON tree view, table rendering, HTML support, auto-detection
-  - **Application Menu**: File/Edit/View/Run/Help menus with full keyboard shortcuts
-  - **Settings Modal**: Editor/Execution/Appearance preferences with tabs
-  - **Unsaved Changes**: Indicator on Save button, warnings before data loss
-  - **Duplicate Snippet**: One-click duplication with automatic naming
-  - **Enhanced Default Code**: Showcases JSON, tables, LINQ with helpful tips
-  - **GitHub Repository**: Public repo created at https://github.com/treytomes/code-pad
-- **Phase 1.5 Additions (May 2, 2026):** 🚀🚀🚀 .DUMP() EXTENSION
-  - **.Dump() Extension Method**: LINQPad-style extension auto-injected into all scripts
-  - **Auto-injection**: DumpExtensions class automatically available, no imports needed
-  - **Labeled Output**: obj.Dump("Label") adds styled headers to sections
-  - **Chaining Support**: Returns object for LINQ pipeline integration
-  - **Smart Visualization**: Arrays of objects → tables, single objects → JSON trees
-  - **Proper C# Compilation**: Uses dotnet build with Program.Main() for correct class nesting
-  - **Multiple Rich Outputs**: Automatic spacing and section separation
-  - **Comprehensive Tests**: 11 tests for .Dump() functionality, 4 tests for .csx extension methods
-  - **DUMP-EXTENSION-DESIGN.md**: Complete design doc with user extension roadmap (Phase 2)
 
-### 🚧 In Progress (Pre-Release v0.1.0)
-- [ ] **Fix CI/CD Pipeline Failures** (Task #1)
-  - Resolve remaining ESLint warnings/errors
-  - Fix unit test mock issues (window.electronAPI)
-  - Ensure all checks pass on main branch
-  - Required before tagging v0.1.0 release
-- [ ] **Generate Production Application Icons**
-  - Use icon generation guide (docs/ICON_GENERATION.md)
-  - Create 256x256, 512x512, 1024x1024 PNG icons
-  - Generate .icns (macOS), .ico (Windows), and PNG set (Linux)
-  - Replace placeholder icons in assets/
-- [ ] **Run Pre-Release Testing**
-  - Complete TESTING-CHECKLIST.md systematically
-  - Test on Windows, macOS, Linux
-  - Verify all keyboard shortcuts
-  - Test import/export functionality
-  - Validate .Dump() on various data types
-- [ ] **Build Production Packages**
-  - Run `npm run build:prod` for all platforms
-  - Test installers on clean systems
-  - Verify code signing (if available)
-  - Document installation instructions
-- [ ] **Prepare Release Documentation**
-  - Finalize CHANGELOG.md for v0.1.0
-  - Update README.md with installation steps
-  - Create release notes highlighting .Dump() feature
-  - Add screenshots/GIFs to documentation
-
-### 📋 Next Priority Tasks (Phase 2)
-- [ ] **Implement User-Defined Extension Scripts** (Task #2)
-  - Create extensions folder (~/.codepad/extensions/)
-  - Support #load directive to import extension scripts
-  - Extension management UI (list, create, edit, delete)
-  - Auto-load setting per extension
-  - See DUMP-EXTENSION-DESIGN.md for full specification
-- [ ] **NuGet Package Support**
-  - Implement #r "nuget:..." directives
-  - Package restore and caching
-  - Version management UI
-- [ ] **Light Theme**
-  - Implement theme switching in settings
-  - Create light color scheme for editor and UI
-- [ ] **Database Connectivity**
-  - Connection string management
-  - Query execution and result display
-  - Schema exploration
-- [ ] **Python Language Support**
-  - Python executor implementation
-  - Syntax highlighting and autocomplete
-  - Virtual environment support
-- [ ] **Git Integration**
-  - Version control for snippets
-  - Commit history and diffs
-  - Branch management
-
-## Table of Contents
-
-1. [Current Status](#current-status-may-1-2026)
-2. [Overview](#overview)
-3. [Phase 0: Foundation (Week 1-2)](#phase-0-foundation-week-1-2)
-4. [Phase 1: Core MVP (Week 3-8)](#phase-1-core-mvp-week-3-8)
-5. [Phase 2: Polish & Enhancement (Week 9-12)](#phase-2-polish--enhancement-week-9-12)
-6. [Phase 3: Advanced Features (Week 13-16)](#phase-3-advanced-features-week-13-16)
-7. [Phase 4: Public Release (Week 17+)](#phase-4-public-release-week-17)
-8. [Risk Management](#risk-management)
-9. [Success Metrics](#success-metrics)
-
----
-
-## Overview
-
-### Goals
-
-**MVP (Minimum Viable Product)**:
-- Execute C# code snippets
-- Monaco Editor with syntax highlighting
-- Rich output visualization (basic .Dump())
-- Save/load snippets locally
-- Cross-platform desktop app (Windows, macOS, Linux)
-
-**Target Users**: .NET developers who want a LINQPad alternative on non-Windows systems
-
-**Development Approach**: Iterative with working software at each phase
-
----
-
-## Phase 0: Foundation (Week 1-2)
-
-**Goal**: Set up project infrastructure and validate core technical decisions
-
-### Tasks
-
-#### Week 1: Project Setup
-
-- [x] **Day 1: Documentation** ✓
-  - [x] Create REQUIREMENTS.md
-  - [x] Create TECH-STACK.md
-  - [x] Create PROJECT-PLAN.md
-  - [x] Update CLAUDE.md with project details
-
-- [x] **Day 2-3: Initialize Project** ✓
-  - [x] Initialize npm project
-  - [x] Set up TypeScript configuration
-  - [x] Install core dependencies (React, Electron, Vite)
-  - [x] Configure Vite with electron plugin
-  - [x] Set up ESLint + Prettier
-  - [x] Configure Husky + lint-staged
-  - [x] Create initial project structure (folders)
-  - [x] Initialize Git with .gitignore
-
-- [x] **Day 4-5: "Hello World" Electron App** ✓
-  - [x] Create basic Electron main process
-  - [x] Create basic React renderer
-  - [x] Set up IPC communication (ping/pong test)
-  - [x] Verify hot reload works
-  - [x] Test build process (`npm run build`)
-  - [x] Verify app runs on current platform
-
-- [x] **Week 1 Bonus: Windows Setup** ✓
-  - [x] Fix better-sqlite3 C++20 requirement (upgrade to v11.7.0)
-  - [x] Create Windows Python venv setup scripts
-  - [x] Fix VS Code debugging for Windows
-  - [x] Add electron-debug.js wrapper for clean exit
-  - [x] Create comprehensive setup documentation
-
-#### Week 2: Proof of Concepts
-
-- [x] **Day 1-2: C# Execution PoC** ✓
-  - [x] Install `dotnet-script` globally
-  - [x] Create execution worker process (Node.js)
-  - [x] Implement basic C# code execution
-  - [x] Test: Hello World C# script
-  - [x] Test: Capture stdout/stderr
-  - [x] Test: Handle execution timeout
-  - [x] Test: Handle errors and exit codes
-
-- [x] **Day 3-4: Monaco Editor PoC** ✓
-  - [x] Install Monaco Editor dependencies
-  - [x] Create basic Editor component
-  - [x] Configure C# syntax highlighting
-  - [x] Test: Code editing with syntax highlighting
-  - [x] Test: Line numbers, folding, find/replace
-  - [x] Verify performance with large files
-
-- [x] **Day 5: Database PoC** ✓
-  - [x] Install better-sqlite3
-  - [x] Create database schema
-  - [x] Implement database wrapper class
-  - [x] Test: CRUD operations for snippets
-  - [x] Test: Database file creation in ~/.codepad/
-  - [x] Verify cross-platform compatibility
-
-**Deliverable**: 
-- Working "Hello World" Electron app ✓
-- Proven C# execution capability ✓
-- Monaco Editor integrated ✓
-- SQLite database working ✓
-
-**Success Criteria**:
-- [x] Can execute simple C# code and capture output ✓ (Week 2, Day 1-2)
-- [x] Monaco Editor displays and edits code ✓ (Week 2, Day 3-4)
-- [x] Database stores and retrieves data ✓ (Week 2, Day 5)
-- [x] App builds and runs without errors ✓ (Week 1 complete)
-
----
-
-## Phase 1: Core MVP (Week 3-8)
-
-**Goal**: Build the minimum viable product with core features
-
-### Week 3-4: UI Foundation
-
-- [x] **Component Architecture** ✓
-  - [x] Design component hierarchy
-  - [x] Create base layout (3-panel: explorer, editor, output)
-  - [x] Implement responsive splitter panels
-  - [x] Add Ant Design theme configuration
-  - [x] Set up Tailwind CSS
-
-- [x] **Snippet Explorer Component** ✅ COMPLETE
-  - [x] Create list view using Ant Design List ✓
-  - [x] Implement snippet selection ✓
-  - [x] Add rename functionality (inline edit) ✓
-  - [x] Add delete with confirmation ✓
-  - [x] Show execution count per snippet ✓
-  - [x] Implement language filter ✓
-  - [x] Real-time search filter by name ✓
-  - [x] Show recently opened snippets ✓
-  - [x] Add starred/favorite snippets section ✓
-  - [x] Toggle star functionality ✓
-  - [x] Track last opened timestamp ✓
-
-- [x] **Editor Component** ✓
-  - [x] Integrate Monaco Editor fully ✓
-  - [x] Single editor with snippet switching ✓
-  - [x] C# syntax highlighting and IntelliSense ✓
-  - [x] Code editing with line numbers ✓
-  - [x] Dark theme (VS Code style) ✓
-
-- [x] **Output Panel Component** ✓
-  - [x] Create basic output display ✓
-  - [x] Resizable panel (drag to adjust height) ✓
-  - [x] Real-time streaming output ✓
-  - [x] Implement execution timing display ✓
-  - [x] Add clear output button ✓
-  - [x] Support text output (plain) ✓
-  - [x] Add copy to clipboard functionality ✓
-
-**Deliverable**: Complete UI layout with all major components
-
-### Week 5-6: Core Functionality
-
-- [x] **Snippet Management Backend** ✓
-  - [x] React state management (App component) ✓
-  - [x] Create snippet CRUD operations ✓
-  - [x] Rename snippet functionality ✓
-  - [x] Implement file storage for snippet content (SQLite database) ✓
-  - [x] Add snippet metadata tracking (createdAt, modifiedAt, executionCount) ✓
-  - [x] Auto-increment execution count on run ✓
-  - [x] Implement search functionality (language filter implemented) ✓
-
-- [x] **Code Execution System** ✓
-  - [x] Create execution worker process (dotnet-script) ✓
-  - [x] Implement C# executor class ✓
-  - [x] Add execution timeout handling ✓
-  - [x] Real-time streaming output ✓
-  - [x] Auto-flush console output for streaming ✓
-  - [x] Fix CS1529 error (using statement ordering) ✓
-  - [x] Handle compile and runtime errors ✓
-  - [x] Add error handling and formatting ✓
-  - [x] Create execution result parser ✓
-  - [x] Measure execution time ✓
-
-- [x] **IPC Layer** ✓
-  - [x] Define IPC channel types ✓
-  - [x] Implement typed IPC handlers ✓
-  - [x] Create secure context bridge (preload) ✓
-  - [x] Add request/response patterns ✓
-  - [x] Implement error propagation ✓
-  - [x] Database operations via IPC ✓
-  - [x] Code execution via IPC ✓
-  - [x] Streaming output via IPC ✓
-
-- [x] **Integration** ✓
-  - [x] Connect UI to backend via IPC ✓
-  - [x] Wire up "Execute" button ✓
-  - [x] Implement snippet save (Save button) ✓
-  - [x] Implement "Save As" functionality ✓
-  - [x] Add snippet open/close ✓
-  - [x] Enable snippet delete with confirmation ✓
-  - [x] Enable snippet rename (inline edit) ✓
-  - [x] Add keyboard shortcuts (Ctrl+S, Ctrl+Shift+S, F5, Ctrl+N) ✓
-  - [x] New snippet creation ✓
-  - [x] Snippet selection from list ✓
-
-**Deliverable**: Functional app that can create, edit, save, and execute C# snippets ✅ COMPLETE
-
-### Week 5.5: Unit Testing (Added)
-
-- [x] **Test Infrastructure** ✓
-  - [x] Set up Vitest with React Testing Library ✓
-  - [x] Configure jsdom environment ✓
-  - [x] Add coverage reporting ✓
-  - [x] Configure mocks for Monaco and Electron ✓
-
-- [x] **Backend Tests** ✓
-  - [x] Database CRUD operations (17 tests) ✓
-  - [x] C# executor tests (13 tests) ✓
-  - [x] CS1529 fix verification tests ✓
-  - [x] Error handling tests ✓
-
-- [x] **Component Tests** ✓
-  - [x] CodeEditor component tests (10 tests) ✓
-  - [x] SnippetList component tests (11 tests) ✓
-  - [x] App component tests (13 tests) ✓
-  - [x] Rename functionality tests ✓
-  - [x] Save/Save As tests ✓
-
-- [x] **Documentation** ✓
-  - [x] Create TEST_COVERAGE.md ✓
-  - [x] Document all test cases ✓
-  - [x] Add test running instructions ✓
-
-**Test Coverage**: 80-85% overall, 54+ test cases
-
-### Week 7-8: Rich Output & Polish
-
-- [x] **Rich Output Implementation** ✅ COMPLETE (May 1, 2026)
-  - [x] Auto-format detection (JSON/table/HTML/plain) ✓
-  - [x] Build collapsible tree view for objects (JsonOutput) ✓
-  - [x] Add table rendering for arrays/collections (TableOutput) ✓
-  - [x] Add HTML rendering support ✓
-  - [x] Syntax highlighting for JSON output (VS Code colors) ✓
-  - [x] OutputDisplay smart router component ✓
-  - [x] Multiple sections with dividers and auto-spacing ✓
-  - [x] Labeled output detection and rendering ✓
-  - [x] Smart array-to-table conversion ✓
-
-- [x] **.Dump() Extension Method** ✅ COMPLETE (May 2, 2026)
-  - [x] Auto-inject DumpExtensions class into all C# scripts ✓
-  - [x] LINQPad-style obj.Dump() and obj.Dump("Label") syntax ✓
-  - [x] Chaining support (returns object) ✓
-  - [x] Automatic JSON serialization with error handling ✓
-  - [x] Circular reference protection (ReferenceHandler.IgnoreCycles) ✓
-  - [x] Automatic spacing between dumps ✓
-  - [x] Label parsing and styled header rendering ✓
-  - [x] Fix CS1109 error (extension methods in top-level class) ✓
-  - [x] Switch from dotnet-script to dotnet build for proper compilation ✓
-  - [x] Program.Main() wrapper for correct C# structure ✓
-  - [x] Comprehensive test suite (15 tests) ✓
-  - [x] DUMP-EXTENSION-DESIGN.md with Phase 2 user extension roadmap ✓
-
-- [x] **Output Formatters** ✅ COMPLETE (May 1, 2026)
-  - [x] Plain text formatter (PlainOutput) ✓
-  - [x] JSON formatter with prettify (JsonOutput) ✓
-  - [x] Table/grid formatter (TableOutput) ✓
-  - [x] output-formatter.ts backend module ✓
-  - [x] Basic error display with execution time ✓
-
-- [x] **Application Menu** ✅ COMPLETE (May 1, 2026)
-  - [x] File menu (New, Open, Save, Save As, Import, Export, Close/Quit) ✓
-  - [x] Edit menu (Undo, Redo, Cut, Copy, Paste, Find, Replace, Settings) ✓
-  - [x] View menu (Toggle panels, zoom, fullscreen, devtools) ✓
-  - [x] Run menu (Execute F5, Stop, Clear Output) ✓
-  - [x] Help menu (About, Documentation, Report Issue, View Logs) ✓
-  - [x] Full keyboard shortcut support ✓
-  - [x] Cross-platform (macOS app menu, Windows/Linux standard) ✓
-
-- [x] **Settings & Preferences** ✅ COMPLETE (May 1, 2026)
-  - [x] Create settings UI (modal with tabs) ✓
-  - [x] Add editor preferences (font size, tab size, word wrap, line numbers, minimap) ✓
-  - [x] Add execution preferences (timeout, auto-save) ✓
-  - [x] Add appearance preferences (theme, panel sizes) ✓
-  - [x] Reset to defaults functionality ✓
-  - [x] Change tracking and save/cancel ✓
-  - [x] Dark theme fully implemented ✓
-  - [x] Settings stored in localStorage (works for Phase 1) ✓
-
-- [x] **Error Handling** ✅ COMPLETE (May 1, 2026)
-  - [x] Global error boundary in React ✓
-  - [x] User-friendly error messages with error details ✓
-  - [x] Crash reporting via electron-log ✓
-  - [x] Handle missing .NET runtime gracefully (detect on startup) ✓
-  - [x] RuntimeWarning dialog with installation instructions ✓
-
-- [x] **Import/Export** ✅ COMPLETE (May 1, 2026)
-  - [x] Export snippet to .cs file ✓
-  - [x] Import snippet from .cs/.csx file ✓
-  - [x] Export all snippets to JSON backup ✓
-  - [x] File dialogs for save/open locations ✓
-
-- [x] **Polish & Documentation** ✅ COMPLETE (May 1, 2026)
-  - [x] Icon generation guide and assets structure ✓
-  - [x] Add About dialog (Help > About with version info) ✓
-  - [x] Fix process.versions access (context isolation) ✓
-  - [x] Update README.md with new features and usage guide ✓
-  - [x] Create TESTING-CHECKLIST.md (297 test items) ✓
-  - [x] Add 13 new npm scripts for better DX ✓
-
-### Week 8 Continuation: Final MVP Polish
-
-- [x] **UX Improvements** ✅ COMPLETE (May 1, 2026)
-  - [x] Unsaved changes indicator (show * when code modified) ✓
-  - [x] Warn before closing unsaved snippet ✓
-  - [x] Add duplicate snippet button/menu item ✓
-  - [x] Update default snippet code to showcase rich output ✓
+### Rich Output & Polish (Week 7-8)
+- **Rich Output Implementation**
+  - JSON tree view with VS Code colors
+  - Table rendering for arrays/collections
+  - HTML rendering support
+  - Auto-format detection
+  - Multiple sections with smart spacing
+  - Labeled output with styled headers
   
-- [ ] **Execution Enhancements** (Deferred to Phase 2)
-  - [ ] Implement execution cancellation (Stop button)
-  - [ ] Add process management for killing child processes
+- **Application Menu**
+  - File, Edit, View, Run, Help menus
+  - Full keyboard shortcut support
+  - Cross-platform (macOS app menu, Windows/Linux standard)
 
-**Week 7-8 Status**: ✅ **100% COMPLETE** (May 1, 2026)
+- **Settings & Preferences**
+  - Modal with tabs (Editor/Execution/Appearance)
+  - Font size, tab size, word wrap, line numbers, minimap
+  - Execution timeout, auto-save settings
+  - Theme preferences
+  - Dark theme fully implemented
+  - Settings stored in localStorage
 
-All core objectives, stretch goals, AND final polish achieved:
-- ✅ Error Handling (boundary, runtime detection, warnings)
-- ✅ Import/Export (.cs files, JSON backup)
-- ✅ Polish & Documentation (About dialog, README, testing checklist, npm scripts)
-- ✅ **Rich Output Implementation** (JSON tree view, table rendering, auto-detection)
-- ✅ **Application Menu** (File, Edit, View, Run, Help with full shortcuts)
-- ✅ **Settings & Preferences** (Editor, Execution, Appearance tabs)
-- ✅ **Unsaved Changes Tracking** (indicator, warnings before data loss)
-- ✅ **Duplicate Snippet** (one-click duplication)
-- ✅ **Enhanced Default Code** (showcases rich output features)
+- **Error Handling & Runtime Detection**
+  - React ErrorBoundary component
+  - .NET SDK detection on startup
+  - RuntimeWarning dialog with installation instructions
+  - Crash reporting via electron-log
 
-**Phase 1 MVP: 100% COMPLETE** 🎉
+- **Import/Export**
+  - Export snippet to .cs file
+  - Import snippet from .cs/.csx file
+  - Export all snippets to JSON backup
+  - File dialogs for save/open locations
 
-**Deliverable**: Production-ready MVP ready for testing and deployment ✅
+- **UX Improvements**
+  - Unsaved changes indicator
+  - Warnings before closing unsaved snippets
+  - Duplicate snippet functionality
+  - About dialog with version info
+  - Enhanced default code showcasing features
 
-**GitHub Repository**: https://github.com/treytomes/code-pad
-
-**Success Criteria**:
-- [x] Can create and manage snippets ✓ (folder support deferred)
-- [x] Can execute C# code with streaming output ✓
-- [x] Monaco Editor has full functionality ✓
-- [x] Output displays text and errors ✓ (rich object display deferred)
-- [x] Key keyboard shortcuts work (Ctrl+S, Ctrl+Shift+S, F5, Ctrl+N) ✓
-- [x] Snippets persist between sessions (SQLite) ✓
-- [x] No major bugs or crashes ✓ (error boundary + runtime detection)
-- [x] Unit test coverage > 80% ✓
-- [x] Import/Export functionality ✓ (added in Week 7-8)
-- [x] User-friendly error handling ✓ (added in Week 7-8)
-- [x] About dialog and help resources ✓ (added in Week 7-8)
-
----
-
-## Phase 2: Polish & Enhancement (Week 9-12)
-
-**Goal**: Make the app production-ready with improved UX and stability
-
-### Week 9: Testing & Bug Fixes
-
-- [x] **Unit Tests** ✓ (Completed in Phase 1)
-  - [x] Write tests for database operations ✓
-  - [x] Test execution engine ✓
-  - [x] Test snippet management logic ✓
-  - [x] Test component interactions ✓
-  - [x] Achieve 80%+ code coverage ✓
-
-- [ ] **Integration Tests** (Partially complete)
-  - [ ] Test IPC communication
-  - [ ] Test end-to-end snippet workflow
-  - [x] Test C# execution with various inputs ✓
-  - [x] Test error scenarios ✓
-
-- [ ] **E2E Tests**
-  - [x] Set up Playwright ✓
-  - [ ] Test snippet creation flow
-  - [ ] Test code execution flow
-  - [ ] Test settings changes
-  - [ ] Test keyboard shortcuts
-
-- [x] **Bug Fixes** ✓
-  - [x] Fix CS1529 using statement error ✓
-  - [x] Fix auto-flush for streaming output ✓
-  - [x] Resolve WSL/Windows compatibility issues ✓
-  - [ ] Address performance issues
-  - [ ] Fix UI/UX issues
-  - [ ] Resolve cross-platform issues
-
-### Week 10: NuGet Package Support
-
-- [ ] **Package Management UI**
-  - [ ] Create package manager modal
-  - [ ] Add package search functionality
-  - [ ] Display installed packages
-  - [ ] Add/remove package UI
-  - [ ] Show package versions
-
-- [ ] **Package Integration**
-  - [ ] Implement `#r "nuget:..."` directive parsing
-  - [ ] Auto-generate .csx with package references
-  - [ ] Handle package restoration
-  - [ ] Cache package downloads
-  - [ ] Show package loading status
-
-- [ ] **Testing**
-  - [ ] Test with Newtonsoft.Json
-  - [ ] Test with Dapper
-  - [ ] Test with common NuGet packages
-  - [ ] Verify package restore on new machine
-
-### Week 11: Advanced Editor Features
-
-- [ ] **IntelliSense Enhancement**
-  - [ ] Improve C# autocomplete
-  - [ ] Add parameter hints
-  - [ ] Add quick info tooltips
-  - [ ] Implement snippet suggestions
-
-- [ ] **Editor Improvements**
-  - [ ] Add minimap
-  - [ ] Add breadcrumbs
-  - [ ] Implement code folding
-  - [ ] Add multi-cursor support
-  - [ ] Improve find/replace UI
-  - [ ] Add tab management (multiple open snippets)
-  - [ ] Implement "new tab" functionality
-  - [ ] Add tab close buttons
-  - [ ] Support drag-to-reorder tabs
-
-- [ ] **Snippet Features**
-  - [ ] Add tags support
-  - [ ] Create tree view with folders
-  - [ ] Support folder organization
-
-### Week 12: UX Improvements
-
-- [ ] **Onboarding**
-  - [ ] Create welcome screen
-  - [ ] Add sample snippets
-  - [ ] Create quick start tutorial
-  - [ ] Add tips and tricks
-  - [ ] Check for .NET runtime on first run
-
-- [ ] **Performance Optimization**
-  - [ ] Optimize startup time
-  - [ ] Lazy load Monaco Editor
-  - [ ] Implement virtual scrolling for large outputs
-  - [ ] Cache execution results (optional)
-  - [ ] Reduce memory footprint
-  - [ ] Implement resource limits (memory/CPU)
-  - [ ] Add execution cancellation
-
-- [ ] **Visual Polish**
-  - [ ] Create app icon
-  - [ ] Design splash screen
-  - [ ] Add loading states
-  - [ ] Improve animations/transitions
-  - [ ] Ensure consistent spacing/padding
-
-- [ ] **Status Bar Component**
-  - [ ] Show current language (C#)
-  - [ ] Show runtime status (Ready/Executing)
-  - [ ] Show cursor position (line:column)
-  - [ ] Show execution time for last run
-
-- [ ] **Accessibility**
-  - [ ] Add keyboard navigation
-  - [ ] Implement ARIA labels
-  - [ ] Support high contrast themes
-  - [ ] Test with screen readers
-
-**Deliverable**: Polished MVP ready for beta testing
-
-**Success Criteria**:
-- [ ] Test coverage > 70%
-- [ ] No critical bugs
-- [ ] NuGet packages work seamlessly
-- [ ] Startup time < 3 seconds
-- [ ] App feels responsive and polished
+### .Dump() Extension (Phase 1.5)
+- **LINQPad-Style Extension Method**
+  - Auto-injected DumpExtensions class
+  - `obj.Dump()` and `obj.Dump("Label")` syntax
+  - Chaining support for LINQ pipelines
+  - Automatic JSON serialization
+  - Circular reference protection
+  - Automatic spacing between dumps
+  - Label parsing and styled rendering
+  
+- **Technical Implementation**
+  - Fixed CS1109 error (extension methods in top-level class)
+  - Switched from dotnet-script to dotnet build
+  - Program.Main() wrapper for correct C# structure
+  - Comprehensive test suite (15 tests)
+  - DUMP-EXTENSION-DESIGN.md with Phase 2 roadmap
 
 ---
 
-## Phase 3: Advanced Features (Week 13-16)
+## 🚧 Current Work: Pre-Release v0.1.0
 
-**Goal**: Add features that differentiate CodePad from competitors
+See [v0.1.0 Milestone](https://github.com/treytomes/code-pad/milestone/1) for active tasks:
 
-### Week 13: Database Connectivity (Foundation)
-
-- [ ] **Connection Management**
-  - [ ] Design connection string UI
-  - [ ] Implement encrypted storage for credentials
-  - [ ] Add connection testing
-  - [ ] Support SQLite connections
-  - [ ] Create connection list UI
-
-- [ ] **Schema Explorer**
-  - [ ] Implement database tree view
-  - [ ] Show tables/views/columns
-  - [ ] Display column types and constraints
-  - [ ] Add refresh functionality
-
-- [ ] **Basic Query Execution**
-  - [ ] Execute raw SQL queries
-  - [ ] Display results in grid
-  - [ ] Handle query errors
-  - [ ] Show row counts and timing
-
-### Week 14: Export & Import
-
-- [ ] **Export Functionality**
-  - [ ] Export snippet to .cs/.csx file
-  - [ ] Export output to text/JSON/CSV
-  - [ ] Export all snippets (backup)
-  - [ ] Generate shareable snippet links
-
-- [ ] **Import Functionality**
-  - [ ] Import .cs/.csx files as snippets
-  - [ ] Import from clipboard
-  - [ ] Import snippet collection
-  - [ ] Parse and import from GitHub Gist
-
-- [ ] **Snippet Sharing**
-  - [ ] Generate shareable snippet JSON
-  - [ ] Import snippet from JSON
-  - [ ] Add snippet templates
-  - [ ] Create starter snippet library
-
-### Week 15: Git Integration
-
-- [ ] **Version Control**
-  - [ ] Initialize git repo in ~/.codepad/snippets/
-  - [ ] Auto-commit on snippet save (optional setting)
-  - [ ] Show snippet history
-  - [ ] Implement diff viewer
-  - [ ] Add revert to previous version
-
-- [ ] **Collaboration Prep**
-  - [ ] Design snippet format for git
-  - [ ] Test with GitHub remote
-  - [ ] Document collaboration workflow
-  - [ ] Create .gitignore template
-
-### Week 16: Python Support (Foundation)
-
-- [ ] **Python Executor**
-  - [ ] Implement Python code execution
-  - [ ] Detect Python runtime
-  - [ ] Handle virtual environments
-  - [ ] Capture stdout/stderr for Python
-
-- [ ] **Python Integration**
-  - [ ] Add Python syntax highlighting
-  - [ ] Add Python to language selector
-  - [ ] Implement basic pip package support
-  - [ ] Create Python sample snippets
-
-- [ ] **Testing**
-  - [ ] Test basic Python scripts
-  - [ ] Test with pandas/numpy
-  - [ ] Verify output formatting
-  - [ ] Cross-platform testing
-
-**Deliverable**: Advanced features that make CodePad competitive
+- [ ] Fix CI/CD Pipeline Failures (Issue #1)
+- [ ] Generate Production Application Icons (Issue #2)
+- [ ] Run Pre-Release Testing (Issue #3)
+- [ ] Build Production Packages (Issue #4)
+- [ ] Prepare Release Documentation (Issue #5)
 
 ---
 
-## Phase 4: Public Release (Week 17+)
+## 📅 Roadmap
 
-**Goal**: Prepare for and execute public release
+### Phase 2: Polish & Enhancement
+See [Phase 2 Milestone](https://github.com/treytomes/code-pad/milestone/2) for all tasks.
 
-### Week 17-18: Pre-Release
+**Key Features:**
+- User-defined extension scripts (Issue #6)
+- NuGet package support (Issue #7)
+- Light theme (Issue #8)
+- Database connectivity (Issue #12)
+- Advanced editor features (Issue #14)
+- Performance optimization (Issue #15)
+- Git integration (Issue #11)
+- Status bar component (Issue #16)
+- Onboarding experience (Issue #17)
 
-- [ ] **Documentation**
-  - [ ] Write comprehensive README
-  - [ ] Create user guide
-  - [ ] Document all keyboard shortcuts
-  - [ ] Create video tutorials
-  - [ ] Write troubleshooting guide
-  - [ ] Document building from source
-
-- [ ] **Build & Distribution**
-  - [ ] Configure electron-builder for all platforms
-  - [ ] Set up code signing (Windows/macOS)
-  - [ ] Test installers on all platforms
-  - [ ] Set up auto-update mechanism
-  - [ ] Create DMG/NSIS installers
-  - [ ] Build AppImage/Snap for Linux
-
-- [ ] **Final Testing**
-  - [ ] Beta testing with 10+ users
-  - [ ] Collect feedback
-  - [ ] Fix critical issues
-  - [ ] Performance testing
-  - [ ] Security audit
-
-- [ ] **Legal & Licensing**
-  - [ ] Choose open source license (MIT/Apache)
-  - [ ] Add LICENSE file
-  - [ ] Create CONTRIBUTING.md
-  - [ ] Add CODE_OF_CONDUCT.md
-  - [ ] Review third-party licenses
-
-### Week 19: Release
-
-- [ ] **Repository Setup**
-  - [ ] Create public GitHub repository
-  - [ ] Set up GitHub Actions for CI/CD
-  - [ ] Configure issue templates
-  - [ ] Set up project board
-  - [ ] Create release notes
-
-- [ ] **Marketing & Outreach**
-  - [ ] Create project website (GitHub Pages)
-  - [ ] Write announcement blog post
-  - [ ] Post on Reddit (r/csharp, r/dotnet, r/programming)
-  - [ ] Share on Hacker News
-  - [ ] Tweet announcement
-  - [ ] Post in .NET communities
-
-- [ ] **Release Tasks**
-  - [ ] Tag v1.0.0 release
-  - [ ] Upload installers to GitHub Releases
-  - [ ] Publish release notes
-  - [ ] Monitor for issues
-  - [ ] Respond to feedback
-
-### Post-Release: Maintenance
-
-- [ ] **Support**
-  - [ ] Triage GitHub issues
-  - [ ] Fix bugs promptly
-  - [ ] Answer user questions
-  - [ ] Collect feature requests
-
-- [ ] **Future Development**
-  - [ ] Plan v1.1 features
-  - [ ] Accept pull requests
-  - [ ] Build community
-  - [ ] Consider monetization (Pro version)
+**Target**: Week 9-12
 
 ---
 
-## Risk Management
+### Phase 3: Advanced Features
+See [Phase 3 Milestone](https://github.com/treytomes/code-pad/milestone/3) for all tasks.
 
-### Risk 1: .NET Runtime Availability
+**Key Features:**
+- Advanced database connectivity (Issue #20)
+- Export & import enhancements (Issue #21)
+- Python language support (Issue #22)
 
-**Risk**: Users may not have .NET SDK installed
-
-**Probability**: High  
-**Impact**: High (blocks C# execution)
-
-**Mitigation**:
-- Detect .NET on first run
-- Show clear installation instructions
-- Link to .NET download page
-- Consider bundling .NET runtime in future (Phase 2+)
-
-**Contingency**:
-- Provide standalone installer with .NET included
-- Document manual installation clearly
-- Add troubleshooting guide
+**Target**: Week 13-16
 
 ---
 
-### Risk 2: Cross-Platform Compatibility
+### Phase 4: Public Release
+See [Phase 4 Milestone](https://github.com/treytomes/code-pad/milestone/4) for all tasks.
 
-**Risk**: Features may not work consistently across Windows/macOS/Linux
+**Key Features:**
+- Comprehensive documentation (Issue #23)
+- Build & distribution setup (Issue #24)
+- Beta testing & feedback (Issue #25)
+- Legal & licensing (Issue #26)
+- Public repository setup (Issue #27)
 
-**Probability**: Medium  
-**Impact**: Medium (user experience varies by platform)
-
-**Mitigation**:
-- Test on all platforms regularly
-- Use CI/CD with matrix testing
-- Follow platform conventions
-- Use Electron's platform abstraction
-
-**Contingency**:
-- Document platform-specific issues
-- Provide platform-specific installers
-- Create platform-specific workarounds
+**Target**: Week 17+
 
 ---
 
-### Risk 3: Performance with Large Outputs
+## 📊 Success Metrics
 
-**Risk**: App may freeze with large data outputs
+### Phase 1 Success (✅ Complete)
+- [x] MVP feature-complete
+- [x] Can create/edit/execute C# snippets
+- [x] Streaming output working
+- [x] Unit tests with 80%+ coverage
+- [x] No major bugs
+- [x] Rich output visualization
 
-**Probability**: Medium  
-**Impact**: Medium (poor user experience)
-
-**Mitigation**:
-- Implement virtual scrolling
-- Limit output size (truncate if needed)
-- Lazy-load nested objects
-- Stream output for long-running processes
-
-**Contingency**:
-- Add warning for large outputs
-- Provide option to save to file instead
-- Implement pagination for tables
-
----
-
-### Risk 4: Security Vulnerabilities
-
-**Risk**: Code execution could be exploited
-
-**Probability**: Low  
-**Impact**: High (user system compromise)
-
-**Mitigation**:
-- Sandbox code execution
-- Implement resource limits
-- Run with user permissions only
-- Security audit before release
-
-**Contingency**:
-- Quick patch releases
-- Clear security documentation
-- Responsible disclosure policy
-
----
-
-### Risk 5: Scope Creep
-
-**Risk**: Adding too many features delays MVP
-
-**Probability**: High  
-**Impact**: Medium (delayed release)
-
-**Mitigation**:
-- Strict MVP definition
-- Defer non-critical features
-- Regular scope reviews
-- Focus on core value proposition
-
-**Contingency**:
-- Cut features if behind schedule
-- Release v1.0 with minimal features
-- Add features in v1.1, v1.2, etc.
-
----
-
-## Success Metrics
-
-### Phase 0 Success (Week 2)
-- [x] All PoCs working ✓
-- [x] Team confident in tech stack ✓
-- [x] No major technical blockers ✓
-
-### Phase 1 Success (Week 8)
-- [x] MVP feature-complete (core features) ✓
-- [x] Can create/edit/execute C# snippets ✓
-- [x] Can save/rename/delete snippets ✓
-- [x] Streaming output working ✓
-- [x] Unit tests with 80%+ coverage ✓
-- [x] No major bugs ✓
-- [ ] Rich output visualization (objects/arrays - deferred to Phase 2)
-
-### Phase 2 Success (Week 12)
-- [x] Test coverage > 80% ✓ (completed early in Phase 1)
+### Phase 2 Success (Target)
+- [ ] Test coverage > 85%
 - [ ] NuGet integration working
-- [x] UI functional and responsive ✓ (polish in progress)
+- [ ] UI polished and responsive
 - [ ] Ready for beta testing
 
-### Phase 3 Success (Week 16)
-- [ ] Database connectivity working (SQLite)
+### Phase 3 Success (Target)
+- [ ] Database connectivity working
 - [ ] Python support functional
-- [ ] Export/import working
-- [ ] Git integration complete
+- [ ] Advanced export/import complete
 
-### Release Success (Week 19+)
+### Release Success (Target)
 - [ ] Public release completed
 - [ ] 1,000+ downloads in first month
 - [ ] < 5 critical bugs reported
@@ -892,78 +196,49 @@ All core objectives, stretch goals, AND final polish achieved:
 
 ---
 
-## Development Velocity Tracking
+## 🔄 Risk Management
 
-### Estimated Hours Per Week
-- **Solo Developer**: 20-30 hours/week
-- **Team of 2**: 40-60 hours/week combined
+### .NET Runtime Availability
+**Mitigation**: ✅ Runtime detection implemented with clear installation instructions
 
-### Task Complexity Points
-- **Small Task**: 1-2 hours (e.g., add button)
-- **Medium Task**: 4-8 hours (e.g., new component)
-- **Large Task**: 16+ hours (e.g., new major feature)
+### Cross-Platform Compatibility
+**Mitigation**: Test on all platforms regularly, use CI/CD with matrix testing
 
-### Burndown Chart (Weekly Goals)
-```
-Week  | Planned Tasks | Completed | Velocity
-------|--------------|-----------|----------
-1     | 8            | -         | -
-2     | 8            | -         | -
-3     | 10           | -         | -
-...   | ...          | ...       | ...
-```
+### Performance with Large Outputs
+**Mitigation**: Implement virtual scrolling, limit output size, stream output
+
+### Security Vulnerabilities
+**Mitigation**: Sandbox execution, resource limits, security audit before release
+
+### Scope Creep
+**Mitigation**: Strict milestone definitions, defer non-critical features
 
 ---
 
-## Milestones & Dates
+## 📈 Milestones & Timeline
 
 | Milestone | Target Date | Status |
 |-----------|-------------|--------|
-| **Phase 0: Foundation** | Week 2 (May 15) | ✅ Complete |
-| **Phase 1: Core MVP** | Week 8 (June 26) | ✅ ~85% Complete |
-| **Phase 2: Polish** | Week 12 (July 24) | ⏳ In Progress (Testing done) |
-| **Phase 3: Advanced** | Week 16 (August 21) | ⏳ Planned |
-| **Public Release** | Week 19 (September 11) | ⏳ Planned |
-
-**Note**: Dates are estimates and may shift based on velocity and blockers.
-
----
-
-## Weekly Standup Template
-
-### What was completed this week?
-- List completed tasks
-
-### What are the goals for next week?
-- List planned tasks
-
-### Any blockers or risks?
-- Identify issues
-
-### Velocity check
-- Are we on track?
-- Need to adjust scope?
+| **Phase 0: Foundation** | Week 2 | ✅ Complete |
+| **Phase 1: Core MVP** | Week 8 | ✅ Complete (100%) |
+| **Phase 1.5: .Dump()** | May 2, 2026 | ✅ Complete (100%) |
+| **Pre-Release v0.1.0** | May 2026 | 🚧 In Progress |
+| **Phase 2: Polish** | Week 12 | ⏳ Planned |
+| **Phase 3: Advanced** | Week 16 | ⏳ Planned |
+| **Phase 4: Public Release** | Week 19+ | ⏳ Planned |
 
 ---
 
-## Next Immediate Actions (Week 1, Day 2)
+## 🔗 Quick Links
 
-1. [ ] Initialize npm project (`npm init`)
-2. [ ] Install core dependencies
-3. [ ] Set up TypeScript config
-4. [ ] Configure Vite + Electron
-5. [ ] Set up ESLint + Prettier
-6. [ ] Create project folder structure
-7. [ ] Commit initial setup to Git
-
-**Command to start**:
-```bash
-cd /home/trey/projects/code-pad
-npm init -y
-```
+- **GitHub Repository**: https://github.com/treytomes/code-pad
+- **Issues**: https://github.com/treytomes/code-pad/issues
+- **Milestones**: https://github.com/treytomes/code-pad/milestones
+- **Testing Checklist**: [TESTING-CHECKLIST.md](TESTING-CHECKLIST.md)
+- **Design Docs**: [DUMP-EXTENSION-DESIGN.md](DUMP-EXTENSION-DESIGN.md)
 
 ---
 
-**Document Status**: Ready for Execution  
-**Last Updated**: 2026-05-01  
+**Document Status**: Active - Migrated to GitHub Issues  
+**Last Updated**: 2026-05-02  
 **Owner**: CodePad Team
