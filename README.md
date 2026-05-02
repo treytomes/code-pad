@@ -4,30 +4,80 @@ A cross-platform code scratchpad and rapid prototyping tool inspired by LINQPad.
 
 ![CodePad Screenshot](docs/images/screenshot-1.png)
 
+## Quick Start
+
+### Installation
+
+1. **Download** the latest release for your platform from [Releases](https://github.com/treytomes/code-pad/releases)
+2. **Install .NET SDK 8.0+** if not already installed: [Download .NET](https://dotnet.microsoft.com/download)
+3. **Extract and run** the CodePad executable
+
+### First Run
+
+1. **Create a new snippet** - The editor opens with a sample demonstrating the `.Dump()` extension
+2. **Press F5** to execute the code
+3. **View output** in the bottom panel - Results appear in real-time as code runs
+4. **Save your work** - Press Ctrl+S or click the Save button
+
+### Key Features
+
+- **LINQPad-style .Dump()** - Automatically format objects as JSON with labels
+- **Samples Tab** - Explore 12 built-in examples organized by category
+- **Instant Execution** - No project setup, no build configuration
+- **Smart Window State** - Size, position, and maximized state persist across restarts
+
 ## Features
 
-### ✅ Available Now (Phase 1 MVP - ~85% Complete)
+### ✅ v0.1.0 - Pre-Release (Complete)
 
-- **C# Code Execution**: Run C# snippets with dotnet-script
-- **Monaco Editor**: VS Code's powerful editor with syntax highlighting and IntelliSense
-- **Snippet Management**: Create, save, rename, and delete code snippets
-- **Real-time Output**: Streaming execution output as code runs
-- **Starred Snippets**: Mark favorites for quick access
-- **Recently Opened**: Quick access to your recent work
-- **Search & Filter**: Find snippets by name or language
-- **Import/Export**: Share snippets via .cs files or backup to JSON
-- **Keyboard Shortcuts**: Ctrl+S (save), Ctrl+Shift+S (save as), F5 (run), Ctrl+N (new)
-- **Error Handling**: Helpful error messages and .NET runtime detection
-- **Cross-platform**: Windows, macOS, and Linux support
+#### Code Execution
+- **C# code execution** using `dotnet build` (no external tools required)
+- **LINQPad-style .Dump()** - Format objects as JSON with optional labels
+- **Configurable timeout** - Set execution limit or disable (run indefinitely)
+- **Stop button** - Cancel long-running executions immediately
+- **Real-time output streaming** - See results as code runs
+- **Execution timing** - Live millisecond counter
 
-### 🚧 Coming Soon (Phase 2)
+#### Snippet Management
+- **Full CRUD operations** - Create, save, update, delete snippets
+- **Starred favorites** - Mark important snippets
+- **Recently opened** - Quick access to last 5 snippets
+- **Search & filter** - Find snippets by name
+- **Unsaved changes tracking** - Visual indicator and warnings
+- **Import/Export** - Share .cs files or backup to JSON
 
-- **Rich Output Visualization**: Beautiful object inspection with `.Dump()` equivalent
-- **NuGet Package Support**: Add packages with `#r "nuget:..."` directives
-- **Multi-language Support**: Python, JavaScript, and more
-- **Database Connectivity**: Query databases directly from snippets
-- **Application Menu**: Full menu system with File, Edit, View, Run, Help
-- **Settings UI**: Customize editor preferences and execution options
+#### Samples & Learning
+- **12 built-in samples** organized into 4 categories:
+  - Getting Started (3 examples)
+  - .Dump() Extension (4 examples)
+  - Long-Running Tasks (2 examples)
+  - Output Formats (3 examples)
+
+#### User Interface
+- **Monaco Editor** - VS Code's editor with IntelliSense
+- **Two-tab snippet panel** - My Snippets and Samples
+- **Resizable panels** - Sidebar and output with saved dimensions
+- **Window state persistence** - Size, position, maximized state
+- **Settings modal** - Editor, execution, and appearance preferences
+- **Application menu** - File, Edit, View, Run, Help
+- **Dark theme** - Professional VS Code-inspired design
+
+#### Keyboard Shortcuts
+- `F5` - Run code | `Ctrl+S` - Save | `Ctrl+N` - New snippet
+- `Ctrl+Shift+S` - Save As | `Ctrl+O` - Import | `Ctrl+E` - Export
+- `Ctrl+B` - Toggle sidebar | `Ctrl+J` - Toggle output | `Ctrl+K` - Clear output
+
+#### Cross-Platform
+- Windows, macOS, and Linux support
+- Off-screen window protection for multi-display setups
+
+### 🚧 Coming in Phase 2
+
+- **NuGet package support** - Add packages with `#r "nuget:..."` directives
+- **Multi-language support** - Python, JavaScript, and more
+- **Database connectivity** - Query databases directly
+- **Light theme** - Additional color scheme option
+- **Multiple tabs** - Work on several snippets simultaneously
 
 ## Development Setup
 
@@ -70,10 +120,7 @@ A cross-platform code scratchpad and rapid prototyping tool inspired by LINQPad.
    native Node.js modules. AlmaLinux 8 ships with GCC 8.5, so we use better-sqlite3 v9.6.0
    (requires C++17) instead of the latest version (requires C++20).
 
-5. **Install .NET global tool** (for C# execution):
-   ```bash
-   dotnet tool install -g dotnet-script
-   ```
+5. **.NET SDK** should already be installed (requirement for building the app)
 
 ### VS Code Setup
 

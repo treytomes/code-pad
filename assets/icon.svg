@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background rounded square -->
+  <rect x="32" y="32" width="448" height="448" rx="80" fill="#007ACC"/>
+
+  <!-- Document/pad shape -->
+  <rect x="96" y="80" width="320" height="352" rx="16" fill="#1E1E1E"/>
+
+  <!-- Code brackets with modern styling -->
+  <g fill="#4EC9B0" stroke="#4EC9B0" stroke-width="8" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Left bracket { -->
+    <path d="M 160 160 Q 140 160 140 180 L 140 220 Q 140 240 120 240 Q 140 240 140 260 L 140 300 Q 140 320 160 320" fill="none"/>
+
+    <!-- Right bracket } -->
+    <path d="M 352 160 Q 372 160 372 180 L 372 220 Q 372 240 392 240 Q 372 240 372 260 L 372 300 Q 372 320 352 320" fill="none"/>
+  </g>
+
+  <!-- Center dot/cursor -->
+  <circle cx="256" cy="240" r="8" fill="#CE9178"/>
+
+  <!-- Bottom accent line (like a text cursor) -->
+  <rect x="200" y="360" width="112" height="4" rx="2" fill="#569CD6"/>
+</svg>

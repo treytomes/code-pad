@@ -7,16 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.1.0] - 2026-05-01
+## [0.1.0] - 2026-05-02
 
 ### Added - Phase 1 MVP Complete 🎉
 
 #### Core Features
-- C# code execution with dotnet-script integration
+- **C# code execution** using dotnet build (replaced dotnet-script for better compatibility)
+- **LINQPad-style .Dump() extension method** - Automatically outputs objects as formatted JSON
+- **Samples tab** with categorized code examples showcasing features
 - Monaco Editor with IntelliSense and syntax highlighting
 - Real-time streaming output from code execution
 - SQLite database for snippet persistence
 - Full CRUD operations for code snippets
+- **Configurable execution timeout** (0 = disabled, run indefinitely)
+- **Stop button** to cancel running execution immediately
 
 #### Rich Output Visualization
 - Auto-format detection (JSON, tables, HTML, plain text)
@@ -43,10 +47,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Native file dialogs for save/open
 
 #### User Interface
+- **Two-tab snippet panel**: My Snippets and Samples
 - **Application menu** (File, Edit, View, Run, Help)
 - **Settings modal** with preferences (Editor, Execution, Appearance)
+- **Window state persistence**: Size, position, and maximized state restored on restart
+- **Off-screen window protection**: Automatically repositions windows when displays change
 - About dialog with version and system info
-- Resizable sidebar and output panel
+- Resizable sidebar and output panel with saved dimensions
 - Dark theme (VS Code style)
 - Three-panel layout (explorer, editor, output)
 
@@ -72,17 +79,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CS1529 fix for using statement ordering
 
 #### Developer Experience
+- **Automated E2E tests** with Playwright + Electron (20+ test cases)
 - 80%+ unit test coverage (54+ test cases)
-- TESTING-CHECKLIST.md with 297 validation items
-- 13 enhanced npm scripts
-- Icon generation guide
-- Complete documentation (README, PROJECT-PLAN, TESTING-CHECKLIST)
-- GitHub repository with full CI/CD
+- **Separate test configurations**: vitest for unit tests, playwright for E2E
+- **CI/CD pipeline** with GitHub Actions (lint, typecheck, test, build)
+- **Project configuration**: .claude folder with memory, skills, and agents for AI assistance
+- Icon generation scripts (SVG to all formats)
+- Complete documentation (README, CHANGELOG, GitHub Wiki)
+- GitHub Issues and Project Board for task tracking
 
 #### Settings & Preferences
 - Editor: Font size (10-32px), tab size (2/4/8), word wrap, line numbers, minimap
-- Execution: Timeout duration (5s-300s), auto-save
+- Execution: Timeout duration (0=disabled, 5s-300s), auto-save
 - Appearance: Theme (dark), default panel sizes
+- All settings persist across sessions in localStorage
 
 #### Performance & Quality
 - Streaming output for long-running code
@@ -102,15 +112,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Playwright** for E2E testing
 
 ### Known Limitations
-- Execution cancellation not yet implemented (Phase 2)
 - Light theme not available (Phase 2)
 - NuGet package support coming in Phase 2
 - Single snippet open at a time (tabs in Phase 2)
 - C# only (Python/JavaScript in Phase 2)
 
 ### Installation Requirements
-- .NET SDK 8.0 or later
-- dotnet-script global tool: `dotnet tool install -g dotnet-script`
+- .NET SDK 8.0 or later (no additional tools required)
+
+### Bug Fixes
+- Fixed off-screen window issue when unplugging external displays
+- Fixed test configuration conflicts between vitest and playwright
+- Fixed window state persistence edge cases
 
 [unreleased]: https://github.com/treytomes/code-pad/compare/v0.1.0...HEAD
 [0.1.0]: https://github.com/treytomes/code-pad/releases/tag/v0.1.0
