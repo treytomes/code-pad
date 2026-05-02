@@ -153,14 +153,14 @@ export class CSharpExecutor {
   }
 
   /**
-   * Create temporary .csx file with code
+   * Create temporary .cs file with code (NOT .csx - we compile as a regular program)
    */
   private async createTempFile(code: string): Promise<string> {
-    const fileName = `codepad-${randomUUID()}.csx`;
+    const fileName = `codepad-${randomUUID()}.cs`;
     const filePath = join(tmpdir(), fileName);
 
     // Also save to a debug location for inspection
-    const debugPath = join(tmpdir(), 'codepad-last-execution.csx');
+    const debugPath = join(tmpdir(), 'codepad-last-execution.cs');
 
     // LINQPad approach: Wrap user code in a class/method to avoid top-level statement issues
     // This keeps extension classes truly top-level
@@ -185,11 +185,14 @@ export class CSharpExecutor {
 
     const dumpExtensions = this.getDumpExtensions();
 
-    // Wrap user code in a class and method (LINQPad style)
-    const wrappedUserCode = [
-      'public class UserQuery',
+    // Create proper C# program structure with Program.Main() entry point
+    // This is a standard console app, not a script, so no implicit wrapping
+    const wrappedProgram = [
+      ...dumpExtensions,
+      '',
+      'public class Program',
       '{',
-      '    public void Main()',
+      '    public static void Main(string[] args)',
       '    {',
       '        // Auto-flush console for streaming output',
       '        System.Console.SetOut(new System.IO.StreamWriter(System.Console.OpenStandardOutput()) { AutoFlush = true });',
@@ -198,21 +201,16 @@ export class CSharpExecutor {
       '        // User code begins here',
       ...userCode.map(line => '        ' + line), // Indent user code by 8 spaces
       '    }',
-      '}',
-      '',
-      '// Execute the user query',
-      'new UserQuery().Main();'
+      '}'
     ];
 
     // Assemble in correct order:
     // 1. Directives and usings
-    // 2. DumpExtensions (top-level class)
-    // 3. UserQuery class with Main method (user code inside)
-    // 4. Execute UserQuery.Main()
+    // 2. DumpExtensions (top-level class - not nested!)
+    // 3. Program class with Main() entry point containing user code
     const processedCode = [
       ...directivesAndUsings,
-      ...dumpExtensions,
-      ...wrappedUserCode
+      ...wrappedProgram
     ].join('\n');
 
     await fs.writeFile(filePath, processedCode, 'utf-8');
@@ -241,7 +239,7 @@ export class CSharpExecutor {
   }
 
   /**
-   * Run dotnet script and capture output
+   * Run dotnet program and capture output (compile and execute)
    */
   private runDotnetScript(
     scriptPath: string,
@@ -254,24 +252,20 @@ export class CSharpExecutor {
       let timedOut = false;
       let killed = false;
 
-      // Spawn dotnet script process
+      // Spawn dotnet process to compile and run as a program (not script)
       const env = { ...process.env };
 
       // Build PATH with dotnet locations
       const pathSeparator = process.platform === 'win32' ? ';' : ':';
       const dotnetCommonPaths = this.findDotnetPath();
 
-      // Add .dotnet/tools to PATH (needed for dotnet-script)
-      const dotnetToolsPath = join(
-        env.HOME || env.USERPROFILE || '',
-        '.dotnet',
-        'tools'
-      );
-
-      // Combine all paths: common dotnet paths + dotnet tools + existing PATH
-      env.PATH = `${dotnetCommonPaths}${dotnetToolsPath}${pathSeparator}${env.PATH || ''}`;
+      // Combine all paths: common dotnet paths + existing PATH
+      env.PATH = `${dotnetCommonPaths}${env.PATH || ''}`;
       env.DOTNET_CLI_TELEMETRY_OPTOUT = '1'; // Disable telemetry
 
+      // Use 'csc' (C# compiler) to compile and execute
+      // Alternative: use 'dotnet-script' but that's what causes the issue
+      // Best: use csc to compile, then execute the dll
       const childProcess: ChildProcess = spawn('dotnet', ['script', scriptPath], {
         cwd: tmpdir(),
         env,
