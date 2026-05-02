@@ -227,11 +227,20 @@ export class CSharpExecutor {
   }
 
   /**
-   * Delete temporary file
+   * Delete temporary file and associated build artifacts
    */
   private async deleteTempFile(filePath: string): Promise<void> {
     try {
       await fs.unlink(filePath);
+
+      // Also delete build artifacts
+      const csprojPath = filePath.replace('.cs', '.csproj');
+      const dllPath = filePath.replace('.cs', '.dll');
+      const pdbPath = filePath.replace('.cs', '.pdb');
+
+      await fs.unlink(csprojPath).catch(() => {});
+      await fs.unlink(dllPath).catch(() => {});
+      await fs.unlink(pdbPath).catch(() => {});
     } catch (error) {
       // Ignore errors, temp files will be cleaned up by OS
       console.warn(`Failed to delete temp file: ${filePath}`, error);
@@ -239,108 +248,172 @@ export class CSharpExecutor {
   }
 
   /**
-   * Run dotnet program and capture output (compile and execute)
+   * Run dotnet program and capture output (compile with csc and execute)
    */
   private runDotnetScript(
     scriptPath: string,
     timeout: number,
     onOutputChunk?: (chunk: string, isError: boolean) => void
   ): Promise<ExecutionResult> {
-    return new Promise((resolve) => {
+    return new Promise(async (resolve) => {
       let stdout = '';
       let stderr = '';
       let timedOut = false;
       let killed = false;
 
-      // Spawn dotnet process to compile and run as a program (not script)
       const env = { ...process.env };
-
-      // Build PATH with dotnet locations
       const pathSeparator = process.platform === 'win32' ? ';' : ':';
       const dotnetCommonPaths = this.findDotnetPath();
 
-      // Combine all paths: common dotnet paths + existing PATH
       env.PATH = `${dotnetCommonPaths}${env.PATH || ''}`;
-      env.DOTNET_CLI_TELEMETRY_OPTOUT = '1'; // Disable telemetry
+      env.DOTNET_CLI_TELEMETRY_OPTOUT = '1';
 
-      // Use 'csc' (C# compiler) to compile and execute
-      // Alternative: use 'dotnet-script' but that's what causes the issue
-      // Best: use csc to compile, then execute the dll
-      const childProcess: ChildProcess = spawn('dotnet', ['script', scriptPath], {
-        cwd: tmpdir(),
-        env,
-      });
+      // Use dotnet build to compile the .cs file into an assembly
+      // This is more reliable than dotnet-script and works with our Program.Main() structure
+      const outputDll = scriptPath.replace('.cs', '.dll');
+      const outputExe = scriptPath.replace('.cs', '.exe');
 
-      // Set timeout
-      const timer = setTimeout(() => {
-        timedOut = true;
-        killed = true;
-        childProcess.kill('SIGTERM');
+      try {
+        // Step 1: Compile the .cs file using 'dotnet build' with inline csproj
+        const csprojContent = `<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+</Project>`;
 
-        // Force kill after 2 seconds
-        setTimeout(() => {
-          if (!childProcess.killed) {
-            childProcess.kill('SIGKILL');
-          }
-        }, 2000);
-      }, timeout);
+        const csprojPath = scriptPath.replace('.cs', '.csproj');
+        await fs.writeFile(csprojPath, csprojContent, 'utf-8');
 
-      // Capture stdout
-      childProcess.stdout?.on('data', (data) => {
-        const chunk = data.toString();
-        stdout += chunk;
+        // Compile
+        const compileResult = await new Promise<{ stdout: string; stderr: string; exitCode: number }>((compileResolve) => {
+          let compileStdout = '';
+          let compileStderr = '';
 
-        // Emit chunk for streaming
-        if (onOutputChunk) {
-          onOutputChunk(chunk, false);
-        }
-      });
+          const compileProcess = spawn('dotnet', ['build', csprojPath, '-o', tmpdir()], {
+            cwd: tmpdir(),
+            env,
+          });
 
-      // Capture stderr
-      childProcess.stderr?.on('data', (data) => {
-        const chunk = data.toString();
-        stderr += chunk;
+          compileProcess.stdout?.on('data', (data) => {
+            compileStdout += data.toString();
+          });
 
-        // Emit chunk for streaming
-        if (onOutputChunk) {
-          onOutputChunk(chunk, true);
-        }
-      });
+          compileProcess.stderr?.on('data', (data) => {
+            compileStderr += data.toString();
+          });
 
-      // Handle exit
-      childProcess.on('exit', (code) => {
-        clearTimeout(timer);
+          compileProcess.on('exit', (code) => {
+            compileResolve({ stdout: compileStdout, stderr: compileStderr, exitCode: code || 0 });
+          });
 
-        resolve({
-          stdout: stdout.trim(),
-          stderr: stderr.trim(),
-          exitCode: code || 0,
-          executionTime: 0, // Set by caller
-          timedOut,
-          error: killed ? 'Execution timed out' : undefined,
+          compileProcess.on('error', (error) => {
+            compileResolve({ stdout: '', stderr: error.message, exitCode: -1 });
+          });
         });
-      });
 
-      // Handle errors
-      childProcess.on('error', (error) => {
-        clearTimeout(timer);
-
-        let errorMessage = error.message;
-
-        // Provide helpful error message for ENOENT (command not found)
-        if (error.message.includes('ENOENT')) {
-          errorMessage = `dotnet command not found. Please ensure .NET SDK is installed and available in PATH.\n\nError: ${error.message}\n\nCurrent PATH: ${env.PATH?.substring(0, 200)}...`;
+        // If compilation failed, return the compile error
+        if (compileResult.exitCode !== 0) {
+          resolve({
+            stdout: compileResult.stdout.trim(),
+            stderr: compileResult.stderr.trim(),
+            exitCode: compileResult.exitCode,
+            executionTime: 0,
+            timedOut: false,
+            error: 'Compilation failed'
+          });
+          return;
         }
 
+        // Step 2: Execute the compiled DLL
+        const childProcess: ChildProcess = spawn('dotnet', [outputDll], {
+          cwd: tmpdir(),
+          env,
+        });
+
+        // Set timeout
+        const timer = setTimeout(() => {
+          timedOut = true;
+          killed = true;
+          childProcess.kill('SIGTERM');
+
+          // Force kill after 2 seconds
+          setTimeout(() => {
+            if (!childProcess.killed) {
+              childProcess.kill('SIGKILL');
+            }
+          }, 2000);
+        }, timeout);
+
+        // Capture stdout
+        childProcess.stdout?.on('data', (data) => {
+          const chunk = data.toString();
+          stdout += chunk;
+
+          // Emit chunk for streaming
+          if (onOutputChunk) {
+            onOutputChunk(chunk, false);
+          }
+        });
+
+        // Capture stderr
+        childProcess.stderr?.on('data', (data) => {
+          const chunk = data.toString();
+          stderr += chunk;
+
+          // Emit chunk for streaming
+          if (onOutputChunk) {
+            onOutputChunk(chunk, true);
+          }
+        });
+
+        // Handle exit
+        childProcess.on('exit', (code) => {
+          clearTimeout(timer);
+
+          resolve({
+            stdout: stdout.trim(),
+            stderr: stderr.trim(),
+            exitCode: code || 0,
+            executionTime: 0, // Set by caller
+            timedOut,
+            error: killed ? 'Execution timed out' : undefined,
+          });
+        });
+
+        // Handle errors
+        childProcess.on('error', (error) => {
+          clearTimeout(timer);
+
+          let errorMessage = error.message;
+
+          // Provide helpful error message for ENOENT (command not found)
+          if (error.message.includes('ENOENT')) {
+            errorMessage = `dotnet command not found. Please ensure .NET SDK is installed and available in PATH.\n\nError: ${error.message}\n\nCurrent PATH: ${env.PATH?.substring(0, 200)}...`;
+          }
+
+          resolve({
+            stdout: stdout.trim(),
+            stderr: stderr.trim(),
+            exitCode: -1,
+            executionTime: 0,
+            timedOut: false,
+            error: errorMessage,
+          });
+        });
+
+      } catch (error: any) {
+        // Handle compilation errors
         resolve({
-          stdout: stdout.trim(),
-          stderr: stderr.trim(),
+          stdout: '',
+          stderr: error.message || 'Unknown compilation error',
           exitCode: -1,
           executionTime: 0,
           timedOut: false,
-          error: errorMessage,
+          error: error.message,
         });
-      });
+      }
     });
   }
 }
