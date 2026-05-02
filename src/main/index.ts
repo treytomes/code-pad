@@ -38,13 +38,77 @@ function loadWindowState(): WindowState {
     if (fs.existsSync(statePath)) {
       const data = fs.readFileSync(statePath, 'utf8');
       const state = JSON.parse(data);
-      logDebug('Loaded window state', state);
-      return { ...defaultWindowState, ...state };
+
+      // Validate and clamp dimensions
+      const validatedState = validateWindowBounds({
+        ...defaultWindowState,
+        ...state,
+      });
+
+      logDebug('Loaded window state', validatedState);
+      return validatedState;
     }
   } catch (error) {
     logWarn('Failed to load window state, using defaults', error);
   }
   return defaultWindowState;
+}
+
+function validateWindowBounds(state: WindowState): WindowState {
+  const { screen } = electron;
+
+  // Minimum sane window size
+  const MIN_WIDTH = 800;
+  const MIN_HEIGHT = 600;
+
+  // Clamp dimensions to minimum values
+  let width = Math.max(state.width, MIN_WIDTH);
+  let height = Math.max(state.height, MIN_HEIGHT);
+
+  // Check if position is specified
+  if (state.x !== undefined && state.y !== undefined) {
+    const displays = screen.getAllDisplays();
+    const windowBounds = {
+      x: state.x,
+      y: state.y,
+      width,
+      height,
+    };
+
+    // Check if window intersects with any display
+    const isVisible = displays.some(display => {
+      const { x, y, width: dWidth, height: dHeight } = display.bounds;
+      // Check if any part of the window is visible on this display
+      return (
+        windowBounds.x < x + dWidth &&
+        windowBounds.x + windowBounds.width > x &&
+        windowBounds.y < y + dHeight &&
+        windowBounds.y + windowBounds.height > y
+      );
+    });
+
+    if (!isVisible) {
+      // Window is off-screen, reset to primary display
+      const primaryDisplay = screen.getPrimaryDisplay();
+      const { x, y, width: dWidth, height: dHeight } = primaryDisplay.workArea;
+
+      logWarn('Window bounds off-screen, resetting to primary display');
+
+      return {
+        width,
+        height,
+        x: x + Math.floor((dWidth - width) / 2),
+        y: y + Math.floor((dHeight - height) / 2),
+        isMaximized: state.isMaximized,
+      };
+    }
+  }
+
+  return {
+    ...state,
+    width,
+    height,
+  };
 }
 
 function saveWindowState(state: WindowState): void {
