@@ -324,6 +324,72 @@ gh issue close 28 --comment "Implemented in commit abc123"
 
 ---
 
+### Documentation and Wiki Workflow
+
+**IMPORTANT**: All documentation must be added to the GitHub Wiki, not as markdown files in the repository root.
+
+**Repository Root Files** (only these should exist):
+- ✅ `README.md` - Main project readme
+- ✅ `CHANGELOG.md` - Release history
+- ✅ `CONTRIBUTING.md` - Contribution guidelines
+- ✅ `CLAUDE.md` - AI assistant guidance (this file)
+- ✅ `PROJECT-PLAN.md` - High-level roadmap
+- ✅ `LICENSE` - License file
+
+**Wiki Documentation** (everything else goes here):
+- Setup guides (Windows, WSL, Linux, macOS)
+- Architecture and design documents
+- Technical specifications
+- Troubleshooting guides
+- API documentation
+- Developer guides
+- Historical/archived documents
+
+**Workflow**:
+1. **Before creating documentation**: Check if similar content exists in the wiki
+2. **Create or update wiki pages**: https://github.com/treytomes/code-pad/wiki
+3. **Link from README if needed**: Add links to wiki pages in README.md
+4. **Never commit documentation to repo root**: Always use wiki
+
+**Adding to Wiki**:
+```bash
+# Clone wiki repository
+git clone git@github.com:treytomes/code-pad.wiki.git /tmp/code-pad-wiki
+cd /tmp/code-pad-wiki
+
+# Create new page (use Title-Case-With-Hyphens.md format)
+# Example: Setup-Guide-Windows.md, Architecture-Overview.md
+
+# Write content
+cat > New-Feature-Guide.md << 'EOF'
+# New Feature Guide
+...
+EOF
+
+# Commit and push
+git add .
+git commit -m "Add guide for new feature"
+git push
+```
+
+**Example Wiki Pages**:
+- Home.md (Getting Started)
+- Architecture.md (System architecture)
+- Tech-Stack.md (Technology choices)
+- Windows-Setup.md (Setup guide)
+- Troubleshooting.md (Common issues)
+
+**Wiki URL**: https://github.com/treytomes/code-pad/wiki
+
+**Why Wiki?**
+- Cleaner repository root
+- Better navigation and search
+- Built-in version history
+- Easier to maintain and update
+- More accessible for contributors
+
+---
+
 ### Unit Testing and Code Coverage
 
 **CRITICAL**: All new code MUST include comprehensive unit tests.
