@@ -1,0 +1,32 @@
+{
+  "extends": null,
+  "appId": "com.codepad.app",
+  "productName": "CodePad",
+  "files": [
+    "dist/**/*",
+    "package.json"
+  ],
+  "directories": {
+    "buildResources": "assets",
+    "output": "release"
+  },
+  "extraFiles": [],
+  "win": {
+    "target": "nsis",
+    "icon": "assets/icon.ico",
+    "sign": null
+  },
+  "mac": {
+    "target": "dmg",
+    "icon": "assets/icon.icns",
+    "category": "public.app-category.developer-tools"
+  },
+  "linux": {
+    "target": [
+      "AppImage",
+      "deb"
+    ],
+    "icon": "assets/icon.png",
+    "category": "Development"
+  }
+}
