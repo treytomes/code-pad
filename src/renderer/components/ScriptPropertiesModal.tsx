@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, Button, Input, Space, Typography, Divider, Table } from 'antd';
+import { Modal, Button, Input, Space, Typography, Divider, Table, Tag } from 'antd';
 import { PlusOutlined, DeleteOutlined } from '@ant-design/icons';
 import type { NuGetReference } from '../../shared/types';
 
@@ -8,6 +8,7 @@ const { Text } = Typography;
 export interface ScriptProperties {
   usings: string[];
   references: NuGetReference[];
+  tags: string[];
 }
 
 interface Props {
@@ -21,17 +22,21 @@ interface Props {
 export default function ScriptPropertiesModal({ open, properties, onOk, onCancel, isDark = true }: Props) {
   const [usings, setUsings] = useState<string[]>([]);
   const [references, setReferences] = useState<NuGetReference[]>([]);
+  const [tags, setTags] = useState<string[]>([]);
   const [newUsing, setNewUsing] = useState('');
   const [newRefName, setNewRefName] = useState('');
   const [newRefVersion, setNewRefVersion] = useState('');
+  const [newTag, setNewTag] = useState('');
 
   useEffect(() => {
     if (open) {
       setUsings([...properties.usings]);
       setReferences([...properties.references]);
+      setTags([...(properties.tags ?? [])]);
       setNewUsing('');
       setNewRefName('');
       setNewRefVersion('');
+      setNewTag('');
     }
   }, [open, properties]);
 
@@ -59,8 +64,19 @@ export default function ScriptPropertiesModal({ open, properties, onOk, onCancel
     setReferences(references.filter((_, i) => i !== index));
   };
 
+  const addTag = () => {
+    const trimmed = newTag.trim().toLowerCase().replace(/\s+/g, '-');
+    if (!trimmed || tags.includes(trimmed)) return;
+    setTags([...tags, trimmed]);
+    setNewTag('');
+  };
+
+  const removeTag = (tag: string) => {
+    setTags(tags.filter((t) => t !== tag));
+  };
+
   const handleOk = () => {
-    onOk({ usings, references });
+    onOk({ usings, references, tags });
   };
 
   const inputStyle: React.CSSProperties = {
@@ -172,6 +188,36 @@ export default function ScriptPropertiesModal({ open, properties, onOk, onCancel
           style={{ ...inputStyle, width: 120 }}
         />
         <Button icon={<PlusOutlined />} onClick={addReference}>Add</Button>
+      </Space.Compact>
+
+      <Divider style={{ margin: '16px 0' }} />
+
+      {/* Tags */}
+      <Text style={labelStyle}>Tags</Text>
+      <Text style={subtextStyle}>Organise snippets. Tags are lowercase and hyphen-separated.</Text>
+
+      <div style={{ marginBottom: 8, display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+        {tags.map((tag) => (
+          <Tag
+            key={tag}
+            closable
+            onClose={() => removeTag(tag)}
+            color="blue"
+          >
+            {tag}
+          </Tag>
+        ))}
+      </div>
+
+      <Space.Compact style={{ width: '100%' }}>
+        <Input
+          placeholder="e.g. linq, data, demo"
+          value={newTag}
+          onChange={(e) => setNewTag(e.target.value)}
+          onPressEnter={addTag}
+          style={inputStyle}
+        />
+        <Button icon={<PlusOutlined />} onClick={addTag}>Add</Button>
       </Space.Compact>
     </Modal>
   );

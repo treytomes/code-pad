@@ -56,18 +56,20 @@ export interface ElectronAPI {
       queryType?: QueryType;
       usings?: string[];
       references?: NuGetReference[];
+      tags?: string[];
     }) => Promise<Snippet>;
     getSnippet: (id: string) => Promise<Snippet | null>;
     updateSnippet: (
       id: string,
-      updates: { name?: string; code?: string; queryType?: QueryType; usings?: string[]; references?: NuGetReference[] }
+      updates: { name?: string; code?: string; queryType?: QueryType; usings?: string[]; references?: NuGetReference[]; tags?: string[] }
     ) => Promise<boolean>;
     deleteSnippet: (id: string) => Promise<boolean>;
-    listSnippets: (language?: string) => Promise<Snippet[]>;
+    listSnippets: (language?: string, tag?: string) => Promise<Snippet[]>;
     incrementExecution: (id: string) => Promise<boolean>;
     toggleStarred: (id: string) => Promise<boolean>;
     getStarredSnippets: () => Promise<Snippet[]>;
     getRecentlyOpened: (limit: number) => Promise<Snippet[]>;
+    getAllTags: () => Promise<string[]>;
     updateLastOpened: (id: string) => Promise<boolean>;
   };
 }

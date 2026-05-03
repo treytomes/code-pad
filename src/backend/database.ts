@@ -28,6 +28,7 @@ export interface Snippet {
   queryType: QueryType;
   usings: string[];
   references: NuGetReference[];
+  tags: string[];
   createdAt: number;
   modifiedAt: number;
   executionCount: number;
@@ -99,6 +100,7 @@ export class SnippetDatabase {
       const hasQueryType = tableInfo.some((col) => col.name === 'query_type');
       const hasUsings = tableInfo.some((col) => col.name === 'usings');
       const hasReferences = tableInfo.some((col) => col.name === 'nuget_references');
+      const hasTags = tableInfo.some((col) => col.name === 'tags');
 
       let ranAny = false;
 
@@ -151,6 +153,14 @@ export class SnippetDatabase {
         ranAny = true;
       }
 
+      // Migration 5: Add tags column
+      if (!hasTags) {
+        logInfo('Running migration: Add tags column');
+        this.db.exec(`ALTER TABLE snippets ADD COLUMN tags TEXT NOT NULL DEFAULT '[]';`);
+        logInfo('Migration completed: tags column added');
+        ranAny = true;
+      }
+
       logInfo(
         ranAny ? 'All database migrations completed successfully' : 'Database schema is up to date'
       );
@@ -172,13 +182,14 @@ export class SnippetDatabase {
     const queryType: QueryType = snippet.queryType ?? 'statements';
     const usings = JSON.stringify(snippet.usings ?? []);
     const references = JSON.stringify(snippet.references ?? []);
+    const tags = JSON.stringify(snippet.tags ?? []);
 
     const stmt = this.db.prepare(`
-      INSERT INTO snippets (id, name, language, code, query_type, usings, nuget_references, created_at, modified_at, execution_count, starred, last_opened_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0, NULL)
+      INSERT INTO snippets (id, name, language, code, query_type, usings, nuget_references, tags, created_at, modified_at, execution_count, starred, last_opened_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0, NULL)
     `);
 
-    stmt.run(id, snippet.name, snippet.language, snippet.code, queryType, usings, references, now, now);
+    stmt.run(id, snippet.name, snippet.language, snippet.code, queryType, usings, references, tags, now, now);
 
     return {
       id,
@@ -186,6 +197,7 @@ export class SnippetDatabase {
       queryType,
       usings: snippet.usings ?? [],
       references: snippet.references ?? [],
+      tags: snippet.tags ?? [],
       createdAt: now,
       modifiedAt: now,
       executionCount: 0,
@@ -207,7 +219,7 @@ export class SnippetDatabase {
   // Update
   updateSnippet(
     id: string,
-    updates: Partial<Pick<Snippet, 'name' | 'code' | 'queryType' | 'usings' | 'references'>>
+    updates: Partial<Pick<Snippet, 'name' | 'code' | 'queryType' | 'usings' | 'references' | 'tags'>>
   ): boolean {
     const sets: string[] = [];
     const values: any[] = [];
@@ -237,6 +249,11 @@ export class SnippetDatabase {
       values.push(JSON.stringify(updates.references));
     }
 
+    if (updates.tags !== undefined) {
+      sets.push('tags = ?');
+      values.push(JSON.stringify(updates.tags));
+    }
+
     if (sets.length === 0) return false;
 
     sets.push('modified_at = ?');
@@ -262,16 +279,39 @@ export class SnippetDatabase {
   }
 
   // List
-  listSnippets(language?: string): Snippet[] {
-    let stmt;
+  listSnippets(language?: string, tag?: string): Snippet[] {
+    let rows: any[];
 
-    if (language) {
-      stmt = this.db.prepare('SELECT * FROM snippets WHERE language = ? ORDER BY modified_at DESC');
-      return stmt.all(language).map(this.rowToSnippet);
+    if (language && tag) {
+      rows = this.db
+        .prepare(`SELECT * FROM snippets WHERE language = ? AND tags LIKE ? ORDER BY modified_at DESC`)
+        .all(language, `%"${tag}"%`);
+    } else if (language) {
+      rows = this.db
+        .prepare('SELECT * FROM snippets WHERE language = ? ORDER BY modified_at DESC')
+        .all(language);
+    } else if (tag) {
+      rows = this.db
+        .prepare(`SELECT * FROM snippets WHERE tags LIKE ? ORDER BY modified_at DESC`)
+        .all(`%"${tag}"%`);
     } else {
-      stmt = this.db.prepare('SELECT * FROM snippets ORDER BY modified_at DESC');
-      return stmt.all().map(this.rowToSnippet);
+      rows = this.db.prepare('SELECT * FROM snippets ORDER BY modified_at DESC').all();
     }
+
+    return rows.map(this.rowToSnippet.bind(this));
+  }
+
+  // Return sorted list of all unique tags across all snippets
+  getAllTags(): string[] {
+    const rows = this.db.prepare('SELECT tags FROM snippets WHERE tags != \'[]\'').all() as any[];
+    const tagSet = new Set<string>();
+    for (const row of rows) {
+      try {
+        const tags: string[] = JSON.parse(row.tags || '[]');
+        tags.forEach((t) => tagSet.add(t));
+      } catch (_e) { /* skip */ }
+    }
+    return Array.from(tagSet).sort();
   }
 
   // Increment execution count
@@ -318,7 +358,7 @@ export class SnippetDatabase {
       ORDER BY modified_at DESC
     `);
 
-    return stmt.all().map(this.rowToSnippet);
+    return stmt.all().map(this.rowToSnippet.bind(this));
   }
 
   // Get recently opened snippets
@@ -330,18 +370,16 @@ export class SnippetDatabase {
       LIMIT ?
     `);
 
-    return stmt.all(limit).map(this.rowToSnippet);
+    return stmt.all(limit).map(this.rowToSnippet.bind(this));
   }
 
   private rowToSnippet(row: any): Snippet {
     let usings: string[] = [];
     let references: NuGetReference[] = [];
-    try {
-      usings = JSON.parse(row.usings || '[]');
-    } catch (_e) { /* keep empty array */ }
-    try {
-      references = JSON.parse(row.nuget_references || '[]');
-    } catch (_e) { /* keep empty array */ }
+    let tags: string[] = [];
+    try { usings = JSON.parse(row.usings || '[]'); } catch (_e) { /* keep empty */ }
+    try { references = JSON.parse(row.nuget_references || '[]'); } catch (_e) { /* keep empty */ }
+    try { tags = JSON.parse(row.tags || '[]'); } catch (_e) { /* keep empty */ }
 
     return {
       id: row.id,
@@ -351,6 +389,7 @@ export class SnippetDatabase {
       queryType: (row.query_type as QueryType) ?? 'statements',
       usings,
       references,
+      tags,
       createdAt: row.created_at,
       modifiedAt: row.modified_at,
       executionCount: row.execution_count,

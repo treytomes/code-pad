@@ -57,6 +57,7 @@ const mockElectronAPI = {
     toggleStarred: vi.fn(),
     getStarredSnippets: vi.fn(),
     getRecentlyOpened: vi.fn(),
+    getAllTags: vi.fn(),
     updateLastOpened: vi.fn(),
   },
 };
@@ -80,6 +81,7 @@ describe('App', () => {
     mockElectronAPI.db.getRecentlyOpened.mockResolvedValue([]);
     mockElectronAPI.db.toggleStarred.mockResolvedValue(true);
     mockElectronAPI.db.updateLastOpened.mockResolvedValue(true);
+    mockElectronAPI.db.getAllTags.mockResolvedValue([]);
     mockElectronAPI.checkRuntime.mockResolvedValue({
       hasDotnet: true,
       hasDotnetScript: true,
@@ -195,6 +197,7 @@ describe('App', () => {
         queryType: expect.any(String),
         usings: expect.any(Array),
         references: expect.any(Array),
+        tags: expect.any(Array),
       });
     });
   });
@@ -262,6 +265,7 @@ describe('App', () => {
         queryType: expect.any(String),
         usings: expect.any(Array),
         references: expect.any(Array),
+        tags: expect.any(Array),
       });
     });
   });

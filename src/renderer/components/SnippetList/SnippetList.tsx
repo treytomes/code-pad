@@ -10,6 +10,7 @@ import {
   Space,
   Divider,
   Tabs,
+  Tag,
 } from 'antd';
 import {
   DeleteOutlined,
@@ -59,6 +60,8 @@ export const SnippetList: React.FC<SnippetListProps> = ({
   const [snippets, setSnippets] = useState<Snippet[]>([]);
   const [starredSnippets, setStarredSnippets] = useState<Snippet[]>([]);
   const [recentSnippets, setRecentSnippets] = useState<Snippet[]>([]);
+  const [allTags, setAllTags] = useState<string[]>([]);
+  const [activeTag, setActiveTag] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [languageFilter, setLanguageFilter] = useState<string | undefined>(undefined);
   const [searchText, setSearchText] = useState('');
@@ -68,20 +71,22 @@ export const SnippetList: React.FC<SnippetListProps> = ({
   const loadSnippets = useCallback(async () => {
     setLoading(true);
     try {
-      const [list, starred, recent] = await Promise.all([
-        window.electronAPI.db.listSnippets(languageFilter),
+      const [list, starred, recent, tags] = await Promise.all([
+        window.electronAPI.db.listSnippets(languageFilter, activeTag ?? undefined),
         window.electronAPI.db.getStarredSnippets(),
         window.electronAPI.db.getRecentlyOpened(5),
+        window.electronAPI.db.getAllTags(),
       ]);
       setSnippets(list);
       setStarredSnippets(starred);
       setRecentSnippets(recent);
+      setAllTags(tags);
     } catch (error) {
       console.error('Failed to load snippets:', error);
     } finally {
       setLoading(false);
     }
-  }, [languageFilter]);
+  }, [languageFilter, activeTag]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -406,6 +411,28 @@ export const SnippetList: React.FC<SnippetListProps> = ({
                     />
                   </Space>
                 </div>
+
+                {/* Tag filter chips */}
+                {allTags.length > 0 && (
+                  <div style={{ padding: '4px 8px 6px', borderBottom: `1px solid ${border}`, display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                    {allTags.map((tag) => (
+                      <Tag
+                        key={tag}
+                        color={activeTag === tag ? 'blue' : undefined}
+                        style={{
+                          cursor: 'pointer',
+                          backgroundColor: activeTag === tag ? undefined : (isDark ? '#2d2d30' : '#f0f0f0'),
+                          borderColor: activeTag === tag ? undefined : border,
+                          color: activeTag === tag ? undefined : textSecondary,
+                          margin: 0,
+                        }}
+                        onClick={() => setActiveTag(activeTag === tag ? null : tag)}
+                      >
+                        {tag}
+                      </Tag>
+                    ))}
+                  </div>
+                )}
 
                 <div style={{ flex: 1, overflowY: 'auto', background: bg }}>
                   {/* Starred Snippets Section */}

@@ -351,8 +351,8 @@ electron.ipcMain.handle('db-delete-snippet', async (_event, id: string) => {
   return snippetDb.deleteSnippet(id);
 });
 
-electron.ipcMain.handle('db-list-snippets', async (_event, language?: string) => {
-  return snippetDb.listSnippets(language);
+electron.ipcMain.handle('db-list-snippets', async (_event, language?: string, tag?: string) => {
+  return snippetDb.listSnippets(language, tag);
 });
 
 electron.ipcMain.handle('db-increment-execution', async (_event, id: string) => {
@@ -372,6 +372,11 @@ electron.ipcMain.handle('db-update-last-opened', async (_event, id: string) => {
 // Get starred snippets
 electron.ipcMain.handle('db-get-starred-snippets', async () => {
   return snippetDb.getStarredSnippets();
+});
+
+// Get all tags
+electron.ipcMain.handle('db-get-all-tags', async () => {
+  return snippetDb.getAllTags();
 });
 
 // Get recently opened snippets

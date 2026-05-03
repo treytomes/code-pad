@@ -174,7 +174,7 @@ function App() {
   const [cursorLine, setCursorLine] = useState(1);
   const [cursorColumn, setCursorColumn] = useState(1);
   const [queryType, setQueryType] = useState<QueryType>('statements');
-  const [scriptProperties, setScriptProperties] = useState<ScriptProperties>({ usings: [], references: [] });
+  const [scriptProperties, setScriptProperties] = useState<ScriptProperties>({ usings: [], references: [], tags: [] });
   const [scriptPropertiesVisible, setScriptPropertiesVisible] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const layoutRef = useRef<HTMLDivElement>(null);
@@ -284,6 +284,7 @@ function App() {
         queryType,
         usings: scriptProperties.usings,
         references: scriptProperties.references,
+        tags: scriptProperties.tags,
       });
       savedCodeRef.current = code;
       setHasUnsavedChanges(false);
@@ -308,6 +309,7 @@ function App() {
         queryType,
         usings: scriptProperties.usings,
         references: scriptProperties.references,
+        tags: scriptProperties.tags,
       });
 
       setCurrentSnippetId(snippet.id);
@@ -335,7 +337,7 @@ function App() {
     setHasUnsavedChanges(false);
     setCurrentSnippetId(snippet.id);
     setQueryType(snippet.queryType ?? 'statements');
-    setScriptProperties({ usings: snippet.usings ?? [], references: snippet.references ?? [] });
+    setScriptProperties({ usings: snippet.usings ?? [], references: snippet.references ?? [], tags: snippet.tags ?? [] });
     setOutput('');
 
     // Update last opened timestamp
@@ -383,6 +385,7 @@ function App() {
         queryType: snippet.queryType,
         usings: snippet.usings ?? [],
         references: snippet.references ?? [],
+        tags: snippet.tags ?? [],
       });
       message.success('Snippet duplicated');
       setRefreshTrigger((prev) => prev + 1);
@@ -393,7 +396,7 @@ function App() {
       setHasUnsavedChanges(false);
       setCurrentSnippetId(newSnippet.id);
       setQueryType(newSnippet.queryType ?? 'statements');
-      setScriptProperties({ usings: newSnippet.usings ?? [], references: newSnippet.references ?? [] });
+      setScriptProperties({ usings: newSnippet.usings ?? [], references: newSnippet.references ?? [], tags: newSnippet.tags ?? [] });
       setOutput('');
     } catch (error) {
       message.error('Failed to duplicate snippet');
@@ -414,7 +417,7 @@ function App() {
     setHasUnsavedChanges(false);
     setCurrentSnippetId(null);
     setQueryType('statements');
-    setScriptProperties({ usings: [], references: [] });
+    setScriptProperties({ usings: [], references: [], tags: [] });
     setOutput('');
   };
 
@@ -1070,6 +1073,7 @@ function App() {
               window.electronAPI.db.updateSnippet(currentSnippetId, {
                 usings: props.usings,
                 references: props.references,
+                tags: props.tags,
               });
             }
             setScriptPropertiesVisible(false);

@@ -95,10 +95,11 @@ export class CSharpExecutor {
 
     // Create temporary file for code
     const tempFile = await this.createTempFile(code, options.queryType ?? 'statements', options.usings ?? [], options.references ?? []);
+
     _logDebug(`Created temp file: ${tempFile}`);
 
     try {
-      const result = await this.runDotnetScript(tempFile, timeout, options.references ?? [], onOutputChunk);
+      const result = await this.runDotnetScript(tempFile.path, timeout, tempFile.references, onOutputChunk);
 
       const executionTime = Date.now() - startTime;
       _logDebug(
@@ -114,7 +115,7 @@ export class CSharpExecutor {
       throw error;
     } finally {
       // Cleanup temp file
-      await this.deleteTempFile(tempFile);
+      await this.deleteTempFile(tempFile.path);
     }
   }
 
@@ -178,22 +179,37 @@ export class CSharpExecutor {
 
   /**
    * Extract leading directives and using statements from user code.
-   * Returns { preamble: string[], body: string[] }.
+   * Returns { preamble: string[], body: string[], inlineRefs: NuGetReference[] }.
+   *
+   * Recognises #r "nuget:PackageName/Version" (and without version) as inline
+   * NuGet references and strips them from the preamble so they don't appear in
+   * the compiled source, returning them as structured NuGetReference objects.
    */
-  private splitPreamble(code: string): { preamble: string[]; body: string[] } {
+  private splitPreamble(code: string): { preamble: string[]; body: string[]; inlineRefs: NuGetReference[] } {
     const lines = code.split('\n');
     let splitIndex = 0;
+    const inlineRefs: NuGetReference[] = [];
 
     for (let i = 0; i < lines.length; i++) {
       const trimmed = lines[i].trim();
-      if (trimmed.startsWith('#r ') || trimmed.startsWith('using ')) {
+      // #r "nuget:PackageName" or #r "nuget:PackageName/Version"
+      const nugetMatch = trimmed.match(/^#r\s+"nuget:([^/"]+)(?:\/([^"]+))?"/i);
+      if (nugetMatch) {
+        inlineRefs.push({ name: nugetMatch[1].trim(), version: nugetMatch[2]?.trim() ?? '*' });
+        splitIndex = i + 1;
+      } else if (trimmed.startsWith('#r ') || trimmed.startsWith('using ')) {
         splitIndex = i + 1;
       } else if (trimmed.length > 0 && !trimmed.startsWith('//')) {
         break;
       }
     }
 
-    return { preamble: lines.slice(0, splitIndex), body: lines.slice(splitIndex) };
+    // Strip inline nuget directives from preamble — they'd cause compiler errors
+    const preamble = lines
+      .slice(0, splitIndex)
+      .filter((line) => !line.trim().match(/^#r\s+"nuget:/i));
+
+    return { preamble, body: lines.slice(splitIndex), inlineRefs };
   }
 
   private buildStatementsScript(preamble: string[], body: string[], extraUsings: string[]): string {
@@ -248,11 +264,19 @@ export class CSharpExecutor {
   /**
    * Create temporary .cs file with code wrapped according to the query type.
    */
-  private async createTempFile(code: string, queryType: QueryType, extraUsings: string[], _references: NuGetReference[]): Promise<string> {
+  private async createTempFile(code: string, queryType: QueryType, extraUsings: string[], references: NuGetReference[]): Promise<{ path: string; references: NuGetReference[] }> {
     const fileName = `codepad-${randomUUID()}.cs`;
     const filePath = join(tmpdir(), fileName);
 
-    const { preamble, body } = this.splitPreamble(code);
+    const { preamble, body, inlineRefs } = this.splitPreamble(code);
+
+    // Merge inline #r "nuget:..." refs with per-script references, deduplicating by name
+    const mergedRefs = [...references];
+    for (const ref of inlineRefs) {
+      if (!mergedRefs.some((r) => r.name.toLowerCase() === ref.name.toLowerCase())) {
+        mergedRefs.push(ref);
+      }
+    }
 
     let processedCode: string;
     switch (queryType) {
@@ -277,7 +301,7 @@ export class CSharpExecutor {
       // Ignore debug save errors
     }
 
-    return filePath;
+    return { path: filePath, references: mergedRefs };
   }
 
   /**
