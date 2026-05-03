@@ -27,6 +27,7 @@ import { AboutDialog } from './components/AboutDialog';
 import { SettingsModal } from './components/SettingsModal';
 import { OutputDisplay } from './components/OutputDisplay';
 import { StatusBar } from './components/StatusBar';
+import { WelcomeModal } from './components/WelcomeModal';
 import type { Snippet } from '../backend/database';
 
 const { Header, Content, Sider } = Layout;
@@ -663,6 +664,7 @@ function App() {
     <ConfigProvider theme={themeConfig}>
       <Layout style={{ height: '100vh', background: bgMain }}>
         <RuntimeWarning />
+        <WelcomeModal />
         <Header
           style={{
             display: 'flex',
