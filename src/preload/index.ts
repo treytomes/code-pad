@@ -27,6 +27,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // Install dotnet-script
   installDotnetScript: () => ipcRenderer.invoke('install-dotnet-script'),
 
+  // Database location
+  getDbPath: () => ipcRenderer.invoke('get-db-path'),
+  setDbPath: () => ipcRenderer.invoke('set-db-path'),
+
   // Listen for background auto-install result
   onDotnetScriptInstallResult: (
     callback: (result: { success: boolean; output?: string; error?: string }) => void

@@ -40,6 +40,35 @@ let mainWindow: electron.BrowserWindow | null = null;
 const csharpExecutor = new CSharpExecutor();
 let snippetDb: SnippetDatabase;
 
+// App settings (separate from window state)
+interface AppSettings {
+  dbPath?: string;
+}
+
+function getAppSettingsPath(): string {
+  return path.join(electron.app.getPath('userData'), 'app-settings.json');
+}
+
+function loadAppSettings(): AppSettings {
+  try {
+    const settingsPath = getAppSettingsPath();
+    if (fs.existsSync(settingsPath)) {
+      return JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
+    }
+  } catch (_e) {
+    // Ignore — use defaults
+  }
+  return {};
+}
+
+function saveAppSettings(settings: AppSettings): void {
+  try {
+    fs.writeFileSync(getAppSettingsPath(), JSON.stringify(settings, null, 2), 'utf8');
+  } catch (error) {
+    logError('Failed to save app settings', error);
+  }
+}
+
 // Window state management
 interface WindowState {
   width: number;
@@ -177,9 +206,10 @@ function saveCurrentWindowState(): void {
   }
 }
 
-// Initialize database with error handling
+// Initialize database — use custom path from app settings if set
+const appSettings = loadAppSettings();
 try {
-  snippetDb = new SnippetDatabase();
+  snippetDb = new SnippetDatabase(appSettings.dbPath);
   logInfo('Database initialized successfully');
 } catch (error) {
   logError('Failed to initialize database', error);
@@ -356,6 +386,61 @@ electron.ipcMain.handle('check-runtime', async (): Promise<RuntimeInfo> => {
 electron.ipcMain.handle('install-dotnet-script', async (): Promise<InstallResult> => {
   return await runInstallDotnetScript();
 });
+
+// Database location handlers
+electron.ipcMain.handle('get-db-path', (): string => {
+  const { homedir } = require('os');
+  const { join } = require('path');
+  return appSettings.dbPath || join(homedir(), '.codepad', 'codepad.db');
+});
+
+electron.ipcMain.handle(
+  'set-db-path',
+  async (): Promise<{ success: boolean; path?: string; error?: string }> => {
+    const { homedir } = require('os');
+    const { join } = require('path');
+    const defaultPath = appSettings.dbPath || join(homedir(), '.codepad', 'codepad.db');
+
+    const result = await electron.dialog.showOpenDialog(mainWindow!, {
+      title: 'Choose Database Location',
+      defaultPath,
+      properties: ['openFile', 'createDirectory', 'promptToCreate'],
+      filters: [{ name: 'SQLite Database', extensions: ['db'] }],
+    });
+
+    if (result.canceled || !result.filePaths[0]) {
+      return { success: false, error: 'Canceled' };
+    }
+
+    const newPath = result.filePaths[0];
+
+    try {
+      // Copy existing DB to new location if it doesn't already exist there
+      const currentPath = appSettings.dbPath || join(homedir(), '.codepad', 'codepad.db');
+      if (newPath !== currentPath && fs.existsSync(currentPath) && !fs.existsSync(newPath)) {
+        fs.mkdirSync(path.dirname(newPath), { recursive: true });
+        fs.copyFileSync(currentPath, newPath);
+        logInfo(`Copied database from ${currentPath} to ${newPath}`);
+      }
+
+      // Save new path and reopen database
+      appSettings.dbPath = newPath;
+      saveAppSettings(appSettings);
+
+      snippetDb.close();
+      snippetDb = new SnippetDatabase(newPath);
+      logInfo(`Database relocated to ${newPath}`);
+
+      return { success: true, path: newPath };
+    } catch (error) {
+      logError('Failed to relocate database', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : String(error),
+      };
+    }
+  }
+);
 
 // Import/Export handlers
 electron.ipcMain.handle('export-snippet', async (_event, snippetName: string, code: string) => {

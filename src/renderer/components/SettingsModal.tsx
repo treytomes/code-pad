@@ -1,5 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, Tabs, Form, InputNumber, Select, Switch, Button, message, Divider } from 'antd';
+import {
+  Modal,
+  Tabs,
+  Form,
+  InputNumber,
+  Select,
+  Switch,
+  Button,
+  message,
+  Divider,
+  Input,
+} from 'antd';
+import { FolderOpenOutlined } from '@ant-design/icons';
 import type { TabsProps } from 'antd';
 
 const { Option } = Select;
@@ -48,6 +60,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 }) => {
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
   const [hasChanges, setHasChanges] = useState(false);
+  const [dbPath, setDbPath] = useState('');
+  const [dbChanging, setDbChanging] = useState(false);
 
   const loadSettings = () => {
     // TODO: Load from database
@@ -65,9 +79,25 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     if (visible) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       loadSettings();
+      window.electronAPI.getDbPath().then(setDbPath).catch(console.error);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible]);
+
+  const handleChangeDbPath = async () => {
+    setDbChanging(true);
+    try {
+      const result = await window.electronAPI.setDbPath();
+      if (result.success && result.path) {
+        setDbPath(result.path);
+        message.success('Database location updated. Restart may be needed for full effect.');
+      } else if (result.error && result.error !== 'Canceled') {
+        message.error(`Failed to change database location: ${result.error}`);
+      }
+    } finally {
+      setDbChanging(false);
+    }
+  };
 
   const handleSave = () => {
     try {
@@ -212,6 +242,25 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           addonAfter="px"
           style={{ width: '100%' }}
         />
+      </Form.Item>
+
+      <Divider />
+
+      <Form.Item
+        label="Database Location"
+        extra="Changing this copies your existing snippets to the new location."
+      >
+        <Input.Group compact>
+          <Input value={dbPath} readOnly style={{ width: 'calc(100% - 110px)' }} />
+          <Button
+            icon={<FolderOpenOutlined />}
+            onClick={handleChangeDbPath}
+            loading={dbChanging}
+            style={{ width: '110px' }}
+          >
+            Change…
+          </Button>
+        </Input.Group>
       </Form.Item>
     </Form>
   );

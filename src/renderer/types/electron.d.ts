@@ -24,6 +24,9 @@ export interface ElectronAPI {
 
   installDotnetScript: () => Promise<{ success: boolean; output?: string; error?: string }>;
 
+  getDbPath: () => Promise<string>;
+  setDbPath: () => Promise<{ success: boolean; path?: string; error?: string }>;
+
   onDotnetScriptInstallResult: (
     callback: (result: { success: boolean; output?: string; error?: string }) => void
   ) => () => void;
