@@ -5,6 +5,7 @@ import * as monaco from 'monaco-editor';
 export interface CodeEditorProps {
   value: string;
   onChange?: (value: string) => void;
+  onCursorChange?: (line: number, column: number) => void;
   language?: string;
   theme?: 'vs-dark' | 'light';
   readOnly?: boolean;
@@ -14,6 +15,7 @@ export interface CodeEditorProps {
 export const CodeEditor: React.FC<CodeEditorProps> = ({
   value,
   onChange,
+  onCursorChange,
   language = 'csharp',
   theme = 'vs-dark',
   readOnly = false,
@@ -23,6 +25,12 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
 
   const handleEditorDidMount: OnMount = (editor) => {
     editorRef.current = editor;
+
+    if (onCursorChange) {
+      editor.onDidChangeCursorPosition((e) => {
+        onCursorChange(e.position.lineNumber, e.position.column);
+      });
+    }
 
     // Configure C# language features
     monaco.languages.registerCompletionItemProvider('csharp', {

@@ -17,6 +17,7 @@ import { RuntimeWarning } from './components/RuntimeWarning';
 import { AboutDialog } from './components/AboutDialog';
 import { SettingsModal } from './components/SettingsModal';
 import { OutputDisplay } from './components/OutputDisplay';
+import { StatusBar } from './components/StatusBar';
 import type { Snippet } from '../backend/database';
 
 const { Header, Content, Sider } = Layout;
@@ -118,6 +119,8 @@ function App() {
   const [settingsVisible, setSettingsVisible] = useState(false);
   const [snippetName, setSnippetName] = useState('');
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [cursorLine, setCursorLine] = useState(1);
+  const [cursorColumn, setCursorColumn] = useState(1);
   const containerRef = useRef<HTMLDivElement>(null);
   const layoutRef = useRef<HTMLDivElement>(null);
 
@@ -741,7 +744,14 @@ function App() {
               background: '#1e1e1e',
             }}
           >
-            <CodeEditor value={code} onChange={handleCodeChange} />
+            <CodeEditor
+              value={code}
+              onChange={handleCodeChange}
+              onCursorChange={(line, col) => {
+                setCursorLine(line);
+                setCursorColumn(col);
+              }}
+            />
           </div>
 
           {/* Output panel resize handle */}
@@ -852,6 +862,14 @@ function App() {
           </div>
         </Content>
       </Layout>
+
+      <StatusBar
+        language="csharp"
+        isRunning={isRunning}
+        cursorLine={cursorLine}
+        cursorColumn={cursorColumn}
+        executionTime={executionTime}
+      />
 
       <Modal
         title="Save Snippet"
