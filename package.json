@@ -41,7 +41,10 @@
     "repl",
     "developer-tools"
   ],
-  "author": "CodePad Team",
+  "author": {
+    "name": "Trey Tomes",
+    "email": "trey.tomes@gmail.com"
+  },
   "license": "MIT",
   "dependencies": {
     "@monaco-editor/react": "^4.7.0",
