@@ -115,7 +115,9 @@ export const RuntimeWarning: React.FC = () => {
     >
       <div style={{ textAlign: 'center', padding: '20px 0' }}>
         {installState === 'success' ? (
-          <CheckCircleOutlined style={{ fontSize: '48px', color: '#52c41a', marginBottom: '16px' }} />
+          <CheckCircleOutlined
+            style={{ fontSize: '48px', color: '#52c41a', marginBottom: '16px' }}
+          />
         ) : (
           <WarningOutlined style={{ fontSize: '48px', color: '#faad14', marginBottom: '16px' }} />
         )}
