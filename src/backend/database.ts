@@ -98,7 +98,7 @@ export class SnippetDatabase {
       const hasLastOpened = tableInfo.some((col) => col.name === 'last_opened_at');
       const hasQueryType = tableInfo.some((col) => col.name === 'query_type');
       const hasUsings = tableInfo.some((col) => col.name === 'usings');
-      const hasReferences = tableInfo.some((col) => col.name === 'references');
+      const hasReferences = tableInfo.some((col) => col.name === 'nuget_references');
 
       let ranAny = false;
 
@@ -145,9 +145,9 @@ export class SnippetDatabase {
       }
 
       if (!hasReferences) {
-        logInfo('Running migration: Add references column');
-        this.db.exec(`ALTER TABLE snippets ADD COLUMN references TEXT NOT NULL DEFAULT '[]';`);
-        logInfo('Migration completed: references column added');
+        logInfo('Running migration: Add nuget_references column');
+        this.db.exec(`ALTER TABLE snippets ADD COLUMN nuget_references TEXT NOT NULL DEFAULT '[]';`);
+        logInfo('Migration completed: nuget_references column added');
         ranAny = true;
       }
 
@@ -174,7 +174,7 @@ export class SnippetDatabase {
     const references = JSON.stringify(snippet.references ?? []);
 
     const stmt = this.db.prepare(`
-      INSERT INTO snippets (id, name, language, code, query_type, usings, references, created_at, modified_at, execution_count, starred, last_opened_at)
+      INSERT INTO snippets (id, name, language, code, query_type, usings, nuget_references, created_at, modified_at, execution_count, starred, last_opened_at)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0, NULL)
     `);
 
@@ -233,7 +233,7 @@ export class SnippetDatabase {
     }
 
     if (updates.references !== undefined) {
-      sets.push('references = ?');
+      sets.push('nuget_references = ?');
       values.push(JSON.stringify(updates.references));
     }
 
@@ -340,7 +340,7 @@ export class SnippetDatabase {
       usings = JSON.parse(row.usings || '[]');
     } catch (_e) { /* keep empty array */ }
     try {
-      references = JSON.parse(row.references || '[]');
+      references = JSON.parse(row.nuget_references || '[]');
     } catch (_e) { /* keep empty array */ }
 
     return {
