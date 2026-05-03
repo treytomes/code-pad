@@ -78,60 +78,59 @@ export function detectOutputFormat(output: string): OutputFormat {
   return 'plain';
 }
 
-/**
- * Check if an array of objects can be represented as a table
- */
-function isArrayOfObjects(data: any): boolean {
-  if (!Array.isArray(data) || data.length === 0) {
-    return false;
-  }
+function isPrimitive(val: unknown): boolean {
+  return val === null || typeof val !== 'object';
+}
 
-  // Check if all items are objects (not arrays, not primitives)
+/**
+ * Any non-empty JSON array renders as a table.
+ */
+function isJsonArray(data: unknown): data is unknown[] {
+  return Array.isArray(data) && data.length > 0;
+}
+
+/**
+ * Convert a JSON array to table format.
+ * - Arrays of objects: one column per property.
+ * - Arrays of primitives (or mixed): single "Value" column.
+ */
+function arrayToTable(data: unknown[], label?: string): FormattedOutput {
   const allObjects = data.every(
     (item) => item !== null && typeof item === 'object' && !Array.isArray(item)
   );
 
-  if (!allObjects) {
-    return false;
+  let headers: string[];
+  let dataRows: string[];
+
+  if (allObjects) {
+    // Multi-column: one column per property key
+    const allKeys = new Set<string>();
+    (data as Record<string, unknown>[]).forEach((item) => {
+      Object.keys(item).forEach((key) => allKeys.add(key));
+    });
+    headers = Array.from(allKeys);
+
+    dataRows = (data as Record<string, unknown>[]).map((item) => {
+      const cells = headers.map((key) => {
+        const value = item[key];
+        if (value === null) return 'null';
+        if (value === undefined) return '';
+        if (typeof value === 'object') return JSON.stringify(value);
+        return String(value);
+      });
+      return '| ' + cells.join(' | ') + ' |';
+    });
+  } else {
+    // Single "Value" column for primitives or mixed arrays
+    headers = ['Value'];
+    dataRows = data.map((item) => {
+      const cell = isPrimitive(item) ? String(item) : JSON.stringify(item);
+      return `| ${cell} |`;
+    });
   }
 
-  // Get all unique keys from all objects
-  const allKeys = new Set<string>();
-  data.forEach((item) => {
-    Object.keys(item).forEach((key) => allKeys.add(key));
-  });
-
-  // Should have at least 2 keys to be worth showing as table
-  return allKeys.size >= 2;
-}
-
-/**
- * Convert array of objects to table format
- */
-function arrayToTable(data: any[], label?: string): FormattedOutput {
-  // Get all unique keys (column headers)
-  const allKeys = new Set<string>();
-  data.forEach((item) => {
-    Object.keys(item).forEach((key) => allKeys.add(key));
-  });
-
-  const headers = Array.from(allKeys);
-
-  // Build markdown table
   const headerRow = '| ' + headers.join(' | ') + ' |';
   const separatorRow = '|' + headers.map(() => '----').join('|') + '|';
-
-  const dataRows = data.map((item) => {
-    const cells = headers.map((key) => {
-      const value = item[key];
-      if (value === null) return 'null';
-      if (value === undefined) return '';
-      if (typeof value === 'object') return JSON.stringify(value);
-      return String(value);
-    });
-    return '| ' + cells.join(' | ') + ' |';
-  });
-
   const tableContent = [headerRow, separatorRow, ...dataRows].join('\n');
 
   return {
@@ -165,8 +164,8 @@ export function formatJSON(json: string, indent: number = 2): FormattedOutput {
 
     const parsed = JSON.parse(jsonContent);
 
-    // Check if this is an array of objects - render as table
-    if (isArrayOfObjects(parsed)) {
+    // Any non-empty array renders as a table
+    if (isJsonArray(parsed)) {
       return arrayToTable(parsed, label);
     }
 

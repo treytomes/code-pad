@@ -73,21 +73,24 @@ describe('output-formatter', () => {
       expect(result.metadata?.length).toBe(2);
     });
 
-    it('should keep simple arrays as JSON', () => {
+    it('should render primitive arrays as a single-column table', () => {
       const json = '[1, 2, 3, 4, 5]';
       const result = formatJSON(json);
 
-      expect(result.format).toBe('json');
-      expect(result.metadata?.type).toBe('array');
+      expect(result.format).toBe('table');
+      expect(result.content).toContain('| Value |');
+      expect(result.content).toContain('| 1 |');
+      expect(result.content).toContain('| 5 |');
+      expect(result.metadata?.length).toBe(5);
     });
 
-    it('should handle JSON arrays', () => {
-      const json = '[1,2,3]';
+    it('should render string arrays as a single-column table', () => {
+      const json = '["alpha", "beta", "gamma"]';
       const result = formatJSON(json);
 
-      expect(result.format).toBe('json');
-      expect(result.metadata?.type).toBe('array');
-      expect(result.metadata?.length).toBe(3);
+      expect(result.format).toBe('table');
+      expect(result.content).toContain('| Value |');
+      expect(result.content).toContain('| alpha |');
     });
 
     it('should return plain for invalid JSON', () => {
@@ -129,7 +132,10 @@ describe('output-formatter', () => {
   describe('formatTable', () => {
     it('should format table as markdown', () => {
       const headers = ['Name', 'Age'];
-      const rows = [['John', '30'], ['Jane', '25']];
+      const rows = [
+        ['John', '30'],
+        ['Jane', '25'],
+      ];
       const result = formatTable(headers, rows);
 
       expect(result.format).toBe('table');
