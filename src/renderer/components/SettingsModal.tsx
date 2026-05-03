@@ -7,6 +7,7 @@ const { Option } = Select;
 interface SettingsModalProps {
   visible: boolean;
   onClose: () => void;
+  onThemeChange?: (theme: 'dark' | 'light' | 'system') => void;
 }
 
 interface Settings {
@@ -22,7 +23,7 @@ interface Settings {
   autoSave: boolean;
 
   // UI settings
-  theme: 'dark' | 'light';
+  theme: 'dark' | 'light' | 'system';
   sidebarWidth: number;
   outputHeight: number;
 }
@@ -35,12 +36,16 @@ const DEFAULT_SETTINGS: Settings = {
   lineNumbers: true,
   timeout: 30000,
   autoSave: false,
-  theme: 'dark',
+  theme: 'system',
   sidebarWidth: 250,
   outputHeight: 200,
 };
 
-export const SettingsModal: React.FC<SettingsModalProps> = ({ visible, onClose }) => {
+export const SettingsModal: React.FC<SettingsModalProps> = ({
+  visible,
+  onClose,
+  onThemeChange,
+}) => {
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
   const [hasChanges, setHasChanges] = useState(false);
 
@@ -66,14 +71,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ visible, onClose }
 
   const handleSave = () => {
     try {
-      // TODO: Save to database via IPC
       localStorage.setItem('codepad-settings', JSON.stringify(settings));
       message.success('Settings saved');
       setHasChanges(false);
+      onThemeChange?.(settings.theme);
       onClose();
-
-      // Reload to apply changes
-      window.location.reload();
     } catch (error) {
       console.error('Failed to save settings:', error);
       message.error('Failed to save settings');
@@ -177,13 +179,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ visible, onClose }
   const appearanceTab = (
     <Form layout="vertical" style={{ marginTop: '16px' }}>
       <Form.Item label="Theme">
-        <Select value={settings.theme} onChange={(value) => updateSetting('theme', value)} disabled>
+        <Select value={settings.theme} onChange={(value) => updateSetting('theme', value)}>
+          <Option value="system">System Default</Option>
           <Option value="dark">Dark (VS Code)</Option>
-          <Option value="light">Light (Coming Soon)</Option>
+          <Option value="light">Light</Option>
         </Select>
-        <div style={{ marginTop: '4px', color: '#858585', fontSize: '12px' }}>
-          Light theme support coming in Phase 2
-        </div>
       </Form.Item>
 
       <Divider />

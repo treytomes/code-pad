@@ -1,5 +1,14 @@
 import React, { useState, useRef } from 'react';
-import { Button, Layout, Modal, Input, message, Space } from 'antd';
+import {
+  Button,
+  Layout,
+  Modal,
+  Input,
+  message,
+  Space,
+  ConfigProvider,
+  theme as antTheme,
+} from 'antd';
 import {
   SaveOutlined,
   PlusOutlined,
@@ -90,12 +99,13 @@ function App() {
           outputHeight: settings.outputHeight ?? 200,
           sidebarWidth: settings.sidebarWidth ?? 250,
           timeout: settings.timeout ?? 30000,
+          theme: (settings.theme ?? 'system') as 'dark' | 'light' | 'system',
         };
       }
     } catch (e) {
       console.error('Failed to load saved settings:', e);
     }
-    return { outputHeight: 200, sidebarWidth: 250, timeout: 30000 };
+    return { outputHeight: 200, sidebarWidth: 250, timeout: 30000, theme: 'system' as const };
   };
 
   const savedSettings = loadSavedSettings();
@@ -109,6 +119,14 @@ function App() {
   const [outputHeight, setOutputHeight] = useState(savedSettings.outputHeight);
   const [sidebarWidth, setSidebarWidth] = useState(savedSettings.sidebarWidth);
   const [timeout, _setTimeout] = useState(savedSettings.timeout);
+  const [appTheme, setAppTheme] = useState<'dark' | 'light' | 'system'>(savedSettings.theme);
+
+  const resolveTheme = (t: 'dark' | 'light' | 'system'): 'dark' | 'light' => {
+    if (t === 'system') {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    return t;
+  };
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const savedCodeRef = useRef<string>(DEFAULT_CODE);
   const [isDraggingOutput, setIsDraggingOutput] = useState(false);
@@ -599,296 +617,349 @@ function App() {
     };
   }, [currentSnippetId, isRunning, code]);
 
+  const isDark = resolveTheme(appTheme) === 'dark';
+
+  const themeConfig = isDark
+    ? {
+        algorithm: antTheme.darkAlgorithm,
+        token: {
+          colorBgBase: '#1e1e1e',
+          colorBgContainer: '#252526',
+          colorBgElevated: '#252526',
+          colorBgLayout: '#1e1e1e',
+          colorBorder: '#2d2d30',
+          colorPrimary: '#007acc',
+          colorText: '#cccccc',
+          colorTextSecondary: '#858585',
+          colorTextTertiary: '#6e6e6e',
+          colorBgTextHover: '#2a2d2e',
+          colorBgTextActive: '#264f78',
+        },
+        components: {
+          Layout: {
+            headerBg: '#323233',
+            headerPadding: '0 16px',
+            headerHeight: 48,
+            siderBg: '#252526',
+            bodyBg: '#1e1e1e',
+          },
+          Button: { colorBgContainer: '#2d2d30', colorBorder: '#2d2d30' },
+          Input: { colorBgContainer: '#181818' },
+          Select: { colorBgContainer: '#181818', colorBgElevated: '#252526' },
+        },
+      }
+    : {
+        algorithm: antTheme.defaultAlgorithm,
+        token: { colorPrimary: '#007acc' },
+      };
+
+  const bgMain = isDark ? '#1e1e1e' : '#f5f5f5';
+  const bgHeader = isDark ? '#323233' : '#ffffff';
+  const bgSider = isDark ? '#252526' : '#fafafa';
+  const borderColor = isDark ? '#2d2d30' : '#d9d9d9';
+  const monacoTheme = isDark ? ('vs-dark' as const) : ('light' as const);
+
   return (
-    <Layout style={{ height: '100vh', background: '#1e1e1e' }}>
-      <RuntimeWarning />
-      <Header
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '10px',
-          padding: '0 16px',
-          background: '#323233',
-          borderBottom: '1px solid #2d2d30',
-          height: '48px',
-          lineHeight: '48px',
-        }}
-      >
-        <h1
+    <ConfigProvider theme={themeConfig}>
+      <Layout style={{ height: '100vh', background: bgMain }}>
+        <RuntimeWarning />
+        <Header
           style={{
-            color: '#cccccc',
-            margin: 0,
-            fontSize: '14px',
-            fontWeight: 400,
-            letterSpacing: '0.5px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            padding: '0 16px',
+            background: bgHeader,
+            borderBottom: `1px solid ${borderColor}`,
+            height: '48px',
+            lineHeight: '48px',
           }}
         >
-          CodePad
-        </h1>
-        <div style={{ flex: 1 }} />
-        <Space>
-          <Button icon={<PlusOutlined />} onClick={handleNewSnippet} title="New Snippet (Ctrl+N)">
-            New
-          </Button>
-          <Button icon={<ImportOutlined />} onClick={handleImport} title="Import from .cs file">
-            Import
-          </Button>
-          {currentSnippetId ? (
-            <>
+          <h1
+            style={{
+              color: '#cccccc',
+              margin: 0,
+              fontSize: '14px',
+              fontWeight: 400,
+              letterSpacing: '0.5px',
+            }}
+          >
+            CodePad
+          </h1>
+          <div style={{ flex: 1 }} />
+          <Space>
+            <Button icon={<PlusOutlined />} onClick={handleNewSnippet} title="New Snippet (Ctrl+N)">
+              New
+            </Button>
+            <Button icon={<ImportOutlined />} onClick={handleImport} title="Import from .cs file">
+              Import
+            </Button>
+            {currentSnippetId ? (
+              <>
+                <Button
+                  type="primary"
+                  icon={<SaveOutlined />}
+                  onClick={handleSaveExisting}
+                  title="Save (Ctrl+S)"
+                  danger={hasUnsavedChanges}
+                >
+                  {hasUnsavedChanges ? 'Save *' : 'Save'}
+                </Button>
+                <Button
+                  icon={<SaveOutlined />}
+                  onClick={handleSaveAs}
+                  title="Save As (Ctrl+Shift+S)"
+                >
+                  Save As...
+                </Button>
+                <Button icon={<ExportOutlined />} onClick={handleExport} title="Export to .cs file">
+                  Export
+                </Button>
+              </>
+            ) : (
               <Button
                 type="primary"
                 icon={<SaveOutlined />}
-                onClick={handleSaveExisting}
-                title="Save (Ctrl+S)"
-                danger={hasUnsavedChanges}
+                onClick={handleSaveNew}
+                title="Save As (Ctrl+S)"
               >
-                {hasUnsavedChanges ? 'Save *' : 'Save'}
-              </Button>
-              <Button icon={<SaveOutlined />} onClick={handleSaveAs} title="Save As (Ctrl+Shift+S)">
                 Save As...
               </Button>
-              <Button icon={<ExportOutlined />} onClick={handleExport} title="Export to .cs file">
-                Export
-              </Button>
-            </>
-          ) : (
+            )}
             <Button
-              type="primary"
-              icon={<SaveOutlined />}
-              onClick={handleSaveNew}
-              title="Save As (Ctrl+S)"
+              icon={<DownloadOutlined />}
+              onClick={handleExportAll}
+              title="Export all snippets to JSON"
             >
-              Save As...
+              Export All
             </Button>
-          )}
+            {!isRunning ? (
+              <Button type="primary" onClick={handleRun}>
+                Run Code
+              </Button>
+            ) : (
+              <Button danger onClick={handleStop} icon={<StopOutlined />}>
+                Stop
+              </Button>
+            )}
+          </Space>
           <Button
-            icon={<DownloadOutlined />}
-            onClick={handleExportAll}
-            title="Export all snippets to JSON"
-          >
-            Export All
-          </Button>
-          {!isRunning ? (
-            <Button type="primary" onClick={handleRun}>
-              Run Code
-            </Button>
-          ) : (
-            <Button danger onClick={handleStop} icon={<StopOutlined />}>
-              Stop
-            </Button>
-          )}
-        </Space>
-        <Button
-          type="text"
-          icon={<QuestionCircleOutlined />}
-          onClick={() => setAboutVisible(true)}
-          title="About CodePad"
-          style={{ color: '#858585' }}
-        />
-      </Header>
-
-      <Layout ref={layoutRef} style={{ background: '#1e1e1e' }}>
-        <Sider
-          width={sidebarWidth}
-          theme="dark"
-          style={{
-            background: '#252526',
-            borderRight: '1px solid #2d2d30',
-            position: 'relative',
-          }}
-        >
-          <SnippetList
-            onSelectSnippet={handleSelectSnippet}
-            onDeleteSnippet={handleDeleteSnippet}
-            onRenameSnippet={handleRenameSnippet}
-            onDuplicateSnippet={handleDuplicateSnippet}
-            refreshTrigger={refreshTrigger}
+            type="text"
+            icon={<QuestionCircleOutlined />}
+            onClick={() => setAboutVisible(true)}
+            title="About CodePad"
+            style={{ color: '#858585' }}
           />
-          {/* Sidebar resize handle */}
-          <div
-            onMouseDown={handleSidebarMouseDown}
-            style={{
-              position: 'absolute',
-              right: 0,
-              top: 0,
-              bottom: 0,
-              width: '4px',
-              cursor: 'ew-resize',
-              backgroundColor: 'transparent',
-              zIndex: 10,
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = '#007acc';
-            }}
-            onMouseLeave={(e) => {
-              if (!isDraggingSidebar) {
-                e.currentTarget.style.backgroundColor = 'transparent';
-              }
-            }}
-          />
-        </Sider>
+        </Header>
 
-        <Content
-          ref={containerRef}
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            overflow: 'hidden',
-          }}
-          onMouseMove={handleMouseMove}
-        >
-          <div
+        <Layout ref={layoutRef} style={{ background: bgMain }}>
+          <Sider
+            width={sidebarWidth}
+            theme={isDark ? 'dark' : 'light'}
             style={{
-              flex: 1,
-              minHeight: 0,
-              background: '#1e1e1e',
+              background: bgSider,
+              borderRight: `1px solid ${borderColor}`,
+              position: 'relative',
             }}
           >
-            <CodeEditor
-              value={code}
-              onChange={handleCodeChange}
-              onCursorChange={(line, col) => {
-                setCursorLine(line);
-                setCursorColumn(col);
+            <SnippetList
+              onSelectSnippet={handleSelectSnippet}
+              onDeleteSnippet={handleDeleteSnippet}
+              onRenameSnippet={handleRenameSnippet}
+              onDuplicateSnippet={handleDuplicateSnippet}
+              refreshTrigger={refreshTrigger}
+            />
+            {/* Sidebar resize handle */}
+            <div
+              onMouseDown={handleSidebarMouseDown}
+              style={{
+                position: 'absolute',
+                right: 0,
+                top: 0,
+                bottom: 0,
+                width: '4px',
+                cursor: 'ew-resize',
+                backgroundColor: 'transparent',
+                zIndex: 10,
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = '#007acc';
+              }}
+              onMouseLeave={(e) => {
+                if (!isDraggingSidebar) {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                }
               }}
             />
-          </div>
+          </Sider>
 
-          {/* Output panel resize handle */}
-          <div
-            onMouseDown={handleOutputMouseDown}
+          <Content
+            ref={containerRef}
             style={{
-              height: '4px',
-              backgroundColor: '#2d2d30',
-              cursor: 'ns-resize',
-              userSelect: 'none',
-              zIndex: 10,
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = '#007acc';
-            }}
-            onMouseLeave={(e) => {
-              if (!isDraggingOutput) {
-                e.currentTarget.style.backgroundColor = '#2d2d30';
-              }
-            }}
-          />
-
-          <div
-            style={{
-              height: `${outputHeight}px`,
-              backgroundColor: '#181818',
-              borderTop: '1px solid #2d2d30',
               display: 'flex',
               flexDirection: 'column',
+              overflow: 'hidden',
             }}
+            onMouseMove={handleMouseMove}
           >
-            {/* Output panel header */}
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                padding: '8px 12px',
-                borderBottom: '1px solid #2d2d30',
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <strong
-                  style={{
-                    color: '#4ec9b0',
-                    fontSize: '11px',
-                    textTransform: 'uppercase',
-                    letterSpacing: '1px',
-                    fontWeight: 600,
-                  }}
-                >
-                  Output
-                </strong>
-                {executionTime !== null && (
-                  <span
-                    style={{
-                      color: '#858585',
-                      fontSize: '11px',
-                      fontFamily: 'monospace',
-                    }}
-                  >
-                    {executionTime}ms
-                  </span>
-                )}
-              </div>
-              <Space size="small">
-                <Button
-                  type="text"
-                  size="small"
-                  icon={<CopyOutlined />}
-                  onClick={handleCopyOutput}
-                  title="Copy to clipboard"
-                  style={{ color: '#858585' }}
-                />
-                <Button
-                  type="text"
-                  size="small"
-                  icon={<ClearOutlined />}
-                  onClick={handleClearOutput}
-                  title="Clear output"
-                  style={{ color: '#858585' }}
-                />
-              </Space>
-            </div>
-
-            {/* Output content */}
             <div
               style={{
                 flex: 1,
-                overflowY: 'auto',
-                background: '#1e1e1e',
+                minHeight: 0,
+                background: bgMain,
               }}
             >
-              {output ? (
-                <OutputDisplay output={output} />
-              ) : (
-                <div
-                  style={{
-                    padding: '12px',
-                    color: '#858585',
-                    fontStyle: 'italic',
-                  }}
-                >
-                  Click &ldquo;Run Code&rdquo; to execute
-                </div>
-              )}
+              <CodeEditor
+                value={code}
+                onChange={handleCodeChange}
+                theme={monacoTheme}
+                onCursorChange={(line, col) => {
+                  setCursorLine(line);
+                  setCursorColumn(col);
+                }}
+              />
             </div>
-          </div>
-        </Content>
-      </Layout>
 
-      <StatusBar
-        language="csharp"
-        isRunning={isRunning}
-        cursorLine={cursorLine}
-        cursorColumn={cursorColumn}
-        executionTime={executionTime}
-      />
+            {/* Output panel resize handle */}
+            <div
+              onMouseDown={handleOutputMouseDown}
+              style={{
+                height: '4px',
+                backgroundColor: '#2d2d30',
+                cursor: 'ns-resize',
+                userSelect: 'none',
+                zIndex: 10,
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = '#007acc';
+              }}
+              onMouseLeave={(e) => {
+                if (!isDraggingOutput) {
+                  e.currentTarget.style.backgroundColor = '#2d2d30';
+                }
+              }}
+            />
 
-      <Modal
-        title="Save Snippet"
-        open={saveModalVisible}
-        onOk={handleSaveConfirm}
-        onCancel={() => setSaveModalVisible(false)}
-      >
-        <Input
-          placeholder="Enter snippet name"
-          value={snippetName}
-          onChange={(e) => setSnippetName(e.target.value)}
-          onPressEnter={handleSaveConfirm}
-          autoFocus
+            <div
+              style={{
+                height: `${outputHeight}px`,
+                backgroundColor: isDark ? '#181818' : '#ffffff',
+                borderTop: `1px solid ${borderColor}`,
+                display: 'flex',
+                flexDirection: 'column',
+              }}
+            >
+              {/* Output panel header */}
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  padding: '8px 12px',
+                  borderBottom: `1px solid ${borderColor}`,
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <strong
+                    style={{
+                      color: '#4ec9b0',
+                      fontSize: '11px',
+                      textTransform: 'uppercase',
+                      letterSpacing: '1px',
+                      fontWeight: 600,
+                    }}
+                  >
+                    Output
+                  </strong>
+                  {executionTime !== null && (
+                    <span
+                      style={{
+                        color: '#858585',
+                        fontSize: '11px',
+                        fontFamily: 'monospace',
+                      }}
+                    >
+                      {executionTime}ms
+                    </span>
+                  )}
+                </div>
+                <Space size="small">
+                  <Button
+                    type="text"
+                    size="small"
+                    icon={<CopyOutlined />}
+                    onClick={handleCopyOutput}
+                    title="Copy to clipboard"
+                    style={{ color: '#858585' }}
+                  />
+                  <Button
+                    type="text"
+                    size="small"
+                    icon={<ClearOutlined />}
+                    onClick={handleClearOutput}
+                    title="Clear output"
+                    style={{ color: '#858585' }}
+                  />
+                </Space>
+              </div>
+
+              {/* Output content */}
+              <div
+                style={{
+                  flex: 1,
+                  overflowY: 'auto',
+                  background: isDark ? '#1e1e1e' : '#fafafa',
+                }}
+              >
+                {output ? (
+                  <OutputDisplay output={output} />
+                ) : (
+                  <div
+                    style={{
+                      padding: '12px',
+                      color: '#858585',
+                      fontStyle: 'italic',
+                    }}
+                  >
+                    Click &ldquo;Run Code&rdquo; to execute
+                  </div>
+                )}
+              </div>
+            </div>
+          </Content>
+        </Layout>
+
+        <StatusBar
+          language="csharp"
+          isRunning={isRunning}
+          cursorLine={cursorLine}
+          cursorColumn={cursorColumn}
+          executionTime={executionTime}
         />
-      </Modal>
 
-      <AboutDialog visible={aboutVisible} onClose={() => setAboutVisible(false)} />
-      <SettingsModal visible={settingsVisible} onClose={() => setSettingsVisible(false)} />
-    </Layout>
+        <Modal
+          title="Save Snippet"
+          open={saveModalVisible}
+          onOk={handleSaveConfirm}
+          onCancel={() => setSaveModalVisible(false)}
+        >
+          <Input
+            placeholder="Enter snippet name"
+            value={snippetName}
+            onChange={(e) => setSnippetName(e.target.value)}
+            onPressEnter={handleSaveConfirm}
+            autoFocus
+          />
+        </Modal>
+
+        <AboutDialog visible={aboutVisible} onClose={() => setAboutVisible(false)} />
+        <SettingsModal
+          visible={settingsVisible}
+          onClose={() => setSettingsVisible(false)}
+          onThemeChange={setAppTheme}
+        />
+      </Layout>
+    </ConfigProvider>
   );
 }
 
