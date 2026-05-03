@@ -26,11 +26,12 @@ This file documents key architectural decisions made for CodePad.
 - **Version**: Using v9.6.0 (requires C++17, not C++20) for AlmaLinux 8 compatibility
 - **Trade-off**: Not suitable for cloud sync, but fine for local-first approach
 
-### C# Execution: dotnet build (not dotnet-script)
-- **Decision**: Switched from dotnet-script to full dotnet build
-- **Rationale**: Needed to fix CS1109 error (extension methods in nested classes)
-- **Implementation**: Create temp project, compile to .dll, execute with dotnet
-- **Trade-off**: Slower compilation, but allows proper C# structure
+### C# Execution: dotnet-script
+- **Decision**: Use dotnet-script global tool to run `.csx` scripts
+- **Rationale**: Lightweight, no temp project needed; extension method issue solved by wrapping user code in a Program.Main() with DumpExtensions as a top-level class
+- **Implementation**: Write user code to a temp `.csx` file, run via `dotnet-script <file>`, stream stdout/stderr back via IPC
+- **Auto-install**: On startup, if dotnet is present but dotnet-script is missing, the app attempts a silent background install (`dotnet tool install -g dotnet-script`)
+- **Trade-off**: Requires separate global tool install, but much simpler than full dotnet build
 
 ## Module System
 
@@ -69,12 +70,20 @@ This file documents key architectural decisions made for CodePad.
 - **Rationale**: Separate from app settings, managed by main process
 - **Location**: `app.getPath('userData')/window-state.json`
 
+### App Settings: JSON file in userData
+- **Decision**: Store non-UI settings (e.g., custom DB path) in `app-settings.json`
+- **Rationale**: Needs to be read by main process before window opens; separate from renderer localStorage
+- **Location**: `app.getPath('userData')/app-settings.json`
+- **Current keys**: `dbPath` (optional custom SQLite path)
+
 ## UI/UX Patterns
 
-### Dark Theme First
-- **Decision**: Default to dark theme, light theme deferred to Phase 2
-- **Rationale**: Target audience (developers) prefers dark themes
-- **Colors**: VS Code color scheme for familiarity
+### Theme System: Dark / Light / System
+- **Decision**: Three-way theme toggle: Dark (VS Code), Light, System Default
+- **Default**: System Default (follows OS `prefers-color-scheme`)
+- **Implementation**: `ConfigProvider` owned by `App`; theme state drives Ant Design tokens + Monaco editor theme (`vs-dark` / `vs`)
+- **Storage**: `codepad-settings` in `localStorage`, key `theme`
+- **Colors**: VS Code color scheme for dark theme familiarity
 
 ### Two-Tab Snippet List
 - **Decision**: Split into "My Snippets" and "Samples" tabs (LINQPad pattern)
@@ -144,5 +153,5 @@ This file documents key architectural decisions made for CodePad.
 
 ---
 
-**Last Updated**: 2026-05-02
+**Last Updated**: 2026-05-03
 **Review**: Update when making significant architectural changes

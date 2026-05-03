@@ -228,6 +228,50 @@ git commit -m "fix: Address linting issues from previous commit"
 
 ## Testing
 
+### ❌ Replacing the window Object in jsdom Tests
+**Problem**: `(global as any).window = { electronAPI: mock }` replaces the entire jsdom window, wiping `clearTimeout`, `addEventListener`, and other globals — all tests fail with cryptic errors.
+
+**Solution**: Assign to a property of the existing window:
+```typescript
+// Bad
+(global as any).window = { electronAPI: mockElectronAPI };
+
+// Good
+(window as any).electronAPI = mockElectronAPI;
+```
+
+### ❌ matchMedia and ResizeObserver Not in jsdom
+**Problem**: Ant Design components call `window.matchMedia()` and use `ResizeObserver` — both undefined in jsdom — causing all component tests to crash.
+
+**Solution**: Stub both in `tests/setup.ts`:
+```typescript
+global.ResizeObserver = class ResizeObserver {
+  observe() {} unobserve() {} disconnect() {}
+};
+Object.defineProperty(window, 'matchMedia', {
+  writable: true,
+  value: (query: string) => ({
+    matches: false, media: query, onchange: null,
+    addListener: () => {}, removeListener: () => {},
+    addEventListener: () => {}, removeEventListener: () => {},
+    dispatchEvent: () => false,
+  }),
+});
+```
+
+### ❌ getAllByRole('button') Is Extremely Slow on Ant Design DOM
+**Problem**: `screen.getAllByRole('button')` traverses the full accessibility tree. On a page with Ant Design Tabs + List, this takes 8+ seconds per call, timing out the entire test suite.
+
+**Solution**: Use direct CSS selectors instead:
+```typescript
+// Bad — 8+ seconds
+const editBtn = screen.getAllByRole('button').find(b => b.querySelector('[data-icon="edit"]'));
+
+// Good — instant
+const editBtn = document.querySelector<HTMLElement>('button[title="Rename"]');
+fireEvent.click(editBtn!);
+```
+
 ### ❌ Tests Depend on Execution Order
 **Problem**: Tests pass individually but fail in suite
 
@@ -341,5 +385,5 @@ npm run build
 
 ---
 
-**Last Updated**: 2026-05-02
+**Last Updated**: 2026-05-03
 **Review**: Add new pitfalls as discovered

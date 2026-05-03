@@ -356,37 +356,40 @@ describe('CSharpExecutor', () => {
 
 ## Styling Patterns
 
-### Inline Styles (Current Approach)
+### Theming via ConfigProvider
+The app supports dark/light/system themes. `ConfigProvider` is owned by `App` and switches Ant Design token sets at runtime. **Do not hardcode dark-specific hex colors** in new components — derive from theme context or use neutral values that work in both themes.
+
 ```typescript
-// Use for component-specific styles
-<div
-  style={{
-    padding: '8px',
-    background: '#252526',
-    color: '#cccccc',
-  }}
->
-  Content
-</div>
+// App.tsx computes these from current theme:
+const isDark = resolveTheme(appTheme) === 'dark';
+const bgMain   = isDark ? '#1e1e1e' : '#f5f5f5';
+const bgHeader = isDark ? '#323233' : '#ffffff';
+const bgSider  = isDark ? '#252526' : '#fafafa';
+const borderColor = isDark ? '#2d2d30' : '#d9d9d9';
+const monacoTheme = isDark ? 'vs-dark' : 'light'; // passed to CodeEditor
 ```
 
-### Color Palette (VS Code Dark Theme)
+New components should either receive theme-derived values as props, or use Ant Design tokens via `theme.useToken()`.
+
+### Color Reference (VS Code Dark Theme)
+These are used in dark mode and fixed UI elements (e.g., the blue status bar):
 ```typescript
-// Backgrounds
+// Status bar (always blue, theme-independent)
+background: '#007acc'
+
+// Dark-mode backgrounds
 background: '#1e1e1e'    // Main background
 background: '#252526'    // Sidebar background
 background: '#2d2d30'    // Border color
 
-// Text
+// Dark-mode text
 color: '#cccccc'         // Normal text
 color: '#858585'         // Secondary text
-color: '#ffffff'         // Emphasis
 
-// Accent colors
-color: '#4ec9b0'         // Cyan (keywords, types)
-color: '#569cd6'         // Blue (functions)
+// Accent colors (both themes)
+color: '#4ec9b0'         // Cyan (output label, executing dot)
+color: '#569cd6'         // Blue (primary actions)
 color: '#ce9178'         // Orange (strings)
-color: '#b5cea8'         // Green (numbers)
 color: '#ffc107'         // Yellow (starred)
 color: '#f48771'         // Red (errors)
 ```
@@ -475,5 +478,5 @@ try {
 
 ---
 
-**Last Updated**: 2026-05-02
+**Last Updated**: 2026-05-03
 **Review**: Update when establishing new patterns

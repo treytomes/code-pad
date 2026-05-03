@@ -10,12 +10,12 @@ Enable developers to write, execute, and visualize code instantly without projec
 
 ---
 
-## Current Status (2026-05-02)
+## Current Status (2026-05-03)
 
-### ✅ Phase 1 Complete - v0.1.0 Pre-Release Ready
+### 🚀 Phase 1 + Phase 2 Polish In Progress
 
-**What's Built**:
-- ✅ C# code execution using dotnet build
+**Phase 1 Complete (v0.1.0 baseline)**:
+- ✅ C# code execution via dotnet-script
 - ✅ LINQPad-style .Dump() extension method
 - ✅ Samples tab with 12 categorized examples
 - ✅ Full snippet management (CRUD, star, search)
@@ -25,18 +25,24 @@ Enable developers to write, execute, and visualize code instantly without projec
 - ✅ Settings modal (editor, execution, appearance)
 - ✅ Import/Export functionality
 - ✅ Automated E2E tests (20+ tests with Playwright)
-- ✅ CI/CD pipeline (GitHub Actions)
-- ✅ Complete documentation (README, CHANGELOG, Release Notes, Wiki)
-- ✅ SVG icon and generation scripts
-- ✅ All ESLint errors fixed (commit 5d98f3b)
-- ✅ All TypeScript errors fixed (commit aedd59e)
+- ✅ CI/CD pipeline (GitHub Actions — unit tests + 3-platform builds passing)
+- ✅ Linux packages uploaded to v0.1.0 GitHub pre-release
 
-**Remaining for Release**:
-- ⏳ Issue #1: CI/CD verification (awaiting GitHub Actions run completion)
-- 🎯 Issue #4: Build production packages (Windows, macOS, Linux) and test installers
+**Phase 2 Polish (in progress)**:
+- ✅ Auto-install dotnet-script with Install Now button (#36)
+- ✅ Status bar (language, execution state, cursor position, timing) (#16)
+- ✅ Light/Dark/System theme support (#8)
+- ✅ Configurable database location (#9)
+- ✅ First-run welcome modal (#17)
+
+**Remaining**:
+- 🎯 Issue #4: Windows installer — needs build + testing (macOS removed, no Mac hardware)
+- ⏳ E2E tests in CI — investigating flakiness after dotnet-script install fix
 
 **Milestone**: [v0.1.0 - Pre-Release](https://github.com/treytomes/code-pad/milestone/1)  
 **Project Board**: https://github.com/users/treytomes/projects/2
+
+**Note on macOS**: No Mac hardware available. macOS builds are excluded from packaging targets and issue #4.
 
 ---
 
