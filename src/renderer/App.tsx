@@ -108,18 +108,33 @@ function App() {
     try {
       const stored = localStorage.getItem('codepad-settings');
       if (stored) {
-        const settings = JSON.parse(stored);
+        const s = JSON.parse(stored);
         return {
-          outputHeight: settings.outputHeight ?? 200,
-          sidebarWidth: settings.sidebarWidth ?? 250,
-          timeout: settings.timeout ?? 30000,
-          theme: (settings.theme ?? 'system') as 'dark' | 'light' | 'system',
+          outputHeight: s.outputHeight ?? 200,
+          sidebarWidth: s.sidebarWidth ?? 250,
+          timeout: s.timeout ?? 30000,
+          theme: (s.theme ?? 'system') as 'dark' | 'light' | 'system',
+          fontSize: s.fontSize ?? 14,
+          tabSize: s.tabSize ?? 4,
+          wordWrap: s.wordWrap ?? false,
+          minimap: s.minimap ?? false,
+          lineNumbers: s.lineNumbers ?? true,
         };
       }
     } catch (e) {
       console.error('Failed to load saved settings:', e);
     }
-    return { outputHeight: 200, sidebarWidth: 250, timeout: 30000, theme: 'system' as const };
+    return {
+      outputHeight: 200,
+      sidebarWidth: 250,
+      timeout: 30000,
+      theme: 'system' as const,
+      fontSize: 14,
+      tabSize: 4,
+      wordWrap: false,
+      minimap: false,
+      lineNumbers: true,
+    };
   };
 
   const savedSettings = loadSavedSettings();
@@ -134,6 +149,11 @@ function App() {
   const [sidebarWidth, setSidebarWidth] = useState(savedSettings.sidebarWidth);
   const [timeout, _setTimeout] = useState(savedSettings.timeout);
   const [appTheme, setAppTheme] = useState<'dark' | 'light' | 'system'>(savedSettings.theme);
+  const [editorFontSize, setEditorFontSize] = useState(savedSettings.fontSize);
+  const [editorTabSize, setEditorTabSize] = useState(savedSettings.tabSize);
+  const [editorWordWrap, setEditorWordWrap] = useState(savedSettings.wordWrap);
+  const [editorMinimap, setEditorMinimap] = useState(savedSettings.minimap);
+  const [editorLineNumbers, setEditorLineNumbers] = useState(savedSettings.lineNumbers);
 
   const resolveTheme = (t: 'dark' | 'light' | 'system'): 'dark' | 'light' => {
     if (t === 'system') {
@@ -886,6 +906,11 @@ function App() {
                   setCursorLine(line);
                   setCursorColumn(col);
                 }}
+                fontSize={editorFontSize}
+                tabSize={editorTabSize}
+                wordWrap={editorWordWrap}
+                minimap={editorMinimap}
+                lineNumbers={editorLineNumbers}
               />
             </div>
 
@@ -1026,6 +1051,14 @@ function App() {
           visible={settingsVisible}
           onClose={() => setSettingsVisible(false)}
           onThemeChange={setAppTheme}
+          onSettingsSaved={() => {
+            const s = loadSavedSettings();
+            setEditorFontSize(s.fontSize);
+            setEditorTabSize(s.tabSize);
+            setEditorWordWrap(s.wordWrap);
+            setEditorMinimap(s.minimap);
+            setEditorLineNumbers(s.lineNumbers);
+          }}
         />
         <ScriptPropertiesModal
           open={scriptPropertiesVisible}
