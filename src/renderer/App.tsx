@@ -34,62 +34,71 @@ import type { Snippet } from '../backend/database';
 
 const { Header, Content, Sider } = Layout;
 
-const DEFAULT_CODE = `// Welcome to CodePad v0.1.0!
-// Press F5 to run | Ctrl+S to save | Ctrl+N for new snippet
+const DEFAULT_CODE_STATEMENTS = `// Welcome to CodePad — Statements mode
+// Write C# statements. Use .Dump() to display results. Press F5 to run.
 
 using System;
 using System.Linq;
 
-// CodePad includes a .Dump() extension method (like LINQPad)
-// It automatically outputs objects as JSON with optional labels
-
-// 1. Simple object with label
+// Simple object with label
 var person = new {
     Name = "John Doe",
     Age = 30,
-    Email = "john@example.com",
-    Address = new {
-        Street = "123 Main St",
-        City = "Springfield",
-        Zip = "12345"
-    },
     Skills = new[] { "C#", "JavaScript", "Python" }
 };
 person.Dump("Person Details");
 
-// 2. Array/collection - renders as tree view
+// Array of objects renders as a table
 var users = new[] {
-    new { Id = 1, Name = "Alice", Role = "Admin", Active = true },
-    new { Id = 2, Name = "Bob", Role = "Developer", Active = true },
-    new { Id = 3, Name = "Carol", Role = "Designer", Active = false }
+    new { Id = 1, Name = "Alice", Role = "Admin",     Active = true  },
+    new { Id = 2, Name = "Bob",   Role = "Developer", Active = true  },
+    new { Id = 3, Name = "Carol", Role = "Designer",  Active = false }
 };
 users.Dump("User List");
 
-// 3. Chaining support - dump intermediate results
-var activeUsers = users
+// .Dump() returns the value, so you can chain it
+var activeNames = users
     .Where(u => u.Active)
-    .Dump("Active Users Only")
+    .Dump("Active Users")
     .Select(u => u.Name)
     .ToArray();
 
-// 4. Statistics object
-var stats = new {
-    TotalUsers = users.Length,
-    ActiveCount = users.Count(u => u.Active),
-    Roles = users.Select(u => u.Role).Distinct().ToArray(),
-    Timestamp = DateTime.Now
-};
-stats.Dump("Statistics");
-
-// 💡 Tips:
-// - .Dump() automatically adds spacing between sections
-// - Use .Dump("Label") to add headers
-// - Returns the object for LINQ chaining
-// - Works with any serializable type
-// - You can still use Console.WriteLine() for plain text
-
-Console.WriteLine("✨ Try .Dump() on your own objects!");
+Console.WriteLine($"Active: {string.Join(", ", activeNames)}");
 `;
+
+const DEFAULT_CODE_EXPRESSION = `// Welcome to CodePad — Expression mode
+// Type a single C# expression. The result is automatically displayed.
+// No .Dump() needed — press F5 to run.
+
+Enumerable.Range(1, 10)
+    .Where(x => x % 2 == 0)
+    .Select(x => new { Value = x, Square = x * x })
+`;
+
+const DEFAULT_CODE_PROGRAM = `// Welcome to CodePad — Program mode
+// Write a complete C# program with your own Main() method.
+// Helper methods and classes are allowed. Press F5 to run.
+
+using System;
+using System.Linq;
+
+static void Main()
+{
+    var numbers = Enumerable.Range(1, 5).ToArray();
+    numbers.Dump("Numbers");
+
+    Console.WriteLine($"Sum: {Sum(numbers)}");
+    Console.WriteLine($"Max: {numbers.Max()}");
+}
+
+static int Sum(int[] values) => values.Sum();
+`;
+
+const DEFAULT_CODE: Record<string, string> = {
+  statements: DEFAULT_CODE_STATEMENTS,
+  expression: DEFAULT_CODE_EXPRESSION,
+  program: DEFAULT_CODE_PROGRAM,
+};
 
 function App() {
   // Load saved settings from localStorage
@@ -113,7 +122,7 @@ function App() {
 
   const savedSettings = loadSavedSettings();
 
-  const [code, setCode] = useState(DEFAULT_CODE);
+  const [code, setCode] = useState(DEFAULT_CODE_STATEMENTS);
   const [output, setOutput] = useState('');
   const [isRunning, setIsRunning] = useState(false);
   const [executionTime, setExecutionTime] = useState<number | null>(null);
@@ -131,7 +140,7 @@ function App() {
     return t;
   };
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-  const savedCodeRef = useRef<string>(DEFAULT_CODE);
+  const savedCodeRef = useRef<string>(DEFAULT_CODE_STATEMENTS);
   const [isDraggingOutput, setIsDraggingOutput] = useState(false);
   const [isDraggingSidebar, setIsDraggingSidebar] = useState(false);
   const [currentSnippetId, setCurrentSnippetId] = useState<string | null>(null);
@@ -308,8 +317,9 @@ function App() {
 
       if (currentSnippetId === id) {
         setCurrentSnippetId(null);
-        setCode(DEFAULT_CODE);
-        savedCodeRef.current = DEFAULT_CODE;
+        const defaultCode = DEFAULT_CODE[queryType] ?? DEFAULT_CODE_STATEMENTS;
+        setCode(defaultCode);
+        savedCodeRef.current = defaultCode;
         setHasUnsavedChanges(false);
       }
     } catch (error) {
@@ -359,8 +369,8 @@ function App() {
       }
     }
 
-    setCode(DEFAULT_CODE);
-    savedCodeRef.current = DEFAULT_CODE;
+    setCode(DEFAULT_CODE_STATEMENTS);
+    savedCodeRef.current = DEFAULT_CODE_STATEMENTS;
     setHasUnsavedChanges(false);
     setCurrentSnippetId(null);
     setQueryType('statements');
@@ -704,6 +714,12 @@ function App() {
                 setQueryType(val);
                 if (currentSnippetId) {
                   window.electronAPI.db.updateSnippet(currentSnippetId, { queryType: val });
+                } else {
+                  // Unsaved scratch buffer — load the matching default
+                  const defaultCode = DEFAULT_CODE[val] ?? DEFAULT_CODE_STATEMENTS;
+                  setCode(defaultCode);
+                  savedCodeRef.current = defaultCode;
+                  setHasUnsavedChanges(false);
                 }
               }}
               style={{ width: 140 }}
