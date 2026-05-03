@@ -1,6 +1,6 @@
 import { ExecutionResult } from '../../backend/executors/csharp';
 import { Snippet } from '../../backend/database';
-import { QueryType } from '../../shared/types';
+import { QueryType, NuGetReference } from '../../shared/types';
 
 export interface ElectronAPI {
   ping: () => string;
@@ -13,7 +13,7 @@ export interface ElectronAPI {
 
   executeCode: (
     code: string,
-    options?: { timeout?: number; queryType?: QueryType }
+    options?: { timeout?: number; queryType?: QueryType; usings?: string[]; references?: NuGetReference[] }
   ) => Promise<ExecutionResult>;
 
   stopExecution: () => Promise<void>;
@@ -54,11 +54,13 @@ export interface ElectronAPI {
       language: string;
       code: string;
       queryType?: QueryType;
+      usings?: string[];
+      references?: NuGetReference[];
     }) => Promise<Snippet>;
     getSnippet: (id: string) => Promise<Snippet | null>;
     updateSnippet: (
       id: string,
-      updates: { name?: string; code?: string; queryType?: QueryType }
+      updates: { name?: string; code?: string; queryType?: QueryType; usings?: string[]; references?: NuGetReference[] }
     ) => Promise<boolean>;
     deleteSnippet: (id: string) => Promise<boolean>;
     listSnippets: (language?: string) => Promise<Snippet[]>;

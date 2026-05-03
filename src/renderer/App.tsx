@@ -10,7 +10,7 @@ import {
   ConfigProvider,
   theme as antTheme,
 } from 'antd';
-import type { QueryType } from '../shared/types';
+import type { QueryType, NuGetReference } from '../shared/types';
 import {
   SaveOutlined,
   PlusOutlined,
@@ -21,6 +21,7 @@ import {
   DownloadOutlined,
   QuestionCircleOutlined,
   StopOutlined,
+  SettingOutlined,
 } from '@ant-design/icons';
 import { CodeEditor } from './components/Editor';
 import { SnippetList } from './components/SnippetList';
@@ -30,6 +31,7 @@ import { SettingsModal } from './components/SettingsModal';
 import { OutputDisplay } from './components/OutputDisplay';
 import { StatusBar } from './components/StatusBar';
 import { WelcomeModal } from './components/WelcomeModal';
+import ScriptPropertiesModal, { type ScriptProperties } from './components/ScriptPropertiesModal';
 import type { Snippet } from '../backend/database';
 
 const { Header, Content, Sider } = Layout;
@@ -152,6 +154,8 @@ function App() {
   const [cursorLine, setCursorLine] = useState(1);
   const [cursorColumn, setCursorColumn] = useState(1);
   const [queryType, setQueryType] = useState<QueryType>('statements');
+  const [scriptProperties, setScriptProperties] = useState<ScriptProperties>({ usings: [], references: [] });
+  const [scriptPropertiesVisible, setScriptPropertiesVisible] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const layoutRef = useRef<HTMLDivElement>(null);
 
@@ -190,7 +194,12 @@ function App() {
     });
 
     try {
-      const result = await window.electronAPI.executeCode(code, { timeout, queryType });
+      const result = await window.electronAPI.executeCode(code, {
+        timeout,
+        queryType,
+        usings: scriptProperties.usings,
+        references: scriptProperties.references,
+      });
 
       // Stop timer and set final time
       if (executionTimerRef.current) {
@@ -250,7 +259,12 @@ function App() {
     if (!currentSnippetId) return;
 
     try {
-      await window.electronAPI.db.updateSnippet(currentSnippetId, { code, queryType });
+      await window.electronAPI.db.updateSnippet(currentSnippetId, {
+        code,
+        queryType,
+        usings: scriptProperties.usings,
+        references: scriptProperties.references,
+      });
       savedCodeRef.current = code;
       setHasUnsavedChanges(false);
       message.success('Snippet saved');
@@ -272,6 +286,8 @@ function App() {
         language: 'csharp',
         code,
         queryType,
+        usings: scriptProperties.usings,
+        references: scriptProperties.references,
       });
 
       setCurrentSnippetId(snippet.id);
@@ -299,6 +315,7 @@ function App() {
     setHasUnsavedChanges(false);
     setCurrentSnippetId(snippet.id);
     setQueryType(snippet.queryType ?? 'statements');
+    setScriptProperties({ usings: snippet.usings ?? [], references: snippet.references ?? [] });
     setOutput('');
 
     // Update last opened timestamp
@@ -344,6 +361,8 @@ function App() {
         language: snippet.language,
         code: snippet.code,
         queryType: snippet.queryType,
+        usings: snippet.usings ?? [],
+        references: snippet.references ?? [],
       });
       message.success('Snippet duplicated');
       setRefreshTrigger((prev) => prev + 1);
@@ -354,6 +373,7 @@ function App() {
       setHasUnsavedChanges(false);
       setCurrentSnippetId(newSnippet.id);
       setQueryType(newSnippet.queryType ?? 'statements');
+      setScriptProperties({ usings: newSnippet.usings ?? [], references: newSnippet.references ?? [] });
       setOutput('');
     } catch (error) {
       message.error('Failed to duplicate snippet');
@@ -374,6 +394,7 @@ function App() {
     setHasUnsavedChanges(false);
     setCurrentSnippetId(null);
     setQueryType('statements');
+    setScriptProperties({ usings: [], references: [] });
     setOutput('');
   };
 
@@ -730,6 +751,11 @@ function App() {
                 { value: 'program', label: 'Program' },
               ]}
             />
+            <Button
+              icon={<SettingOutlined />}
+              onClick={() => setScriptPropertiesVisible(true)}
+              title="Script Properties (namespaces & NuGet references)"
+            />
             <Button icon={<PlusOutlined />} onClick={handleNewSnippet} title="New Snippet (Ctrl+N)">
               New
             </Button>
@@ -1000,6 +1026,22 @@ function App() {
           visible={settingsVisible}
           onClose={() => setSettingsVisible(false)}
           onThemeChange={setAppTheme}
+        />
+        <ScriptPropertiesModal
+          open={scriptPropertiesVisible}
+          properties={scriptProperties}
+          isDark={isDark}
+          onOk={(props) => {
+            setScriptProperties(props);
+            if (currentSnippetId) {
+              window.electronAPI.db.updateSnippet(currentSnippetId, {
+                usings: props.usings,
+                references: props.references,
+              });
+            }
+            setScriptPropertiesVisible(false);
+          }}
+          onCancel={() => setScriptPropertiesVisible(false)}
         />
       </Layout>
     </ConfigProvider>

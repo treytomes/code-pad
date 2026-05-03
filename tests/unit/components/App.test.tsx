@@ -193,6 +193,8 @@ describe('App', () => {
       expect(mockElectronAPI.db.updateSnippet).toHaveBeenCalledWith('123', {
         code: expect.any(String),
         queryType: expect.any(String),
+        usings: expect.any(Array),
+        references: expect.any(Array),
       });
     });
   });
@@ -258,6 +260,8 @@ describe('App', () => {
         language: 'csharp',
         code: expect.any(String),
         queryType: expect.any(String),
+        usings: expect.any(Array),
+        references: expect.any(Array),
       });
     });
   });

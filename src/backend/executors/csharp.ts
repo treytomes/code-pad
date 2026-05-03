@@ -9,7 +9,7 @@ import { promises as fs } from 'fs';
 import { tmpdir } from 'os';
 import { join } from 'path';
 import { randomUUID } from 'crypto';
-import type { QueryType } from '../../shared/types';
+import type { QueryType, NuGetReference } from '../../shared/types';
 
 // Import logger - but make it optional for tests
 let _logInfo: (msg: string, ...args: any[]) => void = console.log;
@@ -39,6 +39,8 @@ export interface ExecutionOptions {
   timeout?: number; // milliseconds, default 30000 (30s), or 0 to disable timeout
   workingDirectory?: string;
   queryType?: QueryType; // defaults to 'statements'
+  usings?: string[]; // additional namespace imports
+  references?: NuGetReference[]; // NuGet package references
 }
 
 export class CSharpExecutor {
@@ -92,11 +94,11 @@ export class CSharpExecutor {
     _logDebug(`Starting C# code execution (timeout: ${timeout}ms)`);
 
     // Create temporary file for code
-    const tempFile = await this.createTempFile(code, options.queryType ?? 'statements');
+    const tempFile = await this.createTempFile(code, options.queryType ?? 'statements', options.usings ?? [], options.references ?? []);
     _logDebug(`Created temp file: ${tempFile}`);
 
     try {
-      const result = await this.runDotnetScript(tempFile, timeout, onOutputChunk);
+      const result = await this.runDotnetScript(tempFile, timeout, options.references ?? [], onOutputChunk);
 
       const executionTime = Date.now() - startTime;
       _logDebug(
@@ -194,9 +196,11 @@ export class CSharpExecutor {
     return { preamble: lines.slice(0, splitIndex), body: lines.slice(splitIndex) };
   }
 
-  private buildStatementsScript(preamble: string[], body: string[]): string {
+  private buildStatementsScript(preamble: string[], body: string[], extraUsings: string[]): string {
+    const usingLines = extraUsings.map((u) => `using ${u};`);
     return [
       ...preamble,
+      ...usingLines,
       ...this.getDumpExtensions(),
       '',
       'public class Program',
@@ -212,12 +216,14 @@ export class CSharpExecutor {
     ].join('\n');
   }
 
-  private buildExpressionScript(preamble: string[], body: string[]): string {
+  private buildExpressionScript(preamble: string[], body: string[], extraUsings: string[]): string {
     // Treat the entire body as a single expression — strip trailing semicolons/whitespace
     const expression = body.join('\n').replace(/;\s*$/, '').trim();
+    const usingLines = extraUsings.map((u) => `using ${u};`);
 
     return [
       ...preamble,
+      ...usingLines,
       ...this.getDumpExtensions(),
       '',
       'public class Program',
@@ -232,16 +238,17 @@ export class CSharpExecutor {
     ].join('\n');
   }
 
-  private buildProgramScript(preamble: string[], body: string[]): string {
+  private buildProgramScript(preamble: string[], body: string[], extraUsings: string[]): string {
     // User owns Main() — inject DumpExtensions after user code so it doesn't conflict
     // with user-defined namespaces or classes
-    return [...preamble, '', ...body, '', ...this.getDumpExtensions()].join('\n');
+    const usingLines = extraUsings.map((u) => `using ${u};`);
+    return [...preamble, ...usingLines, '', ...body, '', ...this.getDumpExtensions()].join('\n');
   }
 
   /**
    * Create temporary .cs file with code wrapped according to the query type.
    */
-  private async createTempFile(code: string, queryType: QueryType): Promise<string> {
+  private async createTempFile(code: string, queryType: QueryType, extraUsings: string[], _references: NuGetReference[]): Promise<string> {
     const fileName = `codepad-${randomUUID()}.cs`;
     const filePath = join(tmpdir(), fileName);
 
@@ -250,14 +257,14 @@ export class CSharpExecutor {
     let processedCode: string;
     switch (queryType) {
       case 'expression':
-        processedCode = this.buildExpressionScript(preamble, body);
+        processedCode = this.buildExpressionScript(preamble, body, extraUsings);
         break;
       case 'program':
-        processedCode = this.buildProgramScript(preamble, body);
+        processedCode = this.buildProgramScript(preamble, body, extraUsings);
         break;
       case 'statements':
       default:
-        processedCode = this.buildStatementsScript(preamble, body);
+        processedCode = this.buildStatementsScript(preamble, body, extraUsings);
         break;
     }
 
@@ -300,6 +307,7 @@ export class CSharpExecutor {
   private runDotnetScript(
     scriptPath: string,
     timeout: number,
+    references: NuGetReference[],
     onOutputChunk?: (chunk: string, isError: boolean) => void
   ): Promise<ExecutionResult> {
     return new Promise((resolve) => {
@@ -336,14 +344,24 @@ export class CSharpExecutor {
           const originalCode = await fs.readFile(scriptPath, 'utf-8');
           await fs.writeFile(csFilePath, originalCode, 'utf-8');
 
+          // Build NuGet package references
+          const nugetRefs = references
+            .filter((r: NuGetReference) => r.name && r.version)
+            .map((r: NuGetReference) => `    <PackageReference Include="${r.name}" Version="${r.version}" />`)
+            .join('\n');
+          const itemGroup = nugetRefs
+            ? `\n  <ItemGroup>\n${nugetRefs}\n  </ItemGroup>`
+            : '';
+
           // Create a proper .csproj file
           const csprojContent = `<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net8.0</TargetFramework>
-    <ImplicitUsings>disable</ImplicitUsings>
+    <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-  </PropertyGroup>
+    <NoWarn>CS0105;CS8625</NoWarn>
+  </PropertyGroup>${itemGroup}
 </Project>`;
 
           await fs.writeFile(csprojPath, csprojContent, 'utf-8');

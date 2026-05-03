@@ -3,7 +3,7 @@ import { homedir } from 'os';
 import { join } from 'path';
 import { mkdirSync, existsSync } from 'fs';
 import { randomUUID } from 'crypto';
-import type { QueryType } from '../shared/types';
+import type { QueryType, NuGetReference } from '../shared/types';
 
 // Import logger - but make it optional for tests
 let logInfo: (msg: string, ...args: any[]) => void = console.log;
@@ -26,6 +26,8 @@ export interface Snippet {
   language: string;
   code: string;
   queryType: QueryType;
+  usings: string[];
+  references: NuGetReference[];
   createdAt: number;
   modifiedAt: number;
   executionCount: number;
@@ -95,6 +97,8 @@ export class SnippetDatabase {
       const hasStarred = tableInfo.some((col) => col.name === 'starred');
       const hasLastOpened = tableInfo.some((col) => col.name === 'last_opened_at');
       const hasQueryType = tableInfo.some((col) => col.name === 'query_type');
+      const hasUsings = tableInfo.some((col) => col.name === 'usings');
+      const hasReferences = tableInfo.some((col) => col.name === 'references');
 
       let ranAny = false;
 
@@ -132,6 +136,21 @@ export class SnippetDatabase {
         ranAny = true;
       }
 
+      // Migration 4: Add usings and references columns (per-script script properties)
+      if (!hasUsings) {
+        logInfo('Running migration: Add usings column');
+        this.db.exec(`ALTER TABLE snippets ADD COLUMN usings TEXT NOT NULL DEFAULT '[]';`);
+        logInfo('Migration completed: usings column added');
+        ranAny = true;
+      }
+
+      if (!hasReferences) {
+        logInfo('Running migration: Add references column');
+        this.db.exec(`ALTER TABLE snippets ADD COLUMN references TEXT NOT NULL DEFAULT '[]';`);
+        logInfo('Migration completed: references column added');
+        ranAny = true;
+      }
+
       logInfo(
         ranAny ? 'All database migrations completed successfully' : 'Database schema is up to date'
       );
@@ -151,18 +170,22 @@ export class SnippetDatabase {
     const id = randomUUID();
     const now = Date.now();
     const queryType: QueryType = snippet.queryType ?? 'statements';
+    const usings = JSON.stringify(snippet.usings ?? []);
+    const references = JSON.stringify(snippet.references ?? []);
 
     const stmt = this.db.prepare(`
-      INSERT INTO snippets (id, name, language, code, query_type, created_at, modified_at, execution_count, starred, last_opened_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, 0, 0, NULL)
+      INSERT INTO snippets (id, name, language, code, query_type, usings, references, created_at, modified_at, execution_count, starred, last_opened_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0, NULL)
     `);
 
-    stmt.run(id, snippet.name, snippet.language, snippet.code, queryType, now, now);
+    stmt.run(id, snippet.name, snippet.language, snippet.code, queryType, usings, references, now, now);
 
     return {
       id,
       ...snippet,
       queryType,
+      usings: snippet.usings ?? [],
+      references: snippet.references ?? [],
       createdAt: now,
       modifiedAt: now,
       executionCount: 0,
@@ -184,7 +207,7 @@ export class SnippetDatabase {
   // Update
   updateSnippet(
     id: string,
-    updates: Partial<Pick<Snippet, 'name' | 'code' | 'queryType'>>
+    updates: Partial<Pick<Snippet, 'name' | 'code' | 'queryType' | 'usings' | 'references'>>
   ): boolean {
     const sets: string[] = [];
     const values: any[] = [];
@@ -202,6 +225,16 @@ export class SnippetDatabase {
     if (updates.queryType !== undefined) {
       sets.push('query_type = ?');
       values.push(updates.queryType);
+    }
+
+    if (updates.usings !== undefined) {
+      sets.push('usings = ?');
+      values.push(JSON.stringify(updates.usings));
+    }
+
+    if (updates.references !== undefined) {
+      sets.push('references = ?');
+      values.push(JSON.stringify(updates.references));
     }
 
     if (sets.length === 0) return false;
@@ -301,12 +334,23 @@ export class SnippetDatabase {
   }
 
   private rowToSnippet(row: any): Snippet {
+    let usings: string[] = [];
+    let references: NuGetReference[] = [];
+    try {
+      usings = JSON.parse(row.usings || '[]');
+    } catch (_e) { /* keep empty array */ }
+    try {
+      references = JSON.parse(row.references || '[]');
+    } catch (_e) { /* keep empty array */ }
+
     return {
       id: row.id,
       name: row.name,
       language: row.language,
       code: row.code,
       queryType: (row.query_type as QueryType) ?? 'statements',
+      usings,
+      references,
       createdAt: row.created_at,
       modifiedAt: row.modified_at,
       executionCount: row.execution_count,

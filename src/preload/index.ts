@@ -15,7 +15,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   },
 
   // Execute C# code
-  executeCode: (code: string, options?: { timeout?: number; queryType?: string }) =>
+  executeCode: (code: string, options?: { timeout?: number; queryType?: string; usings?: string[]; references?: { name: string; version: string }[] }) =>
     ipcRenderer.invoke('execute-code', code, options),
 
   // Stop running execution
@@ -81,11 +81,13 @@ contextBridge.exposeInMainWorld('electronAPI', {
       language: string;
       code: string;
       queryType?: string;
+      usings?: string[];
+      references?: { name: string; version: string }[];
     }) => ipcRenderer.invoke('db-create-snippet', snippet),
 
     getSnippet: (id: string) => ipcRenderer.invoke('db-get-snippet', id),
 
-    updateSnippet: (id: string, updates: { name?: string; code?: string; queryType?: string }) =>
+    updateSnippet: (id: string, updates: { name?: string; code?: string; queryType?: string; usings?: string[]; references?: { name: string; version: string }[] }) =>
       ipcRenderer.invoke('db-update-snippet', id, updates),
 
     deleteSnippet: (id: string) => ipcRenderer.invoke('db-delete-snippet', id),
