@@ -130,6 +130,12 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install --with-deps
 
+      - name: Install dotnet-script
+        run: dotnet tool install -g dotnet-script
+
+      - name: Add dotnet tools to PATH
+        run: echo "$HOME/.dotnet/tools" >> $GITHUB_PATH
+
       - name: Run E2E tests
         run: npm run test:e2e
 
