@@ -192,6 +192,7 @@ describe('App', () => {
     await waitFor(() => {
       expect(mockElectronAPI.db.updateSnippet).toHaveBeenCalledWith('123', {
         code: expect.any(String),
+        queryType: expect.any(String),
       });
     });
   });
@@ -256,6 +257,7 @@ describe('App', () => {
         name: 'New Copy',
         language: 'csharp',
         code: expect.any(String),
+        queryType: expect.any(String),
       });
     });
   });

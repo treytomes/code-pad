@@ -6,9 +6,11 @@ import {
   Input,
   message,
   Space,
+  Select,
   ConfigProvider,
   theme as antTheme,
 } from 'antd';
+import type { QueryType } from '../shared/types';
 import {
   SaveOutlined,
   PlusOutlined,
@@ -140,6 +142,7 @@ function App() {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [cursorLine, setCursorLine] = useState(1);
   const [cursorColumn, setCursorColumn] = useState(1);
+  const [queryType, setQueryType] = useState<QueryType>('statements');
   const containerRef = useRef<HTMLDivElement>(null);
   const layoutRef = useRef<HTMLDivElement>(null);
 
@@ -178,7 +181,7 @@ function App() {
     });
 
     try {
-      const result = await window.electronAPI.executeCode(code, { timeout });
+      const result = await window.electronAPI.executeCode(code, { timeout, queryType });
 
       // Stop timer and set final time
       if (executionTimerRef.current) {
@@ -238,7 +241,7 @@ function App() {
     if (!currentSnippetId) return;
 
     try {
-      await window.electronAPI.db.updateSnippet(currentSnippetId, { code });
+      await window.electronAPI.db.updateSnippet(currentSnippetId, { code, queryType });
       savedCodeRef.current = code;
       setHasUnsavedChanges(false);
       message.success('Snippet saved');
@@ -259,6 +262,7 @@ function App() {
         name: snippetName,
         language: 'csharp',
         code,
+        queryType,
       });
 
       setCurrentSnippetId(snippet.id);
@@ -285,6 +289,7 @@ function App() {
     savedCodeRef.current = snippet.code;
     setHasUnsavedChanges(false);
     setCurrentSnippetId(snippet.id);
+    setQueryType(snippet.queryType ?? 'statements');
     setOutput('');
 
     // Update last opened timestamp
@@ -328,6 +333,7 @@ function App() {
         name: `${snippet.name} (Copy)`,
         language: snippet.language,
         code: snippet.code,
+        queryType: snippet.queryType,
       });
       message.success('Snippet duplicated');
       setRefreshTrigger((prev) => prev + 1);
@@ -337,6 +343,7 @@ function App() {
       savedCodeRef.current = newSnippet.code;
       setHasUnsavedChanges(false);
       setCurrentSnippetId(newSnippet.id);
+      setQueryType(newSnippet.queryType ?? 'statements');
       setOutput('');
     } catch (error) {
       message.error('Failed to duplicate snippet');
@@ -356,6 +363,7 @@ function App() {
     savedCodeRef.current = DEFAULT_CODE;
     setHasUnsavedChanges(false);
     setCurrentSnippetId(null);
+    setQueryType('statements');
     setOutput('');
   };
 
@@ -690,6 +698,22 @@ function App() {
           </h1>
           <div style={{ flex: 1 }} />
           <Space>
+            <Select
+              value={queryType}
+              onChange={(val: QueryType) => {
+                setQueryType(val);
+                if (currentSnippetId) {
+                  window.electronAPI.db.updateSnippet(currentSnippetId, { queryType: val });
+                }
+              }}
+              style={{ width: 140 }}
+              title="Query Type"
+              options={[
+                { value: 'statements', label: 'Statements' },
+                { value: 'expression', label: 'Expression' },
+                { value: 'program', label: 'Program' },
+              ]}
+            />
             <Button icon={<PlusOutlined />} onClick={handleNewSnippet} title="New Snippet (Ctrl+N)">
               New
             </Button>

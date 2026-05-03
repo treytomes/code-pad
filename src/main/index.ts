@@ -15,6 +15,7 @@ import {
 } from '../backend/import-export';
 import { createApplicationMenu } from './menu';
 import { logInfo, logError, logWarn, logDebug } from '../shared/logger';
+import type { QueryType } from '../shared/types';
 
 const execFileAsync = promisify(execFile);
 
@@ -298,7 +299,7 @@ function createWindow() {
 // IPC Handlers
 electron.ipcMain.handle(
   'execute-code',
-  async (event, code: string, options?: { timeout?: number }) => {
+  async (event, code: string, options?: { timeout?: number; queryType?: QueryType }) => {
     logDebug('Execute code request received');
     try {
       const result = await csharpExecutor.execute(

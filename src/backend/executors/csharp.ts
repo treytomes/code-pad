@@ -9,6 +9,7 @@ import { promises as fs } from 'fs';
 import { tmpdir } from 'os';
 import { join } from 'path';
 import { randomUUID } from 'crypto';
+import type { QueryType } from '../../shared/types';
 
 // Import logger - but make it optional for tests
 let _logInfo: (msg: string, ...args: any[]) => void = console.log;
@@ -37,6 +38,7 @@ export interface ExecutionResult {
 export interface ExecutionOptions {
   timeout?: number; // milliseconds, default 30000 (30s), or 0 to disable timeout
   workingDirectory?: string;
+  queryType?: QueryType; // defaults to 'statements'
 }
 
 export class CSharpExecutor {
@@ -90,7 +92,7 @@ export class CSharpExecutor {
     _logDebug(`Starting C# code execution (timeout: ${timeout}ms)`);
 
     // Create temporary file for code
-    const tempFile = await this.createTempFile(code);
+    const tempFile = await this.createTempFile(code, options.queryType ?? 'statements');
     _logDebug(`Created temp file: ${tempFile}`);
 
     try {
@@ -173,69 +175,97 @@ export class CSharpExecutor {
   }
 
   /**
-   * Create temporary .cs file with code (NOT .csx - we compile as a regular program)
+   * Extract leading directives and using statements from user code.
+   * Returns { preamble: string[], body: string[] }.
    */
-  private async createTempFile(code: string): Promise<string> {
-    const fileName = `codepad-${randomUUID()}.cs`;
-    const filePath = join(tmpdir(), fileName);
-
-    // Also save to a debug location for inspection
-    const debugPath = join(tmpdir(), 'codepad-last-execution.cs');
-
-    // LINQPad approach: Wrap user code in a class/method to avoid top-level statement issues
-    // This keeps extension classes truly top-level
-
-    // Split into directives/usings vs everything else
+  private splitPreamble(code: string): { preamble: string[]; body: string[] } {
     const lines = code.split('\n');
-    let firstCodeLineIndex = 0;
+    let splitIndex = 0;
 
-    // Find where actual code begins (skip #r and using statements)
     for (let i = 0; i < lines.length; i++) {
       const trimmed = lines[i].trim();
       if (trimmed.startsWith('#r ') || trimmed.startsWith('using ')) {
-        firstCodeLineIndex = i + 1;
+        splitIndex = i + 1;
       } else if (trimmed.length > 0 && !trimmed.startsWith('//')) {
-        // Found first real code line (not comment, not blank)
         break;
       }
     }
 
-    const directivesAndUsings = lines.slice(0, firstCodeLineIndex);
-    const userCode = lines.slice(firstCodeLineIndex);
+    return { preamble: lines.slice(0, splitIndex), body: lines.slice(splitIndex) };
+  }
 
-    const dumpExtensions = this.getDumpExtensions();
-
-    // Create proper C# program structure with Program.Main() entry point
-    // This is a standard console app, not a script, so no implicit wrapping
-    const wrappedProgram = [
-      ...dumpExtensions,
+  private buildStatementsScript(preamble: string[], body: string[]): string {
+    return [
+      ...preamble,
+      ...this.getDumpExtensions(),
       '',
       'public class Program',
       '{',
       '    public static void Main(string[] args)',
       '    {',
-      '        // Auto-flush console for streaming output',
       '        System.Console.SetOut(new System.IO.StreamWriter(System.Console.OpenStandardOutput()) { AutoFlush = true });',
       '        System.Console.SetError(new System.IO.StreamWriter(System.Console.OpenStandardError()) { AutoFlush = true });',
       '        ',
-      '        // User code begins here',
-      ...userCode.map((line) => '        ' + line), // Indent user code by 8 spaces
+      ...body.map((line) => '        ' + line),
       '    }',
       '}',
-    ];
+    ].join('\n');
+  }
 
-    // Assemble in correct order:
-    // 1. Directives and usings
-    // 2. DumpExtensions (top-level class - not nested!)
-    // 3. Program class with Main() entry point containing user code
-    const processedCode = [...directivesAndUsings, ...wrappedProgram].join('\n');
+  private buildExpressionScript(preamble: string[], body: string[]): string {
+    // Treat the entire body as a single expression — strip trailing semicolons/whitespace
+    const expression = body.join('\n').replace(/;\s*$/, '').trim();
+
+    return [
+      ...preamble,
+      ...this.getDumpExtensions(),
+      '',
+      'public class Program',
+      '{',
+      '    public static void Main(string[] args)',
+      '    {',
+      '        System.Console.SetOut(new System.IO.StreamWriter(System.Console.OpenStandardOutput()) { AutoFlush = true });',
+      '        System.Console.SetError(new System.IO.StreamWriter(System.Console.OpenStandardError()) { AutoFlush = true });',
+      `        (${expression}).Dump();`,
+      '    }',
+      '}',
+    ].join('\n');
+  }
+
+  private buildProgramScript(preamble: string[], body: string[]): string {
+    // User owns Main() — inject DumpExtensions after user code so it doesn't conflict
+    // with user-defined namespaces or classes
+    return [...preamble, '', ...body, '', ...this.getDumpExtensions()].join('\n');
+  }
+
+  /**
+   * Create temporary .cs file with code wrapped according to the query type.
+   */
+  private async createTempFile(code: string, queryType: QueryType): Promise<string> {
+    const fileName = `codepad-${randomUUID()}.cs`;
+    const filePath = join(tmpdir(), fileName);
+
+    const { preamble, body } = this.splitPreamble(code);
+
+    let processedCode: string;
+    switch (queryType) {
+      case 'expression':
+        processedCode = this.buildExpressionScript(preamble, body);
+        break;
+      case 'program':
+        processedCode = this.buildProgramScript(preamble, body);
+        break;
+      case 'statements':
+      default:
+        processedCode = this.buildStatementsScript(preamble, body);
+        break;
+    }
 
     await fs.writeFile(filePath, processedCode, 'utf-8');
 
     // Save debug copy for inspection
     try {
-      await fs.writeFile(debugPath, processedCode, 'utf-8');
-      console.log(`[DEBUG] Generated code saved to: ${debugPath}`);
+      await fs.writeFile(join(tmpdir(), 'codepad-last-execution.cs'), processedCode, 'utf-8');
     } catch (_e) {
       // Ignore debug save errors
     }

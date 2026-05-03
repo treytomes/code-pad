@@ -1,3 +1,3 @@
 // Shared TypeScript types
 
-export {};
+export type QueryType = 'expression' | 'statements' | 'program';

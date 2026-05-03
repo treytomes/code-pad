@@ -3,6 +3,7 @@ import { homedir } from 'os';
 import { join } from 'path';
 import { mkdirSync, existsSync } from 'fs';
 import { randomUUID } from 'crypto';
+import type { QueryType } from '../shared/types';
 
 // Import logger - but make it optional for tests
 let logInfo: (msg: string, ...args: any[]) => void = console.log;
@@ -24,6 +25,7 @@ export interface Snippet {
   name: string;
   language: string;
   code: string;
+  queryType: QueryType;
   createdAt: number;
   modifiedAt: number;
   executionCount: number;
@@ -89,10 +91,12 @@ export class SnippetDatabase {
     try {
       logInfo('Checking for database migrations');
 
-      // Check if starred column exists
       const tableInfo = this.db.prepare('PRAGMA table_info(snippets)').all() as any[];
       const hasStarred = tableInfo.some((col) => col.name === 'starred');
       const hasLastOpened = tableInfo.some((col) => col.name === 'last_opened_at');
+      const hasQueryType = tableInfo.some((col) => col.name === 'query_type');
+
+      let ranAny = false;
 
       // Migration 1: Add starred column
       if (!hasStarred) {
@@ -103,6 +107,7 @@ export class SnippetDatabase {
             ON snippets(starred DESC, modified_at DESC);
         `);
         logInfo('Migration completed: starred column added');
+        ranAny = true;
       }
 
       // Migration 2: Add last_opened_at column
@@ -114,13 +119,22 @@ export class SnippetDatabase {
             ON snippets(last_opened_at DESC);
         `);
         logInfo('Migration completed: last_opened_at column added');
+        ranAny = true;
       }
 
-      if (!hasStarred || !hasLastOpened) {
-        logInfo('All database migrations completed successfully');
-      } else {
-        logInfo('Database schema is up to date');
+      // Migration 3: Add query_type column (defaults to 'statements' for existing snippets)
+      if (!hasQueryType) {
+        logInfo('Running migration: Add query_type column');
+        this.db.exec(`
+          ALTER TABLE snippets ADD COLUMN query_type TEXT NOT NULL DEFAULT 'statements';
+        `);
+        logInfo('Migration completed: query_type column added');
+        ranAny = true;
       }
+
+      logInfo(
+        ranAny ? 'All database migrations completed successfully' : 'Database schema is up to date'
+      );
     } catch (error) {
       logError('Migration failed', error);
       throw error;
@@ -136,17 +150,19 @@ export class SnippetDatabase {
   ): Snippet {
     const id = randomUUID();
     const now = Date.now();
+    const queryType: QueryType = snippet.queryType ?? 'statements';
 
     const stmt = this.db.prepare(`
-      INSERT INTO snippets (id, name, language, code, created_at, modified_at, execution_count, starred, last_opened_at)
-      VALUES (?, ?, ?, ?, ?, ?, 0, 0, NULL)
+      INSERT INTO snippets (id, name, language, code, query_type, created_at, modified_at, execution_count, starred, last_opened_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, 0, 0, NULL)
     `);
 
-    stmt.run(id, snippet.name, snippet.language, snippet.code, now, now);
+    stmt.run(id, snippet.name, snippet.language, snippet.code, queryType, now, now);
 
     return {
       id,
       ...snippet,
+      queryType,
       createdAt: now,
       modifiedAt: now,
       executionCount: 0,
@@ -166,7 +182,10 @@ export class SnippetDatabase {
   }
 
   // Update
-  updateSnippet(id: string, updates: Partial<Pick<Snippet, 'name' | 'code'>>): boolean {
+  updateSnippet(
+    id: string,
+    updates: Partial<Pick<Snippet, 'name' | 'code' | 'queryType'>>
+  ): boolean {
     const sets: string[] = [];
     const values: any[] = [];
 
@@ -178,6 +197,11 @@ export class SnippetDatabase {
     if (updates.code !== undefined) {
       sets.push('code = ?');
       values.push(updates.code);
+    }
+
+    if (updates.queryType !== undefined) {
+      sets.push('query_type = ?');
+      values.push(updates.queryType);
     }
 
     if (sets.length === 0) return false;
@@ -282,6 +306,7 @@ export class SnippetDatabase {
       name: row.name,
       language: row.language,
       code: row.code,
+      queryType: (row.query_type as QueryType) ?? 'statements',
       createdAt: row.created_at,
       modifiedAt: row.modified_at,
       executionCount: row.execution_count,
