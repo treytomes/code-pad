@@ -38,6 +38,8 @@ const mockElectronAPI = {
   executeCode: vi.fn(),
   stopExecution: vi.fn(),
   checkRuntime: vi.fn(),
+  installDotnetScript: vi.fn(),
+  onDotnetScriptInstallResult: vi.fn(() => vi.fn()), // Returns cleanup function
   onOutputChunk: vi.fn((cb: (chunk: string, isError: boolean) => void) => {
     outputChunkCallback = cb;
     return vi.fn(); // cleanup function

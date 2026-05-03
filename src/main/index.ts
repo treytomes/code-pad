@@ -2,6 +2,8 @@
 import * as electron from 'electron';
 import * as path from 'path';
 import * as fs from 'fs';
+import { execFile } from 'child_process';
+import { promisify } from 'util';
 import { CSharpExecutor } from '../backend/executors/csharp';
 import { SnippetDatabase } from '../backend/database';
 import { checkRuntimeRequirements, RuntimeInfo } from '../backend/runtime-checker';
@@ -12,6 +14,27 @@ import {
 } from '../backend/import-export';
 import { createApplicationMenu } from './menu';
 import { logInfo, logError, logWarn, logDebug } from '../shared/logger';
+
+const execFileAsync = promisify(execFile);
+
+interface InstallResult {
+  success: boolean;
+  output?: string;
+  error?: string;
+}
+
+async function runInstallDotnetScript(): Promise<InstallResult> {
+  try {
+    const { stdout } = await execFileAsync('dotnet', ['tool', 'install', '-g', 'dotnet-script']);
+    logInfo('dotnet-script installed successfully');
+    return { success: true, output: stdout };
+  } catch (error: unknown) {
+    const err = error as { stderr?: string; message?: string };
+    const errorMsg = err.stderr || err.message || String(error);
+    logError('Failed to install dotnet-script', error);
+    return { success: false, error: errorMsg };
+  }
+}
 
 let mainWindow: electron.BrowserWindow | null = null;
 const csharpExecutor = new CSharpExecutor();
@@ -329,6 +352,11 @@ electron.ipcMain.handle('check-runtime', async (): Promise<RuntimeInfo> => {
   return await checkRuntimeRequirements();
 });
 
+// Install dotnet-script global tool
+electron.ipcMain.handle('install-dotnet-script', async (): Promise<InstallResult> => {
+  return await runInstallDotnetScript();
+});
+
 // Import/Export handlers
 electron.ipcMain.handle('export-snippet', async (_event, snippetName: string, code: string) => {
   return await exportSnippetToFile(snippetName, code);
@@ -351,6 +379,16 @@ electron.app.whenReady().then(async () => {
   }
 
   createWindow();
+
+  // Auto-install dotnet-script silently if dotnet is present but dotnet-script is missing
+  if (runtimeInfo.hasDotnet && !runtimeInfo.hasDotnetScript) {
+    logInfo('dotnet-script missing — starting auto-install in background');
+    runInstallDotnetScript().then((result) => {
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send('dotnet-script-install-result', result);
+      }
+    });
+  }
 
   electron.app.on('activate', () => {
     if (electron.BrowserWindow.getAllWindows().length === 0) {

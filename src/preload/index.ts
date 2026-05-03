@@ -24,6 +24,21 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // Check runtime requirements
   checkRuntime: () => ipcRenderer.invoke('check-runtime'),
 
+  // Install dotnet-script
+  installDotnetScript: () => ipcRenderer.invoke('install-dotnet-script'),
+
+  // Listen for background auto-install result
+  onDotnetScriptInstallResult: (
+    callback: (result: { success: boolean; output?: string; error?: string }) => void
+  ) => {
+    const listener = (
+      _event: Electron.IpcRendererEvent,
+      result: { success: boolean; output?: string; error?: string }
+    ) => callback(result);
+    ipcRenderer.on('dotnet-script-install-result', listener);
+    return () => ipcRenderer.removeListener('dotnet-script-install-result', listener);
+  },
+
   // Import/Export
   exportSnippet: (snippetName: string, code: string) =>
     ipcRenderer.invoke('export-snippet', snippetName, code),

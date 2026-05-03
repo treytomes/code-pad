@@ -22,6 +22,12 @@ export interface ElectronAPI {
     error?: string;
   }>;
 
+  installDotnetScript: () => Promise<{ success: boolean; output?: string; error?: string }>;
+
+  onDotnetScriptInstallResult: (
+    callback: (result: { success: boolean; output?: string; error?: string }) => void
+  ) => () => void;
+
   exportSnippet: (snippetName: string, code: string) => Promise<any>;
   importSnippet: () => Promise<any>;
   exportAllSnippets: (snippets: any[]) => Promise<any>;
