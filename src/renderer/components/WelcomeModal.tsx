@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Modal, Typography, Space } from 'antd';
+import React, { useState } from 'react';
+import { Modal, Typography } from 'antd';
 import {
   ThunderboltOutlined,
   SaveOutlined,
@@ -31,13 +31,7 @@ const Tip: React.FC<TipProps> = ({ icon, shortcut, description }) => (
 );
 
 export const WelcomeModal: React.FC = () => {
-  const [visible, setVisible] = useState(false);
-
-  useEffect(() => {
-    if (!localStorage.getItem(STORAGE_KEY)) {
-      setVisible(true);
-    }
-  }, []);
+  const [visible, setVisible] = useState(() => !localStorage.getItem(STORAGE_KEY));
 
   const handleDismiss = () => {
     localStorage.setItem(STORAGE_KEY, '1');

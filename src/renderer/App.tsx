@@ -679,7 +679,7 @@ function App() {
         >
           <h1
             style={{
-              color: '#cccccc',
+              color: isDark ? '#cccccc' : '#1f1f1f',
               margin: 0,
               fontSize: '14px',
               fontWeight: 400,
@@ -750,7 +750,7 @@ function App() {
             icon={<QuestionCircleOutlined />}
             onClick={() => setAboutVisible(true)}
             title="About CodePad"
-            style={{ color: '#858585' }}
+            style={{ color: isDark ? '#858585' : '#666666' }}
           />
         </Header>
 
@@ -770,6 +770,7 @@ function App() {
               onRenameSnippet={handleRenameSnippet}
               onDuplicateSnippet={handleDuplicateSnippet}
               refreshTrigger={refreshTrigger}
+              isDark={isDark}
             />
             {/* Sidebar resize handle */}
             <div
@@ -827,7 +828,7 @@ function App() {
               onMouseDown={handleOutputMouseDown}
               style={{
                 height: '4px',
-                backgroundColor: '#2d2d30',
+                backgroundColor: borderColor,
                 cursor: 'ns-resize',
                 userSelect: 'none',
                 zIndex: 10,
@@ -837,7 +838,7 @@ function App() {
               }}
               onMouseLeave={(e) => {
                 if (!isDraggingOutput) {
-                  e.currentTarget.style.backgroundColor = '#2d2d30';
+                  e.currentTarget.style.backgroundColor = borderColor;
                 }
               }}
             />
@@ -876,7 +877,7 @@ function App() {
                   {executionTime !== null && (
                     <span
                       style={{
-                        color: '#858585',
+                        color: isDark ? '#858585' : '#666666',
                         fontSize: '11px',
                         fontFamily: 'monospace',
                       }}
@@ -892,7 +893,7 @@ function App() {
                     icon={<CopyOutlined />}
                     onClick={handleCopyOutput}
                     title="Copy to clipboard"
-                    style={{ color: '#858585' }}
+                    style={{ color: isDark ? '#858585' : '#666666' }}
                   />
                   <Button
                     type="text"
@@ -900,7 +901,7 @@ function App() {
                     icon={<ClearOutlined />}
                     onClick={handleClearOutput}
                     title="Clear output"
-                    style={{ color: '#858585' }}
+                    style={{ color: isDark ? '#858585' : '#666666' }}
                   />
                 </Space>
               </div>
@@ -919,7 +920,7 @@ function App() {
                   <div
                     style={{
                       padding: '12px',
-                      color: '#858585',
+                      color: isDark ? '#858585' : '#666666',
                       fontStyle: 'italic',
                     }}
                   >

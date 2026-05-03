@@ -38,6 +38,7 @@ interface SnippetListProps {
   onRenameSnippet: (id: string, newName: string) => void;
   onDuplicateSnippet: (snippet: Snippet) => void;
   refreshTrigger?: number;
+  isDark?: boolean;
 }
 
 export const SnippetList: React.FC<SnippetListProps> = ({
@@ -46,7 +47,15 @@ export const SnippetList: React.FC<SnippetListProps> = ({
   onRenameSnippet,
   onDuplicateSnippet,
   refreshTrigger,
+  isDark = true,
 }) => {
+  const bg = isDark ? '#252526' : '#fafafa';
+  const bgAlt = isDark ? '#1e1e1e' : '#f0f0f0';
+  const border = isDark ? '#2d2d30' : '#e8e8e8';
+  const textPrimary = isDark ? '#cccccc' : '#1f1f1f';
+  const textSecondary = isDark ? '#858585' : '#666666';
+  const hoverBg = isDark ? '#2a2d2e' : '#e6f4ff';
+  const inputBg = isDark ? '#3c3c3c' : '#ffffff';
   const [snippets, setSnippets] = useState<Snippet[]>([]);
   const [starredSnippets, setStarredSnippets] = useState<Snippet[]>([]);
   const [recentSnippets, setRecentSnippets] = useState<Snippet[]>([]);
@@ -142,12 +151,12 @@ export const SnippetList: React.FC<SnippetListProps> = ({
       style={{
         padding: '8px 12px',
         cursor: 'pointer',
-        borderBottom: '1px solid #2d2d30',
+        borderBottom: `1px solid ${border}`,
         background: 'transparent',
         transition: 'background-color 0.15s ease',
       }}
       onMouseEnter={(e) => {
-        e.currentTarget.style.backgroundColor = '#2a2d2e';
+        e.currentTarget.style.backgroundColor = hoverBg;
       }}
       onMouseLeave={(e) => {
         e.currentTarget.style.backgroundColor = 'transparent';
@@ -155,7 +164,7 @@ export const SnippetList: React.FC<SnippetListProps> = ({
       onClick={() => onSelectSnippet(snippet)}
     >
       <List.Item.Meta
-        avatar={<CodeOutlined style={{ fontSize: '20px', color: '#858585' }} />}
+        avatar={<CodeOutlined style={{ fontSize: '20px', color: textSecondary }} />}
         title={
           <div
             style={{
@@ -195,7 +204,7 @@ export const SnippetList: React.FC<SnippetListProps> = ({
               </>
             ) : (
               <>
-                <Text strong style={{ color: '#cccccc', flex: 1 }}>
+                <Text strong style={{ color: textPrimary, flex: 1 }}>
                   {snippet.name}
                 </Text>
                 <Space size={0}>
@@ -205,7 +214,7 @@ export const SnippetList: React.FC<SnippetListProps> = ({
                     icon={snippet.starred ? <StarFilled /> : <StarOutlined />}
                     onClick={(e) => handleToggleStar(snippet, e)}
                     style={{
-                      color: snippet.starred ? '#ffc107' : '#858585',
+                      color: snippet.starred ? '#ffc107' : textSecondary,
                     }}
                   />
                   <Button
@@ -213,7 +222,7 @@ export const SnippetList: React.FC<SnippetListProps> = ({
                     size="small"
                     icon={<EditOutlined />}
                     onClick={(e) => handleStartRename(snippet, e)}
-                    style={{ color: '#858585' }}
+                    style={{ color: textSecondary }}
                     title="Rename"
                   />
                   <Button
@@ -224,7 +233,7 @@ export const SnippetList: React.FC<SnippetListProps> = ({
                       e.stopPropagation();
                       onDuplicateSnippet(snippet);
                     }}
-                    style={{ color: '#858585' }}
+                    style={{ color: textSecondary }}
                     title="Duplicate"
                   />
                   <Popconfirm
@@ -252,7 +261,7 @@ export const SnippetList: React.FC<SnippetListProps> = ({
         }
         description={
           <div>
-            <Text type="secondary" style={{ fontSize: '12px', color: '#858585' }}>
+            <Text type="secondary" style={{ fontSize: '12px', color: textSecondary }}>
               {snippet.language}
             </Text>
             {snippet.executionCount > 0 && (
@@ -261,7 +270,7 @@ export const SnippetList: React.FC<SnippetListProps> = ({
                 style={{
                   fontSize: '12px',
                   marginLeft: '8px',
-                  color: '#858585',
+                  color: textSecondary,
                 }}
               >
                 <PlayCircleOutlined /> {snippet.executionCount}
@@ -293,11 +302,11 @@ export const SnippetList: React.FC<SnippetListProps> = ({
       style={{
         padding: '12px 16px',
         cursor: 'pointer',
-        borderBottom: '1px solid #2d2d30',
+        borderBottom: `1px solid ${border}`,
         transition: 'background 0.2s',
       }}
       onMouseEnter={(e) => {
-        e.currentTarget.style.background = '#2a2d2e';
+        e.currentTarget.style.background = hoverBg;
       }}
       onMouseLeave={(e) => {
         e.currentTarget.style.background = 'transparent';
@@ -307,7 +316,7 @@ export const SnippetList: React.FC<SnippetListProps> = ({
         avatar={<BookOutlined style={{ fontSize: '20px', color: '#4ec9b0' }} />}
         title={
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Text strong style={{ color: '#cccccc', flex: 1 }}>
+            <Text strong style={{ color: textPrimary, flex: 1 }}>
               {sample.name}
             </Text>
             <Button
@@ -328,13 +337,13 @@ export const SnippetList: React.FC<SnippetListProps> = ({
                   lastOpenedAt: null,
                 } as Snippet);
               }}
-              style={{ color: '#858585' }}
+              style={{ color: textSecondary }}
               title="Copy to My Snippets"
             />
           </div>
         }
         description={
-          <Text type="secondary" style={{ fontSize: '12px', color: '#858585' }}>
+          <Text type="secondary" style={{ fontSize: '12px', color: textSecondary }}>
             {sample.description}
           </Text>
         }
@@ -348,7 +357,7 @@ export const SnippetList: React.FC<SnippetListProps> = ({
         height: '100%',
         display: 'flex',
         flexDirection: 'column',
-        background: '#252526',
+        background: bg,
       }}
     >
       <Tabs
@@ -367,8 +376,8 @@ export const SnippetList: React.FC<SnippetListProps> = ({
                 <div
                   style={{
                     padding: '8px',
-                    borderBottom: '1px solid #2d2d30',
-                    background: '#252526',
+                    borderBottom: `1px solid ${border}`,
+                    background: bg,
                   }}
                 >
                   <Space direction="vertical" style={{ width: '100%' }} size="small">
@@ -385,27 +394,27 @@ export const SnippetList: React.FC<SnippetListProps> = ({
                     </Select>
                     <Input
                       placeholder="Search snippets..."
-                      prefix={<SearchOutlined style={{ color: '#858585' }} />}
+                      prefix={<SearchOutlined style={{ color: textSecondary }} />}
                       allowClear
                       value={searchText}
                       onChange={(e) => setSearchText(e.target.value)}
                       style={{
-                        backgroundColor: '#3c3c3c',
-                        borderColor: '#2d2d30',
-                        color: '#cccccc',
+                        backgroundColor: inputBg,
+                        borderColor: border,
+                        color: textPrimary,
                       }}
                     />
                   </Space>
                 </div>
 
-                <div style={{ flex: 1, overflowY: 'auto', background: '#252526' }}>
+                <div style={{ flex: 1, overflowY: 'auto', background: bg }}>
                   {/* Starred Snippets Section */}
                   {filteredStarred.length > 0 && (
                     <>
                       <div
                         style={{
                           padding: '12px 12px 8px',
-                          borderBottom: '1px solid #2d2d30',
+                          borderBottom: `1px solid ${border}`,
                         }}
                       >
                         <Text
@@ -419,7 +428,9 @@ export const SnippetList: React.FC<SnippetListProps> = ({
                         >
                           <StarFilled /> Starred
                           {searchText && (
-                            <Text style={{ fontSize: '12px', color: '#858585', marginLeft: '8px' }}>
+                            <Text
+                              style={{ fontSize: '12px', color: textSecondary, marginLeft: '8px' }}
+                            >
                               ({filteredStarred.length}/{starredSnippets.length})
                             </Text>
                           )}
@@ -430,7 +441,7 @@ export const SnippetList: React.FC<SnippetListProps> = ({
                         renderItem={(snippet) => renderSnippetItem(snippet)}
                         split={false}
                       />
-                      <Divider style={{ margin: '8px 0', backgroundColor: '#2d2d30' }} />
+                      <Divider style={{ margin: '8px 0', backgroundColor: border }} />
                     </>
                   )}
 
@@ -440,7 +451,7 @@ export const SnippetList: React.FC<SnippetListProps> = ({
                       <div
                         style={{
                           padding: '12px 12px 8px',
-                          borderBottom: '1px solid #2d2d30',
+                          borderBottom: `1px solid ${border}`,
                         }}
                       >
                         <Text
@@ -454,7 +465,9 @@ export const SnippetList: React.FC<SnippetListProps> = ({
                         >
                           <ClockCircleOutlined /> Recently Opened
                           {searchText && (
-                            <Text style={{ fontSize: '12px', color: '#858585', marginLeft: '8px' }}>
+                            <Text
+                              style={{ fontSize: '12px', color: textSecondary, marginLeft: '8px' }}
+                            >
                               ({filteredRecent.length}/{recentSnippets.length})
                             </Text>
                           )}
@@ -465,7 +478,7 @@ export const SnippetList: React.FC<SnippetListProps> = ({
                         renderItem={(snippet) => renderSnippetItem(snippet)}
                         split={false}
                       />
-                      <Divider style={{ margin: '8px 0', backgroundColor: '#2d2d30' }} />
+                      <Divider style={{ margin: '8px 0', backgroundColor: border }} />
                     </>
                   )}
 
@@ -473,13 +486,13 @@ export const SnippetList: React.FC<SnippetListProps> = ({
                   <div
                     style={{
                       padding: '12px 12px 8px',
-                      borderBottom: '1px solid #2d2d30',
+                      borderBottom: `1px solid ${border}`,
                     }}
                   >
-                    <Text strong style={{ color: '#cccccc' }}>
+                    <Text strong style={{ color: textPrimary }}>
                       All Snippets
                       {searchText && (
-                        <Text style={{ fontSize: '12px', color: '#858585', marginLeft: '8px' }}>
+                        <Text style={{ fontSize: '12px', color: textSecondary, marginLeft: '8px' }}>
                           ({filteredSnippets.length}/{snippets.length})
                         </Text>
                       )}
@@ -515,7 +528,7 @@ export const SnippetList: React.FC<SnippetListProps> = ({
               </span>
             ),
             children: (
-              <div style={{ height: '100%', overflowY: 'auto', background: '#252526' }}>
+              <div style={{ height: '100%', overflowY: 'auto', background: bg }}>
                 {SAMPLE_CATEGORIES.map((category) => {
                   const samples = SAMPLES.filter((s) => s.category === category);
                   return (
@@ -523,8 +536,8 @@ export const SnippetList: React.FC<SnippetListProps> = ({
                       <div
                         style={{
                           padding: '12px 12px 8px',
-                          borderBottom: '1px solid #2d2d30',
-                          background: '#1e1e1e',
+                          borderBottom: `1px solid ${border}`,
+                          background: bgAlt,
                         }}
                       >
                         <Text strong style={{ color: '#4ec9b0' }}>
@@ -540,8 +553,8 @@ export const SnippetList: React.FC<SnippetListProps> = ({
           },
         ]}
         tabBarStyle={{
-          background: '#252526',
-          borderBottom: '1px solid #2d2d30',
+          background: bg,
+          borderBottom: `1px solid ${border}`,
           margin: 0,
           padding: '0 8px',
         }}

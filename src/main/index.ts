@@ -2,6 +2,7 @@
 import * as electron from 'electron';
 import * as path from 'path';
 import * as fs from 'fs';
+import * as os from 'os';
 import { execFile } from 'child_process';
 import { promisify } from 'util';
 import { CSharpExecutor } from '../backend/executors/csharp';
@@ -389,17 +390,13 @@ electron.ipcMain.handle('install-dotnet-script', async (): Promise<InstallResult
 
 // Database location handlers
 electron.ipcMain.handle('get-db-path', (): string => {
-  const { homedir } = require('os');
-  const { join } = require('path');
-  return appSettings.dbPath || join(homedir(), '.codepad', 'codepad.db');
+  return appSettings.dbPath || path.join(os.homedir(), '.codepad', 'codepad.db');
 });
 
 electron.ipcMain.handle(
   'set-db-path',
   async (): Promise<{ success: boolean; path?: string; error?: string }> => {
-    const { homedir } = require('os');
-    const { join } = require('path');
-    const defaultPath = appSettings.dbPath || join(homedir(), '.codepad', 'codepad.db');
+    const defaultPath = appSettings.dbPath || path.join(os.homedir(), '.codepad', 'codepad.db');
 
     const result = await electron.dialog.showOpenDialog(mainWindow!, {
       title: 'Choose Database Location',
@@ -416,7 +413,7 @@ electron.ipcMain.handle(
 
     try {
       // Copy existing DB to new location if it doesn't already exist there
-      const currentPath = appSettings.dbPath || join(homedir(), '.codepad', 'codepad.db');
+      const currentPath = appSettings.dbPath || path.join(os.homedir(), '.codepad', 'codepad.db');
       if (newPath !== currentPath && fs.existsSync(currentPath) && !fs.existsSync(newPath)) {
         fs.mkdirSync(path.dirname(newPath), { recursive: true });
         fs.copyFileSync(currentPath, newPath);

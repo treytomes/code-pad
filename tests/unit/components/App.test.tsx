@@ -15,13 +15,7 @@ vi.mock('monaco-editor', () => ({
 }));
 
 vi.mock('@monaco-editor/react', () => ({
-  default: ({
-    value,
-    onChange,
-  }: {
-    value: string;
-    onChange?: (v: string | undefined) => void;
-  }) => (
+  default: ({ value, onChange }: { value: string; onChange?: (v: string | undefined) => void }) => (
     <textarea
       data-testid="monaco-editor"
       value={value}
@@ -73,10 +67,14 @@ describe('App', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     outputChunkCallback = null;
-    mockElectronAPI.onOutputChunk.mockImplementation((cb: (chunk: string, isError: boolean) => void) => {
-      outputChunkCallback = cb;
-      return vi.fn();
-    });
+    // Suppress WelcomeModal so it doesn't interfere with dialog queries
+    localStorage.setItem('codepad-welcomed', '1');
+    mockElectronAPI.onOutputChunk.mockImplementation(
+      (cb: (chunk: string, isError: boolean) => void) => {
+        outputChunkCallback = cb;
+        return vi.fn();
+      }
+    );
     mockElectronAPI.db.listSnippets.mockResolvedValue([]);
     mockElectronAPI.db.getStarredSnippets.mockResolvedValue([]);
     mockElectronAPI.db.getRecentlyOpened.mockResolvedValue([]);
@@ -329,9 +327,7 @@ describe('App', () => {
 
     // Should reset to default code
     await waitFor(() => {
-      expect((editor as HTMLTextAreaElement).value).toContain(
-        '// Welcome to CodePad'
-      );
+      expect((editor as HTMLTextAreaElement).value).toContain('// Welcome to CodePad');
     });
   });
 
@@ -344,8 +340,8 @@ describe('App', () => {
 
     await waitFor(() => {
       // Look for execution time display (should show something like "100ms")
-      const timeDisplay = screen.queryByText(/\d+ms/);
-      expect(timeDisplay).toBeTruthy();
+      const timeDisplays = screen.queryAllByText(/\d+ms/);
+      expect(timeDisplays.length).toBeGreaterThan(0);
     });
   });
 
