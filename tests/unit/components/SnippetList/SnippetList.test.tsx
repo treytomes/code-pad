@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { SnippetList } from '../../../../src/renderer/components/SnippetList/SnippetList';
 import type { Snippet } from '../../../../src/backend/database';
@@ -8,12 +8,13 @@ import type { Snippet } from '../../../../src/backend/database';
 const mockElectronAPI = {
   db: {
     listSnippets: vi.fn(),
+    getStarredSnippets: vi.fn(),
+    getRecentlyOpened: vi.fn(),
+    toggleStarred: vi.fn(),
   },
 };
 
-(global as any).window = {
-  electronAPI: mockElectronAPI,
-};
+(window as any).electronAPI = mockElectronAPI;
 
 describe('SnippetList', () => {
   const mockSnippets: Snippet[] = [
@@ -41,11 +42,15 @@ describe('SnippetList', () => {
     onSelectSnippet: vi.fn(),
     onDeleteSnippet: vi.fn(),
     onRenameSnippet: vi.fn(),
+    onDuplicateSnippet: vi.fn(),
   };
 
   beforeEach(() => {
     vi.clearAllMocks();
     mockElectronAPI.db.listSnippets.mockResolvedValue(mockSnippets);
+    mockElectronAPI.db.getStarredSnippets.mockResolvedValue([]);
+    mockElectronAPI.db.getRecentlyOpened.mockResolvedValue([]);
+    mockElectronAPI.db.toggleStarred.mockResolvedValue(true);
   });
 
   it('should render snippet list', async () => {
@@ -81,28 +86,20 @@ describe('SnippetList', () => {
   });
 
   it('should show rename input when edit button is clicked', async () => {
-    const user = userEvent.setup();
     render(<SnippetList {...mockHandlers} />);
 
     await waitFor(() => {
       expect(screen.getByText('Test Snippet 1')).toBeDefined();
     });
 
-    // Find all edit buttons and click the first one
-    const editButtons = screen.getAllByRole('button');
-    const editButton = editButtons.find((btn) =>
-      btn.querySelector('[data-icon="edit"]')
-    );
+    // Use direct DOM query — getAllByRole is too slow on the complex Ant Design DOM
+    const editButton = document.querySelector<HTMLElement>('button[title="Rename"]');
+    expect(editButton).not.toBeNull();
+    fireEvent.click(editButton!);
 
-    if (editButton) {
-      await user.click(editButton);
-
-      // Should show input with current name
-      await waitFor(() => {
-        const input = screen.getByDisplayValue('Test Snippet 1');
-        expect(input).toBeDefined();
-      });
-    }
+    await waitFor(() => {
+      expect(screen.getByDisplayValue('Test Snippet 1')).toBeDefined();
+    });
   });
 
   it('should call onRenameSnippet when rename is confirmed', async () => {
@@ -113,34 +110,18 @@ describe('SnippetList', () => {
       expect(screen.getByText('Test Snippet 1')).toBeDefined();
     });
 
-    // Click edit button
-    const editButtons = screen.getAllByRole('button');
-    const editButton = editButtons.find((btn) =>
-      btn.querySelector('[data-icon="edit"]')
-    );
+    fireEvent.click(document.querySelector<HTMLElement>('button[title="Rename"]')!);
 
-    if (editButton) {
-      await user.click(editButton);
+    const input = await screen.findByDisplayValue('Test Snippet 1');
+    await user.clear(input);
+    await user.type(input, 'Renamed Snippet');
 
-      // Type new name
-      const input = await screen.findByDisplayValue('Test Snippet 1');
-      await user.clear(input);
-      await user.type(input, 'Renamed Snippet');
+    const checkIcon = document.querySelector<HTMLElement>('[data-icon="check"]');
+    fireEvent.click(checkIcon!.closest('button')!);
 
-      // Click confirm button
-      const confirmButton = editButtons.find((btn) =>
-        btn.querySelector('[data-icon="check"]')
-      );
-
-      if (confirmButton) {
-        await user.click(confirmButton);
-
-        expect(mockHandlers.onRenameSnippet).toHaveBeenCalledWith(
-          '1',
-          'Renamed Snippet'
-        );
-      }
-    }
+    await waitFor(() => {
+      expect(mockHandlers.onRenameSnippet).toHaveBeenCalledWith('1', 'Renamed Snippet');
+    });
   });
 
   it('should confirm rename on Enter key', async () => {
@@ -151,25 +132,15 @@ describe('SnippetList', () => {
       expect(screen.getByText('Test Snippet 1')).toBeDefined();
     });
 
-    // Click edit button
-    const editButtons = screen.getAllByRole('button');
-    const editButton = editButtons.find((btn) =>
-      btn.querySelector('[data-icon="edit"]')
-    );
+    fireEvent.click(document.querySelector<HTMLElement>('button[title="Rename"]')!);
 
-    if (editButton) {
-      await user.click(editButton);
+    const input = await screen.findByDisplayValue('Test Snippet 1');
+    await user.clear(input);
+    await user.type(input, 'New Name{Enter}');
 
-      // Type new name and press Enter
-      const input = await screen.findByDisplayValue('Test Snippet 1');
-      await user.clear(input);
-      await user.type(input, 'New Name{Enter}');
-
-      expect(mockHandlers.onRenameSnippet).toHaveBeenCalledWith(
-        '1',
-        'New Name'
-      );
-    }
+    await waitFor(() => {
+      expect(mockHandlers.onRenameSnippet).toHaveBeenCalledWith('1', 'New Name');
+    });
   });
 
   it('should cancel rename when cancel button is clicked', async () => {
@@ -180,37 +151,20 @@ describe('SnippetList', () => {
       expect(screen.getByText('Test Snippet 1')).toBeDefined();
     });
 
-    // Click edit button
-    const editButtons = screen.getAllByRole('button');
-    const editButton = editButtons.find((btn) =>
-      btn.querySelector('[data-icon="edit"]')
-    );
+    fireEvent.click(document.querySelector<HTMLElement>('button[title="Rename"]')!);
 
-    if (editButton) {
-      await user.click(editButton);
+    const input = await screen.findByDisplayValue('Test Snippet 1');
+    await user.clear(input);
+    await user.type(input, 'Will be cancelled');
 
-      // Type new name
-      const input = await screen.findByDisplayValue('Test Snippet 1');
-      await user.clear(input);
-      await user.type(input, 'Will be cancelled');
+    const closeIcon = document.querySelector<HTMLElement>('[data-icon="close"]');
+    fireEvent.click(closeIcon!.closest('button')!);
 
-      // Click cancel button
-      const cancelButton = editButtons.find((btn) =>
-        btn.querySelector('[data-icon="close"]')
-      );
+    expect(mockHandlers.onRenameSnippet).not.toHaveBeenCalled();
 
-      if (cancelButton) {
-        await user.click(cancelButton);
-
-        // Should not have called rename
-        expect(mockHandlers.onRenameSnippet).not.toHaveBeenCalled();
-
-        // Should show original name again
-        await waitFor(() => {
-          expect(screen.getByText('Test Snippet 1')).toBeDefined();
-        });
-      }
-    }
+    await waitFor(() => {
+      expect(screen.getByText('Test Snippet 1')).toBeDefined();
+    });
   });
 
   it('should filter snippets by language', async () => {

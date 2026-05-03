@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import App from '../../../src/renderer/App';
 
@@ -30,10 +30,22 @@ vi.mock('@monaco-editor/react', () => ({
   ),
 }));
 
+// Capture the output chunk callback so tests can trigger streaming output
+let outputChunkCallback: ((chunk: string, isError: boolean) => void) | null = null;
+
 // Mock window.electronAPI
 const mockElectronAPI = {
   executeCode: vi.fn(),
-  onOutputChunk: vi.fn(() => vi.fn()), // Returns cleanup function
+  stopExecution: vi.fn(),
+  checkRuntime: vi.fn(),
+  onOutputChunk: vi.fn((cb: (chunk: string, isError: boolean) => void) => {
+    outputChunkCallback = cb;
+    return vi.fn(); // cleanup function
+  }),
+  onMenuEvent: vi.fn(() => vi.fn()), // Returns cleanup function
+  exportSnippet: vi.fn(),
+  importSnippet: vi.fn(),
+  exportAllSnippets: vi.fn(),
   versions: {
     electron: '1.0.0',
     chrome: '100.0.0',
@@ -41,21 +53,39 @@ const mockElectronAPI = {
   },
   db: {
     createSnippet: vi.fn(),
+    getSnippet: vi.fn(),
     updateSnippet: vi.fn(),
     deleteSnippet: vi.fn(),
     listSnippets: vi.fn(),
     incrementExecution: vi.fn(),
+    toggleStarred: vi.fn(),
+    getStarredSnippets: vi.fn(),
+    getRecentlyOpened: vi.fn(),
+    updateLastOpened: vi.fn(),
   },
 };
 
-(global as any).window = {
-  electronAPI: mockElectronAPI,
-};
+(window as any).electronAPI = mockElectronAPI;
 
 describe('App', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    outputChunkCallback = null;
+    mockElectronAPI.onOutputChunk.mockImplementation((cb: (chunk: string, isError: boolean) => void) => {
+      outputChunkCallback = cb;
+      return vi.fn();
+    });
     mockElectronAPI.db.listSnippets.mockResolvedValue([]);
+    mockElectronAPI.db.getStarredSnippets.mockResolvedValue([]);
+    mockElectronAPI.db.getRecentlyOpened.mockResolvedValue([]);
+    mockElectronAPI.db.toggleStarred.mockResolvedValue(true);
+    mockElectronAPI.db.updateLastOpened.mockResolvedValue(true);
+    mockElectronAPI.checkRuntime.mockResolvedValue({
+      hasDotnet: true,
+      hasDotnetScript: true,
+      dotnetVersion: '8.0.0',
+      dotnetScriptVersion: '1.5.0',
+    });
     mockElectronAPI.executeCode.mockResolvedValue({
       stdout: 'Hello World',
       stderr: '',
@@ -114,7 +144,7 @@ describe('App', () => {
 
     // Now should show both Save and Save As buttons
     await waitFor(() => {
-      expect(screen.getByText('Save')).toBeDefined();
+      expect(screen.getByTitle(/^Save \(Ctrl\+S\)/)).toBeDefined();
       expect(screen.getAllByText('Save As...').length).toBeGreaterThan(0);
     });
   });
@@ -155,8 +185,8 @@ describe('App', () => {
     await user.clear(editor);
     await user.type(editor, 'var x = 5;');
 
-    // Click Save
-    const saveButton = await screen.findByText('Save');
+    // Click Save — button title is stable even when text shows "Save *" for unsaved changes
+    const saveButton = await screen.findByTitle(/^Save \(Ctrl\+S\)/);
     await user.click(saveButton);
 
     await waitFor(() => {
@@ -285,9 +315,12 @@ describe('App', () => {
 
     const editor = screen.getByTestId('monaco-editor');
 
-    // Type some code
+    // Type some code (causes unsaved changes)
     await user.clear(editor);
     await user.type(editor, 'var x = 5;');
+
+    // Confirm discard dialog when triggered by Ctrl+N
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
 
     // Press Ctrl+N
     await user.keyboard('{Control>}n{/Control}');
@@ -295,7 +328,7 @@ describe('App', () => {
     // Should reset to default code
     await waitFor(() => {
       expect((editor as HTMLTextAreaElement).value).toContain(
-        'Welcome to CodePad'
+        '// Welcome to CodePad'
       );
     });
   });
@@ -340,9 +373,9 @@ describe('App', () => {
     const runButton = screen.getByText('Run Code');
     await user.click(runButton);
 
-    // Button should show loading state
+    // While running, the Run Code button is replaced by a Stop button
     await waitFor(() => {
-      expect(runButton.getAttribute('class')).toContain('loading');
+      expect(screen.getByText('Stop')).toBeDefined();
     });
   });
 
@@ -350,9 +383,17 @@ describe('App', () => {
     const user = userEvent.setup();
     render(<App />);
 
-    // Run code first to generate output
+    // Run code — output arrives via streaming chunks, not result.stdout
     const runButton = screen.getByText('Run Code');
     await user.click(runButton);
+
+    // Emit output via the streaming callback before execution resolves
+    await waitFor(() => {
+      expect(outputChunkCallback).not.toBeNull();
+    });
+    act(() => {
+      outputChunkCallback!('Hello World', false);
+    });
 
     await waitFor(() => {
       expect(screen.getByText(/Hello World/)).toBeDefined();
