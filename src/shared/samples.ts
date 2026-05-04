@@ -207,6 +207,35 @@ Console.WriteLine($"\\nFound {expensiveElectronics.Length} products");`,
 
   // Long-Running Tasks
   {
+    id: 'sample-progress-bar',
+    name: 'Progress Bar',
+    category: 'Long-Running Tasks',
+    description: 'Live progress bar using the built-in ProgressReporter',
+    language: 'csharp',
+    code: `using System;
+using System.Threading;
+
+// ProgressReporter is available in every CodePad script.
+// Construct it with the total number of steps and an optional label.
+var progress = new ProgressReporter(max: 20, label: "Processing items");
+
+Console.WriteLine("Starting batch job...");
+
+for (int i = 1; i <= 20; i++)
+{
+    // Simulate work
+    Thread.Sleep(150);
+
+    // Report current step — the UI updates the bar in real time
+    progress.Report(i, $"Item {i} of 20");
+}
+
+// Mark complete with a final label
+progress.Complete("All items processed");
+
+Console.WriteLine("Batch job finished!");`,
+  },
+  {
     id: 'sample-long-running',
     name: 'Progress with Thread.Sleep',
     category: 'Long-Running Tasks',
@@ -366,6 +395,81 @@ var totals = new {
 };
 
 totals.Dump("Summary Statistics");`,
+  },
+  {
+    id: 'sample-svg-output',
+    name: 'SVG Charts & Graphics',
+    category: 'Output Formats',
+    description: 'Render inline SVG graphics directly from .Dump()',
+    language: 'csharp',
+    code: `using System;
+using System.Linq;
+using System.Text;
+
+// ── Bar chart ──────────────────────────────────────────────────────────
+var data = new[] {
+    ("Jan", 45), ("Feb", 62), ("Mar", 58),
+    ("Apr", 71), ("May", 83), ("Jun", 76)
+};
+
+int chartW = 420, chartH = 200, barW = 48, gap = 22, padL = 40, padB = 30;
+int maxVal = data.Max(d => d.Item2);
+
+var bars = new StringBuilder();
+for (int i = 0; i < data.Length; i++)
+{
+    int x = padL + i * (barW + gap);
+    int barH = (int)((double)data[i].Item2 / maxVal * (chartH - padB - 20));
+    int y = chartH - padB - barH;
+    double hue = 200 + i * 20;
+    bars.Append($@"<rect x='{x}' y='{y}' width='{barW}' height='{barH}' fill='hsl({hue},70%,55%)' rx='3'/>");
+    bars.Append($@"<text x='{x + barW / 2}' y='{y - 4}' text-anchor='middle' font-size='11' fill='#ccc'>{data[i].Item2}</text>");
+    bars.Append($@"<text x='{x + barW / 2}' y='{chartH - 8}' text-anchor='middle' font-size='11' fill='#999'>{data[i].Item1}</text>");
+}
+
+$@"<svg xmlns='http://www.w3.org/2000/svg' width='{chartW}' height='{chartH}' style='background:#1e1e1e;border-radius:6px'>
+  <text x='{chartW / 2}' y='16' text-anchor='middle' font-size='13' fill='#ccc' font-family='sans-serif'>Monthly Sales (units)</text>
+  {bars}
+</svg>".Dump("Bar Chart");
+
+// ── Pie chart ──────────────────────────────────────────────────────────
+var slices = new[] {
+    ("C#",     42, "#569cd6"),
+    ("Python", 28, "#4ec9b0"),
+    ("JS",     18, "#dcdcaa"),
+    ("Other",  12, "#ce9178"),
+};
+
+static string PieSlice(double cx, double cy, double r, double startDeg, double endDeg, string color)
+{
+    double toRad(double d) => d * Math.PI / 180;
+    double x1 = cx + r * Math.Cos(toRad(startDeg));
+    double y1 = cy + r * Math.Sin(toRad(startDeg));
+    double x2 = cx + r * Math.Cos(toRad(endDeg));
+    double y2 = cy + r * Math.Sin(toRad(endDeg));
+    int large = (endDeg - startDeg > 180) ? 1 : 0;
+    return $"<path d='M{cx},{cy} L{x1:F1},{y1:F1} A{r},{r} 0 {large},1 {x2:F1},{y2:F1} Z' fill='{color}'/>";
+}
+
+double total = slices.Sum(s => s.Item2);
+double angle = -90;
+var paths = new StringBuilder();
+var legend = new StringBuilder();
+for (int i = 0; i < slices.Length; i++)
+{
+    double sweep = slices[i].Item2 / total * 360;
+    paths.Append(PieSlice(110, 110, 90, angle, angle + sweep, slices[i].Item3));
+    double midAngle = (angle + sweep / 2) * Math.PI / 180;
+    legend.Append($@"<rect x='220' y='{20 + i * 28}' width='14' height='14' fill='{slices[i].Item3}' rx='2'/>");
+    legend.Append($@"<text x='240' y='{32 + i * 28}' font-size='13' fill='#ccc' font-family='sans-serif'>{slices[i].Item1} ({slices[i].Item2}%)</text>");
+    angle += sweep;
+}
+
+$@"<svg xmlns='http://www.w3.org/2000/svg' width='380' height='220' style='background:#1e1e1e;border-radius:6px'>
+  <text x='190' y='16' text-anchor='middle' font-size='13' fill='#ccc' font-family='sans-serif'>Language Usage</text>
+  {paths}
+  {legend}
+</svg>".Dump("Pie Chart");`,
   },
 ];
 
