@@ -67,14 +67,8 @@ export const OutputDisplay: React.FC<OutputDisplayProps> = ({
     // Split output into sections and format each independently
     const outputSections = splitOutputSections(output);
 
-    // If no sections (single output), format as one
+    // If no sections, format the whole output as one
     if (outputSections.length === 0) {
-      return [formatOutput(output)];
-    }
-
-    // If only one section, check if it's the entire output
-    // (avoid splitting when there's no blank line separation)
-    if (outputSections.length === 1 && outputSections[0] === output.trim()) {
       return [formatOutput(output)];
     }
 
