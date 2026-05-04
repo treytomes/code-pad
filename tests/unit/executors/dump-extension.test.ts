@@ -102,6 +102,66 @@ Console.WriteLine($"Sum: {result}");
     expect(result.stdout).toContain('Sum: 12');
   });
 
+  it.skipIf(!dotnetAvailable)(
+    'should produce all four sections in LINQ pipeline chaining (regression: exit vs close event)',
+    // This test guards against a bug where the executor resolved on the 'exit' event
+    // before all stdout data had been flushed. The fix is to resolve on 'close' instead,
+    // which fires only after all stdio streams have ended.
+    async () => {
+      const code = `
+using System;
+using System.Linq;
+
+var products = new[] {
+    new { Id = 1, Name = "Laptop", Price = 999.99, Category = "Electronics", InStock = true },
+    new { Id = 2, Name = "Mouse", Price = 29.99, Category = "Electronics", InStock = true },
+    new { Id = 3, Name = "Desk", Price = 299.99, Category = "Furniture", InStock = false },
+    new { Id = 4, Name = "Chair", Price = 199.99, Category = "Furniture", InStock = true },
+    new { Id = 5, Name = "Monitor", Price = 349.99, Category = "Electronics", InStock = true }
+};
+
+var expensiveElectronics = products
+    .Dump("All Products")
+    .Where(p => p.Category == "Electronics")
+    .Dump("Electronics Only")
+    .Where(p => p.Price > 100)
+    .Dump("Expensive Electronics")
+    .OrderByDescending(p => p.Price)
+    .Dump("Sorted by Price")
+    .ToArray();
+
+Console.WriteLine($"Found {expensiveElectronics.Length} products");
+`;
+      const chunks: string[] = [];
+      const result = await executor.execute(code, {}, (chunk) => chunks.push(chunk));
+
+      expect(result.exitCode).toBe(0);
+
+      // All four section headers must appear in the final accumulated output
+      expect(result.stdout).toContain('=== All Products ===');
+      expect(result.stdout).toContain('=== Electronics Only ===');
+      expect(result.stdout).toContain('=== Expensive Electronics ===');
+      expect(result.stdout).toContain('=== Sorted by Price ===');
+
+      // Each section header must be followed by a JSON array
+      const sections = result.stdout.split(/\n\s*\n/);
+      const labelledSections = sections.filter((s) => s.startsWith('==='));
+      expect(labelledSections).toHaveLength(4);
+      labelledSections.forEach((section) => {
+        // After the label line there must be a JSON array
+        const afterLabel = section.replace(/^===.+===\n/, '').trim();
+        expect(afterLabel).toMatch(/^\[/);
+        expect(afterLabel).toMatch(/\]$/);
+      });
+
+      // All streamed chunks must combine to the full output
+      const accumulated = chunks.join('');
+      expect(accumulated).toContain('=== All Products ===');
+      expect(accumulated).toContain('=== Sorted by Price ===');
+    },
+    60000
+  );
+
   it.skipIf(!dotnetAvailable)('should handle arrays and collections', async () => {
     const code = `
 using System;
@@ -227,4 +287,61 @@ root.Dump("Tree with Cycle");
     expect(result.exitCode).toBe(0);
     expect(result.stdout).toContain('=== Tree with Cycle ===');
   });
+
+  it.skipIf(!dotnetAvailable)(
+    'ProgressReporter should not conflict when user declares their own progress variable (regression: CS0128)',
+    async () => {
+      // Mirrors the sample script exactly — user declares var progress themselves.
+      // If the script builder also injects var progress, CS0128 fires.
+      const code = `
+using System;
+using System.Threading;
+
+var progress = new ProgressReporter(max: 3, label: "Test");
+progress.Report(1);
+progress.Report(2);
+progress.Complete();
+Console.WriteLine("done");
+`;
+      const result = await executor.execute(code);
+      expect(result.exitCode, result.stderr).toBe(0);
+      expect(result.stdout).toContain('##CODEPAD:PROGRESS:');
+      expect(result.stdout).toContain('done');
+    },
+    60000
+  );
+
+  it.skipIf(!dotnetAvailable)(
+    'ProgressReporter should compile and emit sentinel lines (regression: backslash in interpolation hole)',
+    async () => {
+      const code = `
+using System;
+using System.Threading;
+
+var p = new ProgressReporter(max: 3, label: "Test");
+p.Report(1);
+p.Report(2, "Step 2");
+p.Complete("Done");
+`;
+      const result = await executor.execute(code);
+
+      expect(result.exitCode, result.stderr).toBe(0);
+      expect(result.stdout).toContain('##CODEPAD:PROGRESS:');
+
+      const lines = result.stdout.split('\n').filter((l) => l.startsWith('##CODEPAD:PROGRESS:'));
+      expect(lines).toHaveLength(3);
+
+      // Each line must carry valid JSON after the prefix
+      for (const line of lines) {
+        const json = line.slice('##CODEPAD:PROGRESS:'.length);
+        expect(() => JSON.parse(json), `invalid JSON: ${json}`).not.toThrow();
+      }
+
+      // Last line must be complete (value === max)
+      const last = JSON.parse(lines[2].slice('##CODEPAD:PROGRESS:'.length));
+      expect(last.value).toBe(3);
+      expect(last.max).toBe(3);
+    },
+    60000
+  );
 });

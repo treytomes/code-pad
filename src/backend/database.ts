@@ -3,7 +3,7 @@ import { homedir } from 'os';
 import { join } from 'path';
 import { mkdirSync, existsSync } from 'fs';
 import { randomUUID } from 'crypto';
-import type { QueryType } from '../shared/types';
+import type { QueryType, NuGetReference } from '../shared/types';
 
 // Import logger - but make it optional for tests
 let logInfo: (msg: string, ...args: any[]) => void = console.log;
@@ -26,6 +26,9 @@ export interface Snippet {
   language: string;
   code: string;
   queryType: QueryType;
+  usings: string[];
+  references: NuGetReference[];
+  tags: string[];
   createdAt: number;
   modifiedAt: number;
   executionCount: number;
@@ -95,6 +98,9 @@ export class SnippetDatabase {
       const hasStarred = tableInfo.some((col) => col.name === 'starred');
       const hasLastOpened = tableInfo.some((col) => col.name === 'last_opened_at');
       const hasQueryType = tableInfo.some((col) => col.name === 'query_type');
+      const hasUsings = tableInfo.some((col) => col.name === 'usings');
+      const hasReferences = tableInfo.some((col) => col.name === 'nuget_references');
+      const hasTags = tableInfo.some((col) => col.name === 'tags');
 
       let ranAny = false;
 
@@ -132,6 +138,29 @@ export class SnippetDatabase {
         ranAny = true;
       }
 
+      // Migration 4: Add usings and references columns (per-script script properties)
+      if (!hasUsings) {
+        logInfo('Running migration: Add usings column');
+        this.db.exec(`ALTER TABLE snippets ADD COLUMN usings TEXT NOT NULL DEFAULT '[]';`);
+        logInfo('Migration completed: usings column added');
+        ranAny = true;
+      }
+
+      if (!hasReferences) {
+        logInfo('Running migration: Add nuget_references column');
+        this.db.exec(`ALTER TABLE snippets ADD COLUMN nuget_references TEXT NOT NULL DEFAULT '[]';`);
+        logInfo('Migration completed: nuget_references column added');
+        ranAny = true;
+      }
+
+      // Migration 5: Add tags column
+      if (!hasTags) {
+        logInfo('Running migration: Add tags column');
+        this.db.exec(`ALTER TABLE snippets ADD COLUMN tags TEXT NOT NULL DEFAULT '[]';`);
+        logInfo('Migration completed: tags column added');
+        ranAny = true;
+      }
+
       logInfo(
         ranAny ? 'All database migrations completed successfully' : 'Database schema is up to date'
       );
@@ -151,18 +180,24 @@ export class SnippetDatabase {
     const id = randomUUID();
     const now = Date.now();
     const queryType: QueryType = snippet.queryType ?? 'statements';
+    const usings = JSON.stringify(snippet.usings ?? []);
+    const references = JSON.stringify(snippet.references ?? []);
+    const tags = JSON.stringify(snippet.tags ?? []);
 
     const stmt = this.db.prepare(`
-      INSERT INTO snippets (id, name, language, code, query_type, created_at, modified_at, execution_count, starred, last_opened_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, 0, 0, NULL)
+      INSERT INTO snippets (id, name, language, code, query_type, usings, nuget_references, tags, created_at, modified_at, execution_count, starred, last_opened_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0, NULL)
     `);
 
-    stmt.run(id, snippet.name, snippet.language, snippet.code, queryType, now, now);
+    stmt.run(id, snippet.name, snippet.language, snippet.code, queryType, usings, references, tags, now, now);
 
     return {
       id,
       ...snippet,
       queryType,
+      usings: snippet.usings ?? [],
+      references: snippet.references ?? [],
+      tags: snippet.tags ?? [],
       createdAt: now,
       modifiedAt: now,
       executionCount: 0,
@@ -184,7 +219,7 @@ export class SnippetDatabase {
   // Update
   updateSnippet(
     id: string,
-    updates: Partial<Pick<Snippet, 'name' | 'code' | 'queryType'>>
+    updates: Partial<Pick<Snippet, 'name' | 'code' | 'queryType' | 'usings' | 'references' | 'tags'>>
   ): boolean {
     const sets: string[] = [];
     const values: any[] = [];
@@ -202,6 +237,21 @@ export class SnippetDatabase {
     if (updates.queryType !== undefined) {
       sets.push('query_type = ?');
       values.push(updates.queryType);
+    }
+
+    if (updates.usings !== undefined) {
+      sets.push('usings = ?');
+      values.push(JSON.stringify(updates.usings));
+    }
+
+    if (updates.references !== undefined) {
+      sets.push('nuget_references = ?');
+      values.push(JSON.stringify(updates.references));
+    }
+
+    if (updates.tags !== undefined) {
+      sets.push('tags = ?');
+      values.push(JSON.stringify(updates.tags));
     }
 
     if (sets.length === 0) return false;
@@ -229,16 +279,39 @@ export class SnippetDatabase {
   }
 
   // List
-  listSnippets(language?: string): Snippet[] {
-    let stmt;
+  listSnippets(language?: string, tag?: string): Snippet[] {
+    let rows: any[];
 
-    if (language) {
-      stmt = this.db.prepare('SELECT * FROM snippets WHERE language = ? ORDER BY modified_at DESC');
-      return stmt.all(language).map(this.rowToSnippet);
+    if (language && tag) {
+      rows = this.db
+        .prepare(`SELECT * FROM snippets WHERE language = ? AND tags LIKE ? ORDER BY modified_at DESC`)
+        .all(language, `%"${tag}"%`);
+    } else if (language) {
+      rows = this.db
+        .prepare('SELECT * FROM snippets WHERE language = ? ORDER BY modified_at DESC')
+        .all(language);
+    } else if (tag) {
+      rows = this.db
+        .prepare(`SELECT * FROM snippets WHERE tags LIKE ? ORDER BY modified_at DESC`)
+        .all(`%"${tag}"%`);
     } else {
-      stmt = this.db.prepare('SELECT * FROM snippets ORDER BY modified_at DESC');
-      return stmt.all().map(this.rowToSnippet);
+      rows = this.db.prepare('SELECT * FROM snippets ORDER BY modified_at DESC').all();
     }
+
+    return rows.map(this.rowToSnippet.bind(this));
+  }
+
+  // Return sorted list of all unique tags across all snippets
+  getAllTags(): string[] {
+    const rows = this.db.prepare('SELECT tags FROM snippets WHERE tags != \'[]\'').all() as any[];
+    const tagSet = new Set<string>();
+    for (const row of rows) {
+      try {
+        const tags: string[] = JSON.parse(row.tags || '[]');
+        tags.forEach((t) => tagSet.add(t));
+      } catch (_e) { /* skip */ }
+    }
+    return Array.from(tagSet).sort();
   }
 
   // Increment execution count
@@ -285,7 +358,7 @@ export class SnippetDatabase {
       ORDER BY modified_at DESC
     `);
 
-    return stmt.all().map(this.rowToSnippet);
+    return stmt.all().map(this.rowToSnippet.bind(this));
   }
 
   // Get recently opened snippets
@@ -297,16 +370,26 @@ export class SnippetDatabase {
       LIMIT ?
     `);
 
-    return stmt.all(limit).map(this.rowToSnippet);
+    return stmt.all(limit).map(this.rowToSnippet.bind(this));
   }
 
   private rowToSnippet(row: any): Snippet {
+    let usings: string[] = [];
+    let references: NuGetReference[] = [];
+    let tags: string[] = [];
+    try { usings = JSON.parse(row.usings || '[]'); } catch (_e) { /* keep empty */ }
+    try { references = JSON.parse(row.nuget_references || '[]'); } catch (_e) { /* keep empty */ }
+    try { tags = JSON.parse(row.tags || '[]'); } catch (_e) { /* keep empty */ }
+
     return {
       id: row.id,
       name: row.name,
       language: row.language,
       code: row.code,
       queryType: (row.query_type as QueryType) ?? 'statements',
+      usings,
+      references,
+      tags,
       createdAt: row.created_at,
       modifiedAt: row.modified_at,
       executionCount: row.execution_count,

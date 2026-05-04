@@ -15,7 +15,7 @@ import {
 } from '../backend/import-export';
 import { createApplicationMenu } from './menu';
 import { logInfo, logError, logWarn, logDebug } from '../shared/logger';
-import type { QueryType } from '../shared/types';
+import type { QueryType, NuGetReference } from '../shared/types';
 
 const execFileAsync = promisify(execFile);
 
@@ -299,7 +299,7 @@ function createWindow() {
 // IPC Handlers
 electron.ipcMain.handle(
   'execute-code',
-  async (event, code: string, options?: { timeout?: number; queryType?: QueryType }) => {
+  async (event, code: string, options?: { timeout?: number; queryType?: QueryType; usings?: string[]; references?: NuGetReference[] }) => {
     logDebug('Execute code request received');
     try {
       const result = await csharpExecutor.execute(
@@ -313,6 +313,10 @@ electron.ipcMain.handle(
       logDebug(
         `Code execution completed: exitCode=${result.exitCode}, time=${result.executionTime}ms`
       );
+      // Send done sentinel through the same IPC channel as the chunks so the
+      // renderer knows all data has arrived before it removes its listener.
+      // The invoke reply travels a separate path and can race past pending chunks.
+      event.sender.send('execution-output-done');
       return result;
     } catch (error) {
       logError('Code execution failed', error);
@@ -351,8 +355,8 @@ electron.ipcMain.handle('db-delete-snippet', async (_event, id: string) => {
   return snippetDb.deleteSnippet(id);
 });
 
-electron.ipcMain.handle('db-list-snippets', async (_event, language?: string) => {
-  return snippetDb.listSnippets(language);
+electron.ipcMain.handle('db-list-snippets', async (_event, language?: string, tag?: string) => {
+  return snippetDb.listSnippets(language, tag);
 });
 
 electron.ipcMain.handle('db-increment-execution', async (_event, id: string) => {
@@ -372,6 +376,11 @@ electron.ipcMain.handle('db-update-last-opened', async (_event, id: string) => {
 // Get starred snippets
 electron.ipcMain.handle('db-get-starred-snippets', async () => {
   return snippetDb.getStarredSnippets();
+});
+
+// Get all tags
+electron.ipcMain.handle('db-get-all-tags', async () => {
+  return snippetDb.getAllTags();
 });
 
 // Get recently opened snippets

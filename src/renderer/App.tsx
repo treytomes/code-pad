@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import {
   Button,
   Layout,
@@ -10,7 +10,7 @@ import {
   ConfigProvider,
   theme as antTheme,
 } from 'antd';
-import type { QueryType } from '../shared/types';
+import type { QueryType, NuGetReference } from '../shared/types';
 import {
   SaveOutlined,
   PlusOutlined,
@@ -21,6 +21,7 @@ import {
   DownloadOutlined,
   QuestionCircleOutlined,
   StopOutlined,
+  SettingOutlined,
 } from '@ant-design/icons';
 import { CodeEditor } from './components/Editor';
 import { SnippetList } from './components/SnippetList';
@@ -30,66 +31,77 @@ import { SettingsModal } from './components/SettingsModal';
 import { OutputDisplay } from './components/OutputDisplay';
 import { StatusBar } from './components/StatusBar';
 import { WelcomeModal } from './components/WelcomeModal';
+import ScriptPropertiesModal, { type ScriptProperties } from './components/ScriptPropertiesModal';
 import type { Snippet } from '../backend/database';
+import { extractProgressEvents, stripProgressLines, type ProgressEvent } from '../backend/progress';
 
 const { Header, Content, Sider } = Layout;
 
-const DEFAULT_CODE = `// Welcome to CodePad v0.1.0!
-// Press F5 to run | Ctrl+S to save | Ctrl+N for new snippet
+const DEFAULT_CODE_STATEMENTS = `// Welcome to CodePad — Statements mode
+// Write C# statements. Use .Dump() to display results. Press F5 to run.
 
 using System;
 using System.Linq;
 
-// CodePad includes a .Dump() extension method (like LINQPad)
-// It automatically outputs objects as JSON with optional labels
-
-// 1. Simple object with label
+// Simple object with label
 var person = new {
     Name = "John Doe",
     Age = 30,
-    Email = "john@example.com",
-    Address = new {
-        Street = "123 Main St",
-        City = "Springfield",
-        Zip = "12345"
-    },
     Skills = new[] { "C#", "JavaScript", "Python" }
 };
 person.Dump("Person Details");
 
-// 2. Array/collection - renders as tree view
+// Array of objects renders as a table
 var users = new[] {
-    new { Id = 1, Name = "Alice", Role = "Admin", Active = true },
-    new { Id = 2, Name = "Bob", Role = "Developer", Active = true },
-    new { Id = 3, Name = "Carol", Role = "Designer", Active = false }
+    new { Id = 1, Name = "Alice", Role = "Admin",     Active = true  },
+    new { Id = 2, Name = "Bob",   Role = "Developer", Active = true  },
+    new { Id = 3, Name = "Carol", Role = "Designer",  Active = false }
 };
 users.Dump("User List");
 
-// 3. Chaining support - dump intermediate results
-var activeUsers = users
+// .Dump() returns the value, so you can chain it
+var activeNames = users
     .Where(u => u.Active)
-    .Dump("Active Users Only")
+    .Dump("Active Users")
     .Select(u => u.Name)
     .ToArray();
 
-// 4. Statistics object
-var stats = new {
-    TotalUsers = users.Length,
-    ActiveCount = users.Count(u => u.Active),
-    Roles = users.Select(u => u.Role).Distinct().ToArray(),
-    Timestamp = DateTime.Now
-};
-stats.Dump("Statistics");
-
-// 💡 Tips:
-// - .Dump() automatically adds spacing between sections
-// - Use .Dump("Label") to add headers
-// - Returns the object for LINQ chaining
-// - Works with any serializable type
-// - You can still use Console.WriteLine() for plain text
-
-Console.WriteLine("✨ Try .Dump() on your own objects!");
+Console.WriteLine($"Active: {string.Join(", ", activeNames)}");
 `;
+
+const DEFAULT_CODE_EXPRESSION = `// Welcome to CodePad — Expression mode
+// Type a single C# expression. The result is automatically displayed.
+// No .Dump() needed — press F5 to run.
+
+Enumerable.Range(1, 10)
+    .Where(x => x % 2 == 0)
+    .Select(x => new { Value = x, Square = x * x })
+`;
+
+const DEFAULT_CODE_PROGRAM = `// Welcome to CodePad — Program mode
+// Write a complete C# program with your own Main() method.
+// Helper methods and classes are allowed. Press F5 to run.
+
+using System;
+using System.Linq;
+
+static void Main()
+{
+    var numbers = Enumerable.Range(1, 5).ToArray();
+    numbers.Dump("Numbers");
+
+    Console.WriteLine($"Sum: {Sum(numbers)}");
+    Console.WriteLine($"Max: {numbers.Max()}");
+}
+
+static int Sum(int[] values) => values.Sum();
+`;
+
+const DEFAULT_CODE: Record<string, string> = {
+  statements: DEFAULT_CODE_STATEMENTS,
+  expression: DEFAULT_CODE_EXPRESSION,
+  program: DEFAULT_CODE_PROGRAM,
+};
 
 function App() {
   // Load saved settings from localStorage
@@ -97,24 +109,40 @@ function App() {
     try {
       const stored = localStorage.getItem('codepad-settings');
       if (stored) {
-        const settings = JSON.parse(stored);
+        const s = JSON.parse(stored);
         return {
-          outputHeight: settings.outputHeight ?? 200,
-          sidebarWidth: settings.sidebarWidth ?? 250,
-          timeout: settings.timeout ?? 30000,
-          theme: (settings.theme ?? 'system') as 'dark' | 'light' | 'system',
+          outputHeight: s.outputHeight ?? 200,
+          sidebarWidth: s.sidebarWidth ?? 250,
+          timeout: s.timeout ?? 30000,
+          theme: (s.theme ?? 'system') as 'dark' | 'light' | 'system',
+          fontSize: s.fontSize ?? 14,
+          tabSize: s.tabSize ?? 4,
+          wordWrap: s.wordWrap ?? false,
+          minimap: s.minimap ?? false,
+          lineNumbers: s.lineNumbers ?? true,
         };
       }
     } catch (e) {
       console.error('Failed to load saved settings:', e);
     }
-    return { outputHeight: 200, sidebarWidth: 250, timeout: 30000, theme: 'system' as const };
+    return {
+      outputHeight: 200,
+      sidebarWidth: 250,
+      timeout: 30000,
+      theme: 'system' as const,
+      fontSize: 14,
+      tabSize: 4,
+      wordWrap: false,
+      minimap: false,
+      lineNumbers: true,
+    };
   };
 
   const savedSettings = loadSavedSettings();
 
-  const [code, setCode] = useState(DEFAULT_CODE);
+  const [code, setCode] = useState(DEFAULT_CODE_STATEMENTS);
   const [output, setOutput] = useState('');
+  const [progressEvents, setProgressEvents] = useState<ProgressEvent[]>([]);
   const [isRunning, setIsRunning] = useState(false);
   const [executionTime, setExecutionTime] = useState<number | null>(null);
   const executionTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -123,6 +151,11 @@ function App() {
   const [sidebarWidth, setSidebarWidth] = useState(savedSettings.sidebarWidth);
   const [timeout, _setTimeout] = useState(savedSettings.timeout);
   const [appTheme, setAppTheme] = useState<'dark' | 'light' | 'system'>(savedSettings.theme);
+  const [editorFontSize, setEditorFontSize] = useState(savedSettings.fontSize);
+  const [editorTabSize, setEditorTabSize] = useState(savedSettings.tabSize);
+  const [editorWordWrap, setEditorWordWrap] = useState(savedSettings.wordWrap);
+  const [editorMinimap, setEditorMinimap] = useState(savedSettings.minimap);
+  const [editorLineNumbers, setEditorLineNumbers] = useState(savedSettings.lineNumbers);
 
   const resolveTheme = (t: 'dark' | 'light' | 'system'): 'dark' | 'light' => {
     if (t === 'system') {
@@ -131,7 +164,7 @@ function App() {
     return t;
   };
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-  const savedCodeRef = useRef<string>(DEFAULT_CODE);
+  const savedCodeRef = useRef<string>(DEFAULT_CODE_STATEMENTS);
   const [isDraggingOutput, setIsDraggingOutput] = useState(false);
   const [isDraggingSidebar, setIsDraggingSidebar] = useState(false);
   const [currentSnippetId, setCurrentSnippetId] = useState<string | null>(null);
@@ -143,14 +176,20 @@ function App() {
   const [cursorLine, setCursorLine] = useState(1);
   const [cursorColumn, setCursorColumn] = useState(1);
   const [queryType, setQueryType] = useState<QueryType>('statements');
+  const [scriptProperties, setScriptProperties] = useState<ScriptProperties>({ usings: [], references: [], tags: [] });
+  const [scriptPropertiesVisible, setScriptPropertiesVisible] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const layoutRef = useRef<HTMLDivElement>(null);
 
-  const handleCodeChange = (newCode: string) => {
+  const handleCodeChange = useCallback((newCode: string) => {
     setCode(newCode);
-    // Check if code has changed from saved version
     setHasUnsavedChanges(newCode !== savedCodeRef.current);
-  };
+  }, []);
+
+  const handleCursorChange = useCallback((line: number, col: number) => {
+    setCursorLine(line);
+    setCursorColumn(col);
+  }, []);
 
   const handleStop = async () => {
     try {
@@ -165,6 +204,7 @@ function App() {
   const handleRun = async () => {
     setIsRunning(true);
     setOutput('');
+    setProgressEvents([]);
 
     // Start live timer
     executionStartRef.current = performance.now();
@@ -175,13 +215,28 @@ function App() {
       setExecutionTime(elapsed);
     }, 100); // Update every 100ms
 
-    // Subscribe to streaming output
+    // Subscribe to streaming output — intercept progress sentinel lines
     const cleanup = window.electronAPI.onOutputChunk((chunk: string, _isError: boolean) => {
-      setOutput((prev) => prev + chunk);
+      const events = extractProgressEvents(chunk);
+      if (events.length > 0) {
+        setProgressEvents((prev) => [...prev, ...events]);
+      }
+      const stripped = stripProgressLines(chunk);
+      if (stripped) {
+        setOutput((prev) => prev + stripped);
+      }
     });
 
     try {
-      const result = await window.electronAPI.executeCode(code, { timeout, queryType });
+      const [result] = await Promise.all([
+        window.electronAPI.executeCode(code, {
+          timeout,
+          queryType,
+          usings: scriptProperties.usings,
+          references: scriptProperties.references,
+        }),
+        window.electronAPI.onOutputDone(),
+      ]);
 
       // Stop timer and set final time
       if (executionTimerRef.current) {
@@ -191,7 +246,9 @@ function App() {
       const finalTime = Math.round(performance.now() - executionStartRef.current);
       setExecutionTime(finalTime);
 
-      // Clean up output subscription
+      // Clean up output subscription — safe now that onOutputDone has resolved,
+      // meaning the 'execution-output-done' sentinel has been received and all
+      // preceding chunks are guaranteed to have arrived.
       cleanup();
 
       // Show error if execution failed
@@ -241,7 +298,13 @@ function App() {
     if (!currentSnippetId) return;
 
     try {
-      await window.electronAPI.db.updateSnippet(currentSnippetId, { code, queryType });
+      await window.electronAPI.db.updateSnippet(currentSnippetId, {
+        code,
+        queryType,
+        usings: scriptProperties.usings,
+        references: scriptProperties.references,
+        tags: scriptProperties.tags,
+      });
       savedCodeRef.current = code;
       setHasUnsavedChanges(false);
       message.success('Snippet saved');
@@ -263,6 +326,9 @@ function App() {
         language: 'csharp',
         code,
         queryType,
+        usings: scriptProperties.usings,
+        references: scriptProperties.references,
+        tags: scriptProperties.tags,
       });
 
       setCurrentSnippetId(snippet.id);
@@ -290,6 +356,7 @@ function App() {
     setHasUnsavedChanges(false);
     setCurrentSnippetId(snippet.id);
     setQueryType(snippet.queryType ?? 'statements');
+    setScriptProperties({ usings: snippet.usings ?? [], references: snippet.references ?? [], tags: snippet.tags ?? [] });
     setOutput('');
 
     // Update last opened timestamp
@@ -308,8 +375,9 @@ function App() {
 
       if (currentSnippetId === id) {
         setCurrentSnippetId(null);
-        setCode(DEFAULT_CODE);
-        savedCodeRef.current = DEFAULT_CODE;
+        const defaultCode = DEFAULT_CODE[queryType] ?? DEFAULT_CODE_STATEMENTS;
+        setCode(defaultCode);
+        savedCodeRef.current = defaultCode;
         setHasUnsavedChanges(false);
       }
     } catch (error) {
@@ -334,6 +402,9 @@ function App() {
         language: snippet.language,
         code: snippet.code,
         queryType: snippet.queryType,
+        usings: snippet.usings ?? [],
+        references: snippet.references ?? [],
+        tags: snippet.tags ?? [],
       });
       message.success('Snippet duplicated');
       setRefreshTrigger((prev) => prev + 1);
@@ -344,6 +415,7 @@ function App() {
       setHasUnsavedChanges(false);
       setCurrentSnippetId(newSnippet.id);
       setQueryType(newSnippet.queryType ?? 'statements');
+      setScriptProperties({ usings: newSnippet.usings ?? [], references: newSnippet.references ?? [], tags: newSnippet.tags ?? [] });
       setOutput('');
     } catch (error) {
       message.error('Failed to duplicate snippet');
@@ -359,11 +431,12 @@ function App() {
       }
     }
 
-    setCode(DEFAULT_CODE);
-    savedCodeRef.current = DEFAULT_CODE;
+    setCode(DEFAULT_CODE_STATEMENTS);
+    savedCodeRef.current = DEFAULT_CODE_STATEMENTS;
     setHasUnsavedChanges(false);
     setCurrentSnippetId(null);
     setQueryType('statements');
+    setScriptProperties({ usings: [], references: [], tags: [] });
     setOutput('');
   };
 
@@ -704,6 +777,12 @@ function App() {
                 setQueryType(val);
                 if (currentSnippetId) {
                   window.electronAPI.db.updateSnippet(currentSnippetId, { queryType: val });
+                } else {
+                  // Unsaved scratch buffer — load the matching default
+                  const defaultCode = DEFAULT_CODE[val] ?? DEFAULT_CODE_STATEMENTS;
+                  setCode(defaultCode);
+                  savedCodeRef.current = defaultCode;
+                  setHasUnsavedChanges(false);
                 }
               }}
               style={{ width: 140 }}
@@ -713,6 +792,11 @@ function App() {
                 { value: 'expression', label: 'Expression' },
                 { value: 'program', label: 'Program' },
               ]}
+            />
+            <Button
+              icon={<SettingOutlined />}
+              onClick={() => setScriptPropertiesVisible(true)}
+              title="Script Properties (namespaces & NuGet references)"
             />
             <Button icon={<PlusOutlined />} onClick={handleNewSnippet} title="New Snippet (Ctrl+N)">
               New
@@ -840,10 +924,12 @@ function App() {
                 value={code}
                 onChange={handleCodeChange}
                 theme={monacoTheme}
-                onCursorChange={(line, col) => {
-                  setCursorLine(line);
-                  setCursorColumn(col);
-                }}
+                onCursorChange={handleCursorChange}
+                fontSize={editorFontSize}
+                tabSize={editorTabSize}
+                wordWrap={editorWordWrap}
+                minimap={editorMinimap}
+                lineNumbers={editorLineNumbers}
               />
             </div>
 
@@ -939,7 +1025,7 @@ function App() {
                 }}
               >
                 {output ? (
-                  <OutputDisplay output={output} />
+                  <OutputDisplay output={output} progressEvents={progressEvents} />
                 ) : (
                   <div
                     style={{
@@ -984,6 +1070,31 @@ function App() {
           visible={settingsVisible}
           onClose={() => setSettingsVisible(false)}
           onThemeChange={setAppTheme}
+          onSettingsSaved={() => {
+            const s = loadSavedSettings();
+            setEditorFontSize(s.fontSize);
+            setEditorTabSize(s.tabSize);
+            setEditorWordWrap(s.wordWrap);
+            setEditorMinimap(s.minimap);
+            setEditorLineNumbers(s.lineNumbers);
+          }}
+        />
+        <ScriptPropertiesModal
+          open={scriptPropertiesVisible}
+          properties={scriptProperties}
+          isDark={isDark}
+          onOk={(props) => {
+            setScriptProperties(props);
+            if (currentSnippetId) {
+              window.electronAPI.db.updateSnippet(currentSnippetId, {
+                usings: props.usings,
+                references: props.references,
+                tags: props.tags,
+              });
+            }
+            setScriptPropertiesVisible(false);
+          }}
+          onCancel={() => setScriptPropertiesVisible(false)}
         />
       </Layout>
     </ConfigProvider>

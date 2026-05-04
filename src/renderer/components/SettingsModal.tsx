@@ -20,6 +20,7 @@ interface SettingsModalProps {
   visible: boolean;
   onClose: () => void;
   onThemeChange?: (theme: 'dark' | 'light' | 'system') => void;
+  onSettingsSaved?: () => void;
 }
 
 interface Settings {
@@ -57,6 +58,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   visible,
   onClose,
   onThemeChange,
+  onSettingsSaved,
 }) => {
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
   const [hasChanges, setHasChanges] = useState(false);
@@ -105,6 +107,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       message.success('Settings saved');
       setHasChanges(false);
       onThemeChange?.(settings.theme);
+      onSettingsSaved?.();
       onClose();
     } catch (error) {
       console.error('Failed to save settings:', error);
@@ -170,7 +173,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           onChange={(checked) => updateSetting('minimap', checked)}
         />
         <span style={{ marginLeft: '8px', color: '#858585', fontSize: '12px' }}>
-          Show code minimap (requires reload)
+          Show code minimap
         </span>
       </Form.Item>
     </Form>

@@ -38,6 +38,7 @@ const mockElectronAPI = {
     outputChunkCallback = cb;
     return vi.fn(); // cleanup function
   }),
+  onOutputDone: vi.fn(() => Promise.resolve()),
   onMenuEvent: vi.fn(() => vi.fn()), // Returns cleanup function
   exportSnippet: vi.fn(),
   importSnippet: vi.fn(),
@@ -57,6 +58,7 @@ const mockElectronAPI = {
     toggleStarred: vi.fn(),
     getStarredSnippets: vi.fn(),
     getRecentlyOpened: vi.fn(),
+    getAllTags: vi.fn(),
     updateLastOpened: vi.fn(),
   },
 };
@@ -80,6 +82,7 @@ describe('App', () => {
     mockElectronAPI.db.getRecentlyOpened.mockResolvedValue([]);
     mockElectronAPI.db.toggleStarred.mockResolvedValue(true);
     mockElectronAPI.db.updateLastOpened.mockResolvedValue(true);
+    mockElectronAPI.db.getAllTags.mockResolvedValue([]);
     mockElectronAPI.checkRuntime.mockResolvedValue({
       hasDotnet: true,
       hasDotnetScript: true,
@@ -193,6 +196,9 @@ describe('App', () => {
       expect(mockElectronAPI.db.updateSnippet).toHaveBeenCalledWith('123', {
         code: expect.any(String),
         queryType: expect.any(String),
+        usings: expect.any(Array),
+        references: expect.any(Array),
+        tags: expect.any(Array),
       });
     });
   });
@@ -258,6 +264,9 @@ describe('App', () => {
         language: 'csharp',
         code: expect.any(String),
         queryType: expect.any(String),
+        usings: expect.any(Array),
+        references: expect.any(Array),
+        tags: expect.any(Array),
       });
     });
   });

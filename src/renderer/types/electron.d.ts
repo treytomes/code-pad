@@ -1,6 +1,6 @@
 import { ExecutionResult } from '../../backend/executors/csharp';
 import { Snippet } from '../../backend/database';
-import { QueryType } from '../../shared/types';
+import { QueryType, NuGetReference } from '../../shared/types';
 
 export interface ElectronAPI {
   ping: () => string;
@@ -13,7 +13,7 @@ export interface ElectronAPI {
 
   executeCode: (
     code: string,
-    options?: { timeout?: number; queryType?: QueryType }
+    options?: { timeout?: number; queryType?: QueryType; usings?: string[]; references?: NuGetReference[] }
   ) => Promise<ExecutionResult>;
 
   stopExecution: () => Promise<void>;
@@ -40,6 +40,7 @@ export interface ElectronAPI {
   exportAllSnippets: (snippets: any[]) => Promise<any>;
 
   onOutputChunk: (callback: (chunk: string, isError: boolean) => void) => () => void;
+  onOutputDone: () => Promise<void>;
 
   onMenuEvent: (event: string, callback: () => void) => () => void;
 
@@ -54,18 +55,22 @@ export interface ElectronAPI {
       language: string;
       code: string;
       queryType?: QueryType;
+      usings?: string[];
+      references?: NuGetReference[];
+      tags?: string[];
     }) => Promise<Snippet>;
     getSnippet: (id: string) => Promise<Snippet | null>;
     updateSnippet: (
       id: string,
-      updates: { name?: string; code?: string; queryType?: QueryType }
+      updates: { name?: string; code?: string; queryType?: QueryType; usings?: string[]; references?: NuGetReference[]; tags?: string[] }
     ) => Promise<boolean>;
     deleteSnippet: (id: string) => Promise<boolean>;
-    listSnippets: (language?: string) => Promise<Snippet[]>;
+    listSnippets: (language?: string, tag?: string) => Promise<Snippet[]>;
     incrementExecution: (id: string) => Promise<boolean>;
     toggleStarred: (id: string) => Promise<boolean>;
     getStarredSnippets: () => Promise<Snippet[]>;
     getRecentlyOpened: (limit: number) => Promise<Snippet[]>;
+    getAllTags: () => Promise<string[]>;
     updateLastOpened: (id: string) => Promise<boolean>;
   };
 }

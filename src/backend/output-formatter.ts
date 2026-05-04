@@ -2,7 +2,7 @@
  * Output formatting utilities for rich display of objects, arrays, and data structures
  */
 
-export type OutputFormat = 'plain' | 'json' | 'table' | 'html';
+export type OutputFormat = 'plain' | 'json' | 'table' | 'html' | 'image' | 'svg';
 
 export interface FormattedOutput {
   format: OutputFormat;
@@ -42,6 +42,16 @@ export function detectOutputFormat(output: string): OutputFormat {
     }
   }
 
+  // Check for SVG
+  if (isSvg(contentToCheck)) {
+    return 'svg';
+  }
+
+  // Check for base-64 image data or data URI
+  if (isBase64Image(contentToCheck)) {
+    return 'image';
+  }
+
   // Check for HTML
   if (trimmed.startsWith('<') && trimmed.endsWith('>')) {
     if (
@@ -76,6 +86,31 @@ export function detectOutputFormat(output: string): OutputFormat {
   }
 
   return 'plain';
+}
+
+// PNG, JPEG, GIF, BMP, WebP magic-byte prefixes encoded in base-64.
+// We only need to match the first few base-64 characters of each header.
+const IMAGE_BASE64_PREFIXES = [
+  'iVBORw0KGgo',  // PNG  (\x89PNG)
+  '/9j/',          // JPEG (FFD8FF)
+  'R0lGOD',        // GIF  (GIF87a / GIF89a)
+  'Qk0',           // BMP  (BM)
+  'UklGR',         // WebP (RIFF)
+];
+
+/**
+ * Returns true if the string is a raw base-64 image or a data-URI image.
+ */
+function isBase64Image(s: string): boolean {
+  if (s.startsWith('data:image/')) return true;
+  return IMAGE_BASE64_PREFIXES.some((prefix) => s.startsWith(prefix));
+}
+
+/**
+ * Returns true if the string looks like SVG markup (possibly wrapped in a label).
+ */
+function isSvg(s: string): boolean {
+  return /^<svg[\s>]/i.test(s);
 }
 
 function isPrimitive(val: unknown): boolean {
@@ -275,6 +310,69 @@ export function formatTable(headers: string[], rows: string[][]): FormattedOutpu
 }
 
 /**
+ * Strip script tags and inline event handlers from SVG before rendering.
+ * Not a full sanitiser — Electron's sandbox provides the real enforcement.
+ */
+function sanitizeSvg(svg: string): string {
+  return svg
+    .replace(/<script[\s\S]*?<\/script>/gi, '')
+    .replace(/\s+on\w+="[^"]*"/gi, '')
+    .replace(/\s+on\w+='[^']*'/gi, '');
+}
+
+/**
+ * Format a section whose content is SVG markup.
+ */
+function formatSvg(raw: string): FormattedOutput {
+  let label: string | undefined;
+  let svgContent = raw.trim();
+
+  const labelMatch = raw.match(/^===\s+(.+?)\s+===\s*\n([\s\S]+)/);
+  if (labelMatch) {
+    label = labelMatch[1];
+    svgContent = labelMatch[2].trim();
+  }
+
+  return {
+    format: 'svg',
+    content: sanitizeSvg(svgContent),
+    metadata: { label },
+  };
+}
+
+/**
+ * Format a section whose content is a base-64 image or data URI.
+ * Normalises raw base-64 to a proper data URI so the renderer can use it in <img src>.
+ */
+function formatImage(raw: string): FormattedOutput {
+  let label: string | undefined;
+  let imageContent = raw.trim();
+
+  const labelMatch = raw.match(/^===\s+(.+?)\s+===\s*\n([\s\S]+)/);
+  if (labelMatch) {
+    label = labelMatch[1];
+    imageContent = labelMatch[2].trim();
+  }
+
+  // Detect MIME type from magic bytes and build a data URI if needed
+  let src = imageContent;
+  if (!src.startsWith('data:')) {
+    let mime = 'image/png';
+    if (src.startsWith('/9j/')) mime = 'image/jpeg';
+    else if (src.startsWith('R0lGOD')) mime = 'image/gif';
+    else if (src.startsWith('Qk0')) mime = 'image/bmp';
+    else if (src.startsWith('UklGR')) mime = 'image/webp';
+    src = `data:${mime};base64,${src}`;
+  }
+
+  return {
+    format: 'image',
+    content: src,
+    metadata: { label },
+  };
+}
+
+/**
  * Split output into sections separated by blank lines
  * Each section can have its own format (JSON, table, plain text)
  */
@@ -306,6 +404,12 @@ export function formatOutput(output: string): FormattedOutput {
       }
       break;
     }
+
+    case 'svg':
+      return formatSvg(output);
+
+    case 'image':
+      return formatImage(output);
 
     case 'html':
       return {

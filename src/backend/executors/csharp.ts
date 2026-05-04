@@ -9,7 +9,7 @@ import { promises as fs } from 'fs';
 import { tmpdir } from 'os';
 import { join } from 'path';
 import { randomUUID } from 'crypto';
-import type { QueryType } from '../../shared/types';
+import type { QueryType, NuGetReference } from '../../shared/types';
 
 // Import logger - but make it optional for tests
 let _logInfo: (msg: string, ...args: any[]) => void = console.log;
@@ -39,6 +39,8 @@ export interface ExecutionOptions {
   timeout?: number; // milliseconds, default 30000 (30s), or 0 to disable timeout
   workingDirectory?: string;
   queryType?: QueryType; // defaults to 'statements'
+  usings?: string[]; // additional namespace imports
+  references?: NuGetReference[]; // NuGet package references
 }
 
 export class CSharpExecutor {
@@ -92,11 +94,12 @@ export class CSharpExecutor {
     _logDebug(`Starting C# code execution (timeout: ${timeout}ms)`);
 
     // Create temporary file for code
-    const tempFile = await this.createTempFile(code, options.queryType ?? 'statements');
+    const tempFile = await this.createTempFile(code, options.queryType ?? 'statements', options.usings ?? [], options.references ?? []);
+
     _logDebug(`Created temp file: ${tempFile}`);
 
     try {
-      const result = await this.runDotnetScript(tempFile, timeout, onOutputChunk);
+      const result = await this.runDotnetScript(tempFile.path, timeout, tempFile.references, onOutputChunk);
 
       const executionTime = Date.now() - startTime;
       _logDebug(
@@ -112,7 +115,7 @@ export class CSharpExecutor {
       throw error;
     } finally {
       // Cleanup temp file
-      await this.deleteTempFile(tempFile);
+      await this.deleteTempFile(tempFile.path);
     }
   }
 
@@ -125,48 +128,97 @@ export class CSharpExecutor {
       '// Auto-injected by CodePad - provides .Dump() extension method',
       'public static class DumpExtensions',
       '{',
-      '    private static int _dumpCount = 0;',
-      '    ',
       '    /// <summary>',
       '    /// Dumps the object as formatted JSON to the console.',
       '    /// Returns the object for method chaining.',
       '    /// </summary>',
       '    /// <param name="obj">The object to dump</param>',
       '    /// <param name="label">Optional label to display before the output</param>',
+      '    // Overload for IEnumerable<T>: materialises to array before dumping so the',
+      '    // sequence can continue to be used in LINQ chains after .Dump().',
+      '    public static TItem[] Dump<TItem>(this System.Collections.Generic.IEnumerable<TItem> seq, string label = null)',
+      '    {',
+      '        var arr = System.Linq.Enumerable.ToArray(seq);',
+      '        DumpObject(arr, label);',
+      '        return arr;',
+      '    }',
+      '    ',
       '    public static T Dump<T>(this T obj, string label = null)',
       '    {',
-      '        // Add blank line separator (except first dump)',
-      '        if (_dumpCount++ > 0)',
-      '        {',
-      '            System.Console.WriteLine();',
-      '        }',
-      '        ',
+      '        DumpObject(obj, label);',
+      '        return obj;',
+      '    }',
+      '    ',
+      '    private static void DumpObject(object obj, string label)',
+      '    {',
       '        // Output label if provided',
       '        if (!string.IsNullOrEmpty(label))',
       '        {',
       '            System.Console.WriteLine($"=== {label} ===");',
       '        }',
       '        ',
-      '        // Serialize to JSON using fully-qualified names',
-      '        try',
+      '        // Strings are written directly — JsonSerializer would HTML-encode and quote them',
+      '        if (obj is string s)',
       '        {',
-      '            var json = System.Text.Json.JsonSerializer.Serialize(obj, new System.Text.Json.JsonSerializerOptions',
+      '            System.Console.WriteLine(s);',
+      '        }',
+      '        else',
+      '        {',
+      '            try',
       '            {',
-      '                WriteIndented = true,',
-      '                ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles,',
-      '                DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.Never',
-      '            });',
-      '            ',
-      '            System.Console.WriteLine(json);',
+      '                var json = System.Text.Json.JsonSerializer.Serialize(obj, new System.Text.Json.JsonSerializerOptions',
+      '                {',
+      '                    WriteIndented = true,',
+      '                    ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles,',
+      '                    DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.Never',
+      '                });',
+      '                System.Console.WriteLine(json);',
+      '            }',
+      '            catch (System.Exception ex)',
+      '            {',
+      '                System.Console.WriteLine($"[Dump Error: {ex.Message}]");',
+      '                System.Console.WriteLine(obj?.ToString() ?? "null");',
+      '            }',
       '        }',
-      '        catch (System.Exception ex)',
-      '        {',
-      '            // Fallback to ToString() if serialization fails',
-      '            System.Console.WriteLine($"[Dump Error: {ex.Message}]");',
-      '            System.Console.WriteLine(obj?.ToString() ?? "null");',
-      '        }',
-      '        ',
-      '        return obj;',
+      '        // Trailing blank line so the next output (another .Dump() or a',
+      '        // Console.WriteLine) always starts a new section for the renderer.',
+      '        System.Console.WriteLine();',
+      '    }',
+      '}',
+      '#endregion',
+      '',
+    ];
+  }
+
+  private getProgressExtensions(): string[] {
+    // NOTE: C# does not allow backslash escapes inside interpolation holes ($"{...}").
+    // Build JSON by concatenation so that quote characters never appear inside {}.
+    return [
+      '#region CodePad Progress',
+      'public class ProgressReporter : System.IProgress<int>',
+      '{',
+      '    private const string _prefix = "##CODEPAD:PROGRESS:";',
+      '    private int _max;',
+      '    private string _label;',
+      '    public ProgressReporter(int max = 100, string label = null) { _max = max; _label = label; }',
+      '    private static string Json(int value, int max, string label)',
+      '    {',
+      '        var core = "{\\"value\\":" + value + ",\\"max\\":" + max;',
+      '        if (label != null)',
+      '            core += ",\\"label\\":\\"" + label.Replace("\\\\", "\\\\\\\\").Replace("\\"", "\\\\\\"") + "\\"";',
+      '        return core + "}";',
+      '    }',
+      '    public void Report(int value)',
+      '    {',
+      '        System.Console.WriteLine(_prefix + Json(value, _max, _label));',
+      '    }',
+      '    public void Report(int value, string label)',
+      '    {',
+      '        System.Console.WriteLine(_prefix + Json(value, _max, label));',
+      '    }',
+      '    public void Complete(string label = null)',
+      '    {',
+      '        System.Console.WriteLine(_prefix + Json(_max, _max, label ?? _label ?? "Done"));',
       '    }',
       '}',
       '#endregion',
@@ -176,28 +228,46 @@ export class CSharpExecutor {
 
   /**
    * Extract leading directives and using statements from user code.
-   * Returns { preamble: string[], body: string[] }.
+   * Returns { preamble: string[], body: string[], inlineRefs: NuGetReference[] }.
+   *
+   * Recognises #r "nuget:PackageName/Version" (and without version) as inline
+   * NuGet references and strips them from the preamble so they don't appear in
+   * the compiled source, returning them as structured NuGetReference objects.
    */
-  private splitPreamble(code: string): { preamble: string[]; body: string[] } {
+  private splitPreamble(code: string): { preamble: string[]; body: string[]; inlineRefs: NuGetReference[] } {
     const lines = code.split('\n');
     let splitIndex = 0;
+    const inlineRefs: NuGetReference[] = [];
 
     for (let i = 0; i < lines.length; i++) {
       const trimmed = lines[i].trim();
-      if (trimmed.startsWith('#r ') || trimmed.startsWith('using ')) {
+      // #r "nuget:PackageName" or #r "nuget:PackageName/Version"
+      const nugetMatch = trimmed.match(/^#r\s+"nuget:([^/"]+)(?:\/([^"]+))?"/i);
+      if (nugetMatch) {
+        inlineRefs.push({ name: nugetMatch[1].trim(), version: nugetMatch[2]?.trim() ?? '*' });
+        splitIndex = i + 1;
+      } else if (trimmed.startsWith('#r ') || trimmed.startsWith('using ')) {
         splitIndex = i + 1;
       } else if (trimmed.length > 0 && !trimmed.startsWith('//')) {
         break;
       }
     }
 
-    return { preamble: lines.slice(0, splitIndex), body: lines.slice(splitIndex) };
+    // Strip inline nuget directives from preamble — they'd cause compiler errors
+    const preamble = lines
+      .slice(0, splitIndex)
+      .filter((line) => !line.trim().match(/^#r\s+"nuget:/i));
+
+    return { preamble, body: lines.slice(splitIndex), inlineRefs };
   }
 
-  private buildStatementsScript(preamble: string[], body: string[]): string {
+  private buildStatementsScript(preamble: string[], body: string[], extraUsings: string[]): string {
+    const usingLines = extraUsings.map((u) => `using ${u};`);
     return [
       ...preamble,
+      ...usingLines,
       ...this.getDumpExtensions(),
+      ...this.getProgressExtensions(),
       '',
       'public class Program',
       '{',
@@ -212,13 +282,16 @@ export class CSharpExecutor {
     ].join('\n');
   }
 
-  private buildExpressionScript(preamble: string[], body: string[]): string {
+  private buildExpressionScript(preamble: string[], body: string[], extraUsings: string[]): string {
     // Treat the entire body as a single expression — strip trailing semicolons/whitespace
     const expression = body.join('\n').replace(/;\s*$/, '').trim();
+    const usingLines = extraUsings.map((u) => `using ${u};`);
 
     return [
       ...preamble,
+      ...usingLines,
       ...this.getDumpExtensions(),
+      ...this.getProgressExtensions(),
       '',
       'public class Program',
       '{',
@@ -232,32 +305,48 @@ export class CSharpExecutor {
     ].join('\n');
   }
 
-  private buildProgramScript(preamble: string[], body: string[]): string {
-    // User owns Main() — inject DumpExtensions after user code so it doesn't conflict
-    // with user-defined namespaces or classes
-    return [...preamble, '', ...body, '', ...this.getDumpExtensions()].join('\n');
+  private buildProgramScript(preamble: string[], body: string[], extraUsings: string[]): string {
+    // User owns Main() — inject DumpExtensions and ProgressReporter after user code
+    const usingLines = extraUsings.map((u) => `using ${u};`);
+    return [
+      ...preamble,
+      ...usingLines,
+      '',
+      ...body,
+      '',
+      ...this.getDumpExtensions(),
+      ...this.getProgressExtensions(),
+    ].join('\n');
   }
 
   /**
    * Create temporary .cs file with code wrapped according to the query type.
    */
-  private async createTempFile(code: string, queryType: QueryType): Promise<string> {
+  private async createTempFile(code: string, queryType: QueryType, extraUsings: string[], references: NuGetReference[]): Promise<{ path: string; references: NuGetReference[] }> {
     const fileName = `codepad-${randomUUID()}.cs`;
     const filePath = join(tmpdir(), fileName);
 
-    const { preamble, body } = this.splitPreamble(code);
+    const { preamble, body, inlineRefs } = this.splitPreamble(code);
+
+    // Merge inline #r "nuget:..." refs with per-script references, deduplicating by name
+    const mergedRefs = [...references];
+    for (const ref of inlineRefs) {
+      if (!mergedRefs.some((r) => r.name.toLowerCase() === ref.name.toLowerCase())) {
+        mergedRefs.push(ref);
+      }
+    }
 
     let processedCode: string;
     switch (queryType) {
       case 'expression':
-        processedCode = this.buildExpressionScript(preamble, body);
+        processedCode = this.buildExpressionScript(preamble, body, extraUsings);
         break;
       case 'program':
-        processedCode = this.buildProgramScript(preamble, body);
+        processedCode = this.buildProgramScript(preamble, body, extraUsings);
         break;
       case 'statements':
       default:
-        processedCode = this.buildStatementsScript(preamble, body);
+        processedCode = this.buildStatementsScript(preamble, body, extraUsings);
         break;
     }
 
@@ -270,7 +359,7 @@ export class CSharpExecutor {
       // Ignore debug save errors
     }
 
-    return filePath;
+    return { path: filePath, references: mergedRefs };
   }
 
   /**
@@ -300,6 +389,7 @@ export class CSharpExecutor {
   private runDotnetScript(
     scriptPath: string,
     timeout: number,
+    references: NuGetReference[],
     onOutputChunk?: (chunk: string, isError: boolean) => void
   ): Promise<ExecutionResult> {
     return new Promise((resolve) => {
@@ -336,14 +426,24 @@ export class CSharpExecutor {
           const originalCode = await fs.readFile(scriptPath, 'utf-8');
           await fs.writeFile(csFilePath, originalCode, 'utf-8');
 
+          // Build NuGet package references
+          const nugetRefs = references
+            .filter((r: NuGetReference) => r.name && r.version)
+            .map((r: NuGetReference) => `    <PackageReference Include="${r.name}" Version="${r.version}" />`)
+            .join('\n');
+          const itemGroup = nugetRefs
+            ? `\n  <ItemGroup>\n${nugetRefs}\n  </ItemGroup>`
+            : '';
+
           // Create a proper .csproj file
           const csprojContent = `<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net8.0</TargetFramework>
-    <ImplicitUsings>disable</ImplicitUsings>
+    <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-  </PropertyGroup>
+    <NoWarn>CS0105;CS8625</NoWarn>
+  </PropertyGroup>${itemGroup}
 </Project>`;
 
           await fs.writeFile(csprojPath, csprojContent, 'utf-8');
@@ -377,8 +477,12 @@ export class CSharpExecutor {
               compileStderr += data.toString();
             });
 
+            let compileExitCode = 0;
             compileProcess.on('exit', (code) => {
-              compileResolve({ stdout: compileStdout, stderr: compileStderr, exitCode: code || 0 });
+              compileExitCode = code || 0;
+            });
+            compileProcess.on('close', () => {
+              compileResolve({ stdout: compileStdout, stderr: compileStderr, exitCode: compileExitCode });
             });
 
             compileProcess.on('error', (error) => {
@@ -466,8 +570,16 @@ export class CSharpExecutor {
             }
           });
 
-          // Handle exit
-          childProcess.on('exit', async (code) => {
+          // Use 'close' (not 'exit') so all stdout/stderr data has been flushed
+          // before we resolve. 'exit' fires when the process exits but stdio streams
+          // may still have buffered data that arrives after cleanup() removes the
+          // IPC listener, causing the tail of streaming output to be lost.
+          let exitCode = 0;
+          childProcess.on('exit', (code) => {
+            exitCode = code || 0;
+          });
+
+          childProcess.on('close', async () => {
             if (timer) clearTimeout(timer);
             this.currentProcess = null;
 
@@ -481,7 +593,7 @@ export class CSharpExecutor {
             resolve({
               stdout: stdout.trim(),
               stderr: stderr.trim(),
-              exitCode: code || 0,
+              exitCode,
               executionTime: 0, // Set by caller
               timedOut,
               error: killed ? 'Execution timed out or was stopped' : undefined,

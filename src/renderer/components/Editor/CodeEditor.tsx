@@ -10,6 +10,11 @@ export interface CodeEditorProps {
   theme?: 'vs-dark' | 'light';
   readOnly?: boolean;
   height?: string;
+  fontSize?: number;
+  tabSize?: number;
+  wordWrap?: boolean;
+  minimap?: boolean;
+  lineNumbers?: boolean;
 }
 
 export const CodeEditor: React.FC<CodeEditorProps> = ({
@@ -20,6 +25,11 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
   theme = 'vs-dark',
   readOnly = false,
   height = '100%',
+  fontSize = 14,
+  tabSize = 4,
+  wordWrap = false,
+  minimap = false,
+  lineNumbers = true,
 }) => {
   const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
 
@@ -82,16 +92,16 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
       onMount={handleEditorDidMount}
       options={{
         readOnly,
-        minimap: { enabled: true },
-        fontSize: 14,
-        lineNumbers: 'on',
+        minimap: { enabled: minimap },
+        fontSize,
+        lineNumbers: lineNumbers ? 'on' : 'off',
         roundedSelection: true,
         scrollBeyondLastLine: false,
         automaticLayout: true,
         folding: true,
         renderWhitespace: 'selection',
-        wordWrap: 'off',
-        tabSize: 4,
+        wordWrap: wordWrap ? 'on' : 'off',
+        tabSize,
         insertSpaces: true,
       }}
     />
