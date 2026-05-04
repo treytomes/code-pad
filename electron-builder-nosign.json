@@ -12,9 +12,14 @@
   },
   "extraFiles": [],
   "win": {
-    "target": "nsis",
+    "target": [
+      {
+        "target": "zip",
+        "arch": ["x64"]
+      }
+    ],
     "icon": "assets/icon.ico",
-    "sign": null
+    "forceCodeSigning": false
   },
   "mac": {
     "target": "dmg",
