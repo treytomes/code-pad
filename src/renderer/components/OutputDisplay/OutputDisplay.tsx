@@ -50,7 +50,7 @@ const OutputSection: React.FC<{ formatted: FormattedOutput }> = ({ formatted }) 
 
     case 'plain':
     default:
-      return <PlainOutput content={formatted.content} />;
+      return <PlainOutput content={formatted.content} metadata={formatted.metadata} />;
   }
 };
 
