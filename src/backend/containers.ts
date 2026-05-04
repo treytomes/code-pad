@@ -64,7 +64,10 @@ export function processContainerChunk(
       events.push(event);
       if (!seenIds.has(event.id)) {
         seenIds.add(event.id);
+        // Blank lines ensure splitOutputSections treats the slot as its own section
+        outputLines.push('');
         outputLines.push(buildSlotPlaceholder(event.id));
+        outputLines.push('');
       }
       // Subsequent refreshes for same ID: drop the line (slot stays in place)
     } else {

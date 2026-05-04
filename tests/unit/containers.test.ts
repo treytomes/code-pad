@@ -138,8 +138,30 @@ describe('processContainerChunk', () => {
     const { displayChunk, events } = processContainerChunk(chunk, seenIds);
     const lines = displayChunk.split('\n');
     expect(lines[0]).toBe('before');
-    expect(lines[1]).toBe(SLOT_PREFIX + 'c1');
-    expect(lines[2]).toBe('after');
+    // blank line, slot placeholder, blank line are inserted to isolate the section
+    expect(lines[1]).toBe('');
+    expect(lines[2]).toBe(SLOT_PREFIX + 'c1');
+    expect(lines[3]).toBe('');
+    expect(lines[4]).toBe('after');
     expect(events).toHaveLength(1);
+  });
+
+  it('slot placeholder becomes its own section when combined with adjacent text', () => {
+    // Simulate two separate chunks arriving: the sentinel, then plain text.
+    // The combined output string must let splitOutputSections isolate the slot.
+    const seenIds = new Set<string>();
+    const sentinelChunk = CONTAINER_PREFIX + JSON.stringify({ id: 'c1', content: 42 }) + '\n';
+    const { displayChunk: slotChunk } = processContainerChunk(sentinelChunk, seenIds);
+
+    // Combine as App.tsx does: prev + stripped
+    const combined = slotChunk + 'Done!\n';
+
+    // Import splitOutputSections dynamically to avoid circular dep in test
+    const sections = combined.split(/\n\s*\n/).map((s) => s.trim()).filter((s) => s.length > 0);
+    expect(sections).toContain(SLOT_PREFIX + 'c1');
+    expect(sections).toContain('Done!');
+    // The slot must be its own section (not merged with Done!)
+    const slotSection = sections.find((s) => s.startsWith(SLOT_PREFIX));
+    expect(slotSection).toBe(SLOT_PREFIX + 'c1');
   });
 });
