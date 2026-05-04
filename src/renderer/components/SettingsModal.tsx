@@ -21,6 +21,7 @@ interface SettingsModalProps {
   onClose: () => void;
   onThemeChange?: (theme: 'dark' | 'light' | 'system') => void;
   onSettingsSaved?: () => void;
+  onShowWelcome?: () => void;
 }
 
 interface Settings {
@@ -59,6 +60,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   onClose,
   onThemeChange,
   onSettingsSaved,
+  onShowWelcome,
 }) => {
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
   const [hasChanges, setHasChanges] = useState(false);
@@ -264,6 +266,17 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             Change…
           </Button>
         </Input.Group>
+      </Form.Item>
+
+      <Divider />
+
+      <Form.Item label="Welcome Screen">
+        <Button onClick={() => { onClose(); onShowWelcome?.(); }}>
+          Show Welcome Screen
+        </Button>
+        <div style={{ marginTop: '4px', color: '#858585', fontSize: '12px' }}>
+          Re-open the getting started guide
+        </div>
       </Form.Item>
     </Form>
   );

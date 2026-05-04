@@ -3,7 +3,7 @@ import { homedir } from 'os';
 import { join } from 'path';
 import { mkdirSync, existsSync } from 'fs';
 import { randomUUID } from 'crypto';
-import type { QueryType, NuGetReference } from '../shared/types';
+import type { QueryType, NuGetReference, LocalAssemblyReference } from '../shared/types';
 
 // Import logger - but make it optional for tests
 let logInfo: (msg: string, ...args: any[]) => void = console.log;
@@ -28,6 +28,7 @@ export interface Snippet {
   queryType: QueryType;
   usings: string[];
   references: NuGetReference[];
+  localReferences: LocalAssemblyReference[];
   tags: string[];
   createdAt: number;
   modifiedAt: number;
@@ -101,6 +102,7 @@ export class SnippetDatabase {
       const hasUsings = tableInfo.some((col) => col.name === 'usings');
       const hasReferences = tableInfo.some((col) => col.name === 'nuget_references');
       const hasTags = tableInfo.some((col) => col.name === 'tags');
+      const hasLocalReferences = tableInfo.some((col) => col.name === 'local_references');
 
       let ranAny = false;
 
@@ -161,6 +163,14 @@ export class SnippetDatabase {
         ranAny = true;
       }
 
+      // Migration 6: Add local_references column
+      if (!hasLocalReferences) {
+        logInfo('Running migration: Add local_references column');
+        this.db.exec(`ALTER TABLE snippets ADD COLUMN local_references TEXT NOT NULL DEFAULT '[]';`);
+        logInfo('Migration completed: local_references column added');
+        ranAny = true;
+      }
+
       logInfo(
         ranAny ? 'All database migrations completed successfully' : 'Database schema is up to date'
       );
@@ -182,14 +192,15 @@ export class SnippetDatabase {
     const queryType: QueryType = snippet.queryType ?? 'statements';
     const usings = JSON.stringify(snippet.usings ?? []);
     const references = JSON.stringify(snippet.references ?? []);
+    const localReferences = JSON.stringify(snippet.localReferences ?? []);
     const tags = JSON.stringify(snippet.tags ?? []);
 
     const stmt = this.db.prepare(`
-      INSERT INTO snippets (id, name, language, code, query_type, usings, nuget_references, tags, created_at, modified_at, execution_count, starred, last_opened_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0, NULL)
+      INSERT INTO snippets (id, name, language, code, query_type, usings, nuget_references, local_references, tags, created_at, modified_at, execution_count, starred, last_opened_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0, NULL)
     `);
 
-    stmt.run(id, snippet.name, snippet.language, snippet.code, queryType, usings, references, tags, now, now);
+    stmt.run(id, snippet.name, snippet.language, snippet.code, queryType, usings, references, localReferences, tags, now, now);
 
     return {
       id,
@@ -197,6 +208,7 @@ export class SnippetDatabase {
       queryType,
       usings: snippet.usings ?? [],
       references: snippet.references ?? [],
+      localReferences: snippet.localReferences ?? [],
       tags: snippet.tags ?? [],
       createdAt: now,
       modifiedAt: now,
@@ -219,7 +231,7 @@ export class SnippetDatabase {
   // Update
   updateSnippet(
     id: string,
-    updates: Partial<Pick<Snippet, 'name' | 'code' | 'queryType' | 'usings' | 'references' | 'tags'>>
+    updates: Partial<Pick<Snippet, 'name' | 'code' | 'queryType' | 'usings' | 'references' | 'localReferences' | 'tags'>>
   ): boolean {
     const sets: string[] = [];
     const values: any[] = [];
@@ -247,6 +259,11 @@ export class SnippetDatabase {
     if (updates.references !== undefined) {
       sets.push('nuget_references = ?');
       values.push(JSON.stringify(updates.references));
+    }
+
+    if (updates.localReferences !== undefined) {
+      sets.push('local_references = ?');
+      values.push(JSON.stringify(updates.localReferences));
     }
 
     if (updates.tags !== undefined) {
@@ -376,9 +393,11 @@ export class SnippetDatabase {
   private rowToSnippet(row: any): Snippet {
     let usings: string[] = [];
     let references: NuGetReference[] = [];
+    let localReferences: LocalAssemblyReference[] = [];
     let tags: string[] = [];
     try { usings = JSON.parse(row.usings || '[]'); } catch (_e) { /* keep empty */ }
     try { references = JSON.parse(row.nuget_references || '[]'); } catch (_e) { /* keep empty */ }
+    try { localReferences = JSON.parse(row.local_references || '[]'); } catch (_e) { /* keep empty */ }
     try { tags = JSON.parse(row.tags || '[]'); } catch (_e) { /* keep empty */ }
 
     return {
@@ -389,6 +408,7 @@ export class SnippetDatabase {
       queryType: (row.query_type as QueryType) ?? 'statements',
       usings,
       references,
+      localReferences,
       tags,
       createdAt: row.created_at,
       modifiedAt: row.modified_at,

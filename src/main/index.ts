@@ -15,7 +15,7 @@ import {
 } from '../backend/import-export';
 import { createApplicationMenu } from './menu';
 import { logInfo, logError, logWarn, logDebug } from '../shared/logger';
-import type { QueryType, NuGetReference } from '../shared/types';
+import type { QueryType, NuGetReference, LocalAssemblyReference } from '../shared/types';
 
 const execFileAsync = promisify(execFile);
 
@@ -299,7 +299,7 @@ function createWindow() {
 // IPC Handlers
 electron.ipcMain.handle(
   'execute-code',
-  async (event, code: string, options?: { timeout?: number; queryType?: QueryType; usings?: string[]; references?: NuGetReference[] }) => {
+  async (event, code: string, options?: { timeout?: number; queryType?: QueryType; usings?: string[]; references?: NuGetReference[]; localReferences?: LocalAssemblyReference[] }) => {
     logDebug('Execute code request received');
     try {
       const result = await csharpExecutor.execute(

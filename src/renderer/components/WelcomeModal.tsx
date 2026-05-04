@@ -30,17 +30,25 @@ const Tip: React.FC<TipProps> = ({ icon, shortcut, description }) => (
   </div>
 );
 
-export const WelcomeModal: React.FC = () => {
+interface WelcomeModalProps {
+  forceOpen?: boolean;
+  onClose?: () => void;
+}
+
+export const WelcomeModal: React.FC<WelcomeModalProps> = ({ forceOpen, onClose }) => {
   const [visible, setVisible] = useState(() => !localStorage.getItem(STORAGE_KEY));
+
+  const effectiveVisible = forceOpen ?? visible;
 
   const handleDismiss = () => {
     localStorage.setItem(STORAGE_KEY, '1');
     setVisible(false);
+    onClose?.();
   };
 
   return (
     <Modal
-      open={visible}
+      open={effectiveVisible}
       onCancel={handleDismiss}
       onOk={handleDismiss}
       okText="Get Started"

@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Modal, Button, Input, Space, Typography, Divider, Table, Tag } from 'antd';
 import { PlusOutlined, DeleteOutlined } from '@ant-design/icons';
-import type { NuGetReference } from '../../shared/types';
+import type { NuGetReference, LocalAssemblyReference } from '../../shared/types';
 
 const { Text } = Typography;
 
 export interface ScriptProperties {
   usings: string[];
   references: NuGetReference[];
+  localReferences: LocalAssemblyReference[];
   tags: string[];
 }
 
@@ -22,20 +23,24 @@ interface Props {
 export default function ScriptPropertiesModal({ open, properties, onOk, onCancel, isDark = true }: Props) {
   const [usings, setUsings] = useState<string[]>([]);
   const [references, setReferences] = useState<NuGetReference[]>([]);
+  const [localReferences, setLocalReferences] = useState<LocalAssemblyReference[]>([]);
   const [tags, setTags] = useState<string[]>([]);
   const [newUsing, setNewUsing] = useState('');
   const [newRefName, setNewRefName] = useState('');
   const [newRefVersion, setNewRefVersion] = useState('');
+  const [newLocalRefPath, setNewLocalRefPath] = useState('');
   const [newTag, setNewTag] = useState('');
 
   useEffect(() => {
     if (open) {
       setUsings([...properties.usings]);
       setReferences([...properties.references]);
+      setLocalReferences([...(properties.localReferences ?? [])]);
       setTags([...(properties.tags ?? [])]);
       setNewUsing('');
       setNewRefName('');
       setNewRefVersion('');
+      setNewLocalRefPath('');
       setNewTag('');
     }
   }, [open, properties]);
@@ -64,6 +69,17 @@ export default function ScriptPropertiesModal({ open, properties, onOk, onCancel
     setReferences(references.filter((_, i) => i !== index));
   };
 
+  const addLocalReference = () => {
+    const path = newLocalRefPath.trim();
+    if (!path || localReferences.some((r) => r.path === path)) return;
+    setLocalReferences([...localReferences, { path }]);
+    setNewLocalRefPath('');
+  };
+
+  const removeLocalReference = (index: number) => {
+    setLocalReferences(localReferences.filter((_, i) => i !== index));
+  };
+
   const addTag = () => {
     const trimmed = newTag.trim().toLowerCase().replace(/\s+/g, '-');
     if (!trimmed || tags.includes(trimmed)) return;
@@ -76,7 +92,7 @@ export default function ScriptPropertiesModal({ open, properties, onOk, onCancel
   };
 
   const handleOk = () => {
-    onOk({ usings, references, tags });
+    onOk({ usings, references, localReferences, tags });
   };
 
   const inputStyle: React.CSSProperties = {
@@ -188,6 +204,45 @@ export default function ScriptPropertiesModal({ open, properties, onOk, onCancel
           style={{ ...inputStyle, width: 120 }}
         />
         <Button icon={<PlusOutlined />} onClick={addReference}>Add</Button>
+      </Space.Compact>
+
+      <Divider style={{ margin: '16px 0' }} />
+
+      {/* Local Assembly References */}
+      <Text style={labelStyle}>Local Assembly References</Text>
+      <Text style={subtextStyle}>
+        Paths to local <code>.dll</code> files. Relative paths are resolved from the project directory.
+        You can also use <code>#r "path/to/assembly.dll"</code> inline in your script.
+      </Text>
+
+      {localReferences.length > 0 && (
+        <Space direction="vertical" style={{ width: '100%', marginBottom: 12 }}>
+          {localReferences.map((ref, i) => (
+            <Space key={i} style={{ width: '100%', justifyContent: 'space-between' }}>
+              <Text style={{ color: isDark ? '#cccccc' : '#1f1f1f', fontFamily: 'monospace', fontSize: 12 }}>
+                {ref.path}
+              </Text>
+              <Button
+                type="text"
+                danger
+                size="small"
+                icon={<DeleteOutlined />}
+                onClick={() => removeLocalReference(i)}
+              />
+            </Space>
+          ))}
+        </Space>
+      )}
+
+      <Space.Compact style={{ width: '100%', marginBottom: 4 }}>
+        <Input
+          placeholder="e.g. /path/to/MyLibrary.dll"
+          value={newLocalRefPath}
+          onChange={(e) => setNewLocalRefPath(e.target.value)}
+          onPressEnter={addLocalReference}
+          style={inputStyle}
+        />
+        <Button icon={<PlusOutlined />} onClick={addLocalReference}>Add</Button>
       </Space.Compact>
 
       <Divider style={{ margin: '16px 0' }} />

@@ -174,12 +174,13 @@ function App() {
   const [saveModalVisible, setSaveModalVisible] = useState(false);
   const [aboutVisible, setAboutVisible] = useState(false);
   const [settingsVisible, setSettingsVisible] = useState(false);
+  const [welcomeVisible, setWelcomeVisible] = useState(false);
   const [snippetName, setSnippetName] = useState('');
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [cursorLine, setCursorLine] = useState(1);
   const [cursorColumn, setCursorColumn] = useState(1);
   const [queryType, setQueryType] = useState<QueryType>('statements');
-  const [scriptProperties, setScriptProperties] = useState<ScriptProperties>({ usings: [], references: [], tags: [] });
+  const [scriptProperties, setScriptProperties] = useState<ScriptProperties>({ usings: [], references: [], localReferences: [], tags: [] });
   const [scriptPropertiesVisible, setScriptPropertiesVisible] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const layoutRef = useRef<HTMLDivElement>(null);
@@ -253,6 +254,7 @@ function App() {
           queryType,
           usings: scriptProperties.usings,
           references: scriptProperties.references,
+          localReferences: scriptProperties.localReferences,
         }),
         window.electronAPI.onOutputDone(),
       ]);
@@ -322,6 +324,7 @@ function App() {
         queryType,
         usings: scriptProperties.usings,
         references: scriptProperties.references,
+        localReferences: scriptProperties.localReferences,
         tags: scriptProperties.tags,
       });
       savedCodeRef.current = code;
@@ -347,6 +350,7 @@ function App() {
         queryType,
         usings: scriptProperties.usings,
         references: scriptProperties.references,
+        localReferences: scriptProperties.localReferences,
         tags: scriptProperties.tags,
       });
 
@@ -375,7 +379,7 @@ function App() {
     setHasUnsavedChanges(false);
     setCurrentSnippetId(snippet.id);
     setQueryType(snippet.queryType ?? 'statements');
-    setScriptProperties({ usings: snippet.usings ?? [], references: snippet.references ?? [], tags: snippet.tags ?? [] });
+    setScriptProperties({ usings: snippet.usings ?? [], references: snippet.references ?? [], localReferences: snippet.localReferences ?? [], tags: snippet.tags ?? [] });
     setOutput('');
 
     // Update last opened timestamp
@@ -423,6 +427,7 @@ function App() {
         queryType: snippet.queryType,
         usings: snippet.usings ?? [],
         references: snippet.references ?? [],
+        localReferences: snippet.localReferences ?? [],
         tags: snippet.tags ?? [],
       });
       message.success('Snippet duplicated');
@@ -434,7 +439,7 @@ function App() {
       setHasUnsavedChanges(false);
       setCurrentSnippetId(newSnippet.id);
       setQueryType(newSnippet.queryType ?? 'statements');
-      setScriptProperties({ usings: newSnippet.usings ?? [], references: newSnippet.references ?? [], tags: newSnippet.tags ?? [] });
+      setScriptProperties({ usings: newSnippet.usings ?? [], references: newSnippet.references ?? [], localReferences: newSnippet.localReferences ?? [], tags: newSnippet.tags ?? [] });
       setOutput('');
     } catch (error) {
       message.error('Failed to duplicate snippet');
@@ -455,7 +460,7 @@ function App() {
     setHasUnsavedChanges(false);
     setCurrentSnippetId(null);
     setQueryType('statements');
-    setScriptProperties({ usings: [], references: [], tags: [] });
+    setScriptProperties({ usings: [], references: [], localReferences: [], tags: [] });
     setOutput('');
   };
 
@@ -764,7 +769,7 @@ function App() {
     <ConfigProvider theme={themeConfig}>
       <Layout style={{ height: '100vh', background: bgMain }}>
         <RuntimeWarning />
-        <WelcomeModal />
+        <WelcomeModal forceOpen={welcomeVisible || undefined} onClose={() => setWelcomeVisible(false)} />
         <Header
           style={{
             display: 'flex',
@@ -1089,6 +1094,7 @@ function App() {
           visible={settingsVisible}
           onClose={() => setSettingsVisible(false)}
           onThemeChange={setAppTheme}
+          onShowWelcome={() => setWelcomeVisible(true)}
           onSettingsSaved={() => {
             const s = loadSavedSettings();
             setEditorFontSize(s.fontSize);
@@ -1108,6 +1114,7 @@ function App() {
               window.electronAPI.db.updateSnippet(currentSnippetId, {
                 usings: props.usings,
                 references: props.references,
+                localReferences: props.localReferences,
                 tags: props.tags,
               });
             }
