@@ -1042,6 +1042,7 @@ function App() {
 
               {/* Output content */}
               <div
+                data-testid="output-panel"
                 style={{
                   flex: 1,
                   overflowY: 'auto',

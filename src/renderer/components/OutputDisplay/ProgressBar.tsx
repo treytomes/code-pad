@@ -14,6 +14,7 @@ export const ProgressBar: React.FC<ProgressBarProps> = ({ events }) => {
 
   return (
     <div
+      data-testid="progress-bar"
       style={{
         padding: '10px 12px 8px',
         borderBottom: '1px solid #2d2d30',

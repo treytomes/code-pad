@@ -52,6 +52,7 @@ export const WelcomeModal: React.FC<WelcomeModalProps> = ({ forceOpen, onClose }
       onCancel={handleDismiss}
       onOk={handleDismiss}
       okText="Get Started"
+      okButtonProps={{ 'data-testid': 'welcome-get-started' } as any}
       cancelButtonProps={{ style: { display: 'none' } }}
       width={480}
       title={null}

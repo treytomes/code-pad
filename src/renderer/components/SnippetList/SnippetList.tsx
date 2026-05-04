@@ -290,6 +290,7 @@ export const SnippetList: React.FC<SnippetListProps> = ({
   // Render a sample snippet item
   const renderSampleItem = (sample: SampleSnippet) => (
     <List.Item
+      data-testid={`sample-item-${sample.id}`}
       onClick={() => {
         // Convert sample to snippet format for loading
         onSelectSnippet({
@@ -392,6 +393,7 @@ export const SnippetList: React.FC<SnippetListProps> = ({
       {/* Custom tab bar — onMouseDown prevents focus leaving the editor */}
       <div style={tabBarStyle}>
         <button
+          data-testid="tab-my-snippets"
           style={makeTabButtonStyle('my-snippets')}
           onMouseDown={(e) => e.preventDefault()}
           onClick={() => setActiveTab('my-snippets')}
@@ -399,6 +401,7 @@ export const SnippetList: React.FC<SnippetListProps> = ({
           <FolderOutlined /> My Snippets
         </button>
         <button
+          data-testid="tab-samples"
           style={makeTabButtonStyle('samples')}
           onMouseDown={(e) => e.preventDefault()}
           onClick={() => setActiveTab('samples')}
