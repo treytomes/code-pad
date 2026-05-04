@@ -166,14 +166,14 @@ export default function ScriptPropertiesModal({ open, properties, onOk, onCancel
           dataSource={references.map((r, i) => ({ ...r, key: i }))}
           pagination={false}
           size="small"
-          style={{ marginBottom: 12 }}
+          style={{ width: '100%', marginBottom: 12, tableLayout: 'fixed' }}
           columns={[
-            { title: 'Package', dataIndex: 'name', key: 'name' },
-            { title: 'Version', dataIndex: 'version', key: 'version', width: 120 },
+            { title: 'Package', dataIndex: 'name', key: 'name', ellipsis: true },
+            { title: 'Version', dataIndex: 'version', key: 'version', width: 120, ellipsis: true },
             {
               title: '',
               key: 'action',
-              width: 40,
+              width: 48,
               render: (_: any, __: any, index: number) => (
                 <Button
                   type="text"
