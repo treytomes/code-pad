@@ -38,6 +38,7 @@ const mockElectronAPI = {
     outputChunkCallback = cb;
     return vi.fn(); // cleanup function
   }),
+  onOutputDone: vi.fn(() => Promise.resolve()),
   onMenuEvent: vi.fn(() => vi.fn()), // Returns cleanup function
   exportSnippet: vi.fn(),
   importSnippet: vi.fn(),

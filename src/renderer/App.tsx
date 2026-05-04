@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import {
   Button,
   Layout,
@@ -33,6 +33,7 @@ import { StatusBar } from './components/StatusBar';
 import { WelcomeModal } from './components/WelcomeModal';
 import ScriptPropertiesModal, { type ScriptProperties } from './components/ScriptPropertiesModal';
 import type { Snippet } from '../backend/database';
+import { extractProgressEvents, stripProgressLines, type ProgressEvent } from '../backend/progress';
 
 const { Header, Content, Sider } = Layout;
 
@@ -141,6 +142,7 @@ function App() {
 
   const [code, setCode] = useState(DEFAULT_CODE_STATEMENTS);
   const [output, setOutput] = useState('');
+  const [progressEvents, setProgressEvents] = useState<ProgressEvent[]>([]);
   const [isRunning, setIsRunning] = useState(false);
   const [executionTime, setExecutionTime] = useState<number | null>(null);
   const executionTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -179,11 +181,15 @@ function App() {
   const containerRef = useRef<HTMLDivElement>(null);
   const layoutRef = useRef<HTMLDivElement>(null);
 
-  const handleCodeChange = (newCode: string) => {
+  const handleCodeChange = useCallback((newCode: string) => {
     setCode(newCode);
-    // Check if code has changed from saved version
     setHasUnsavedChanges(newCode !== savedCodeRef.current);
-  };
+  }, []);
+
+  const handleCursorChange = useCallback((line: number, col: number) => {
+    setCursorLine(line);
+    setCursorColumn(col);
+  }, []);
 
   const handleStop = async () => {
     try {
@@ -198,6 +204,7 @@ function App() {
   const handleRun = async () => {
     setIsRunning(true);
     setOutput('');
+    setProgressEvents([]);
 
     // Start live timer
     executionStartRef.current = performance.now();
@@ -208,18 +215,28 @@ function App() {
       setExecutionTime(elapsed);
     }, 100); // Update every 100ms
 
-    // Subscribe to streaming output
+    // Subscribe to streaming output — intercept progress sentinel lines
     const cleanup = window.electronAPI.onOutputChunk((chunk: string, _isError: boolean) => {
-      setOutput((prev) => prev + chunk);
+      const events = extractProgressEvents(chunk);
+      if (events.length > 0) {
+        setProgressEvents((prev) => [...prev, ...events]);
+      }
+      const stripped = stripProgressLines(chunk);
+      if (stripped) {
+        setOutput((prev) => prev + stripped);
+      }
     });
 
     try {
-      const result = await window.electronAPI.executeCode(code, {
-        timeout,
-        queryType,
-        usings: scriptProperties.usings,
-        references: scriptProperties.references,
-      });
+      const [result] = await Promise.all([
+        window.electronAPI.executeCode(code, {
+          timeout,
+          queryType,
+          usings: scriptProperties.usings,
+          references: scriptProperties.references,
+        }),
+        window.electronAPI.onOutputDone(),
+      ]);
 
       // Stop timer and set final time
       if (executionTimerRef.current) {
@@ -229,7 +246,9 @@ function App() {
       const finalTime = Math.round(performance.now() - executionStartRef.current);
       setExecutionTime(finalTime);
 
-      // Clean up output subscription
+      // Clean up output subscription — safe now that onOutputDone has resolved,
+      // meaning the 'execution-output-done' sentinel has been received and all
+      // preceding chunks are guaranteed to have arrived.
       cleanup();
 
       // Show error if execution failed
@@ -905,10 +924,7 @@ function App() {
                 value={code}
                 onChange={handleCodeChange}
                 theme={monacoTheme}
-                onCursorChange={(line, col) => {
-                  setCursorLine(line);
-                  setCursorColumn(col);
-                }}
+                onCursorChange={handleCursorChange}
                 fontSize={editorFontSize}
                 tabSize={editorTabSize}
                 wordWrap={editorWordWrap}
@@ -1009,7 +1025,7 @@ function App() {
                 }}
               >
                 {output ? (
-                  <OutputDisplay output={output} />
+                  <OutputDisplay output={output} progressEvents={progressEvents} />
                 ) : (
                   <div
                     style={{

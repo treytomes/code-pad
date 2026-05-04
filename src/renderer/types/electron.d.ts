@@ -40,6 +40,7 @@ export interface ElectronAPI {
   exportAllSnippets: (snippets: any[]) => Promise<any>;
 
   onOutputChunk: (callback: (chunk: string, isError: boolean) => void) => () => void;
+  onOutputDone: () => Promise<void>;
 
   onMenuEvent: (event: string, callback: () => void) => () => void;
 

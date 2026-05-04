@@ -128,8 +128,6 @@ export class CSharpExecutor {
       '// Auto-injected by CodePad - provides .Dump() extension method',
       'public static class DumpExtensions',
       '{',
-      '    private static int _dumpCount = 0;',
-      '    ',
       '    /// <summary>',
       '    /// Dumps the object as formatted JSON to the console.',
       '    /// Returns the object for method chaining.',
@@ -153,36 +151,74 @@ export class CSharpExecutor {
       '    ',
       '    private static void DumpObject(object obj, string label)',
       '    {',
-      '        // Add blank line separator (except first dump)',
-      '        if (_dumpCount++ > 0)',
-      '        {',
-      '            System.Console.WriteLine();',
-      '        }',
-      '        ',
       '        // Output label if provided',
       '        if (!string.IsNullOrEmpty(label))',
       '        {',
       '            System.Console.WriteLine($"=== {label} ===");',
       '        }',
       '        ',
-      '        // Serialize to JSON using fully-qualified names',
-      '        try',
+      '        // Strings are written directly — JsonSerializer would HTML-encode and quote them',
+      '        if (obj is string s)',
       '        {',
-      '            var json = System.Text.Json.JsonSerializer.Serialize(obj, new System.Text.Json.JsonSerializerOptions',
+      '            System.Console.WriteLine(s);',
+      '        }',
+      '        else',
+      '        {',
+      '            try',
       '            {',
-      '                WriteIndented = true,',
-      '                ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles,',
-      '                DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.Never',
-      '            });',
-      '            ',
-      '            System.Console.WriteLine(json);',
+      '                var json = System.Text.Json.JsonSerializer.Serialize(obj, new System.Text.Json.JsonSerializerOptions',
+      '                {',
+      '                    WriteIndented = true,',
+      '                    ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles,',
+      '                    DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.Never',
+      '                });',
+      '                System.Console.WriteLine(json);',
+      '            }',
+      '            catch (System.Exception ex)',
+      '            {',
+      '                System.Console.WriteLine($"[Dump Error: {ex.Message}]");',
+      '                System.Console.WriteLine(obj?.ToString() ?? "null");',
+      '            }',
       '        }',
-      '        catch (System.Exception ex)',
-      '        {',
-      '            // Fallback to ToString() if serialization fails',
-      '            System.Console.WriteLine($"[Dump Error: {ex.Message}]");',
-      '            System.Console.WriteLine(obj?.ToString() ?? "null");',
-      '        }',
+      '        // Trailing blank line so the next output (another .Dump() or a',
+      '        // Console.WriteLine) always starts a new section for the renderer.',
+      '        System.Console.WriteLine();',
+      '    }',
+      '}',
+      '#endregion',
+      '',
+    ];
+  }
+
+  private getProgressExtensions(): string[] {
+    // NOTE: C# does not allow backslash escapes inside interpolation holes ($"{...}").
+    // Build JSON by concatenation so that quote characters never appear inside {}.
+    return [
+      '#region CodePad Progress',
+      'public class ProgressReporter : System.IProgress<int>',
+      '{',
+      '    private const string _prefix = "##CODEPAD:PROGRESS:";',
+      '    private int _max;',
+      '    private string _label;',
+      '    public ProgressReporter(int max = 100, string label = null) { _max = max; _label = label; }',
+      '    private static string Json(int value, int max, string label)',
+      '    {',
+      '        var core = "{\\"value\\":" + value + ",\\"max\\":" + max;',
+      '        if (label != null)',
+      '            core += ",\\"label\\":\\"" + label.Replace("\\\\", "\\\\\\\\").Replace("\\"", "\\\\\\"") + "\\"";',
+      '        return core + "}";',
+      '    }',
+      '    public void Report(int value)',
+      '    {',
+      '        System.Console.WriteLine(_prefix + Json(value, _max, _label));',
+      '    }',
+      '    public void Report(int value, string label)',
+      '    {',
+      '        System.Console.WriteLine(_prefix + Json(value, _max, label));',
+      '    }',
+      '    public void Complete(string label = null)',
+      '    {',
+      '        System.Console.WriteLine(_prefix + Json(_max, _max, label ?? _label ?? "Done"));',
       '    }',
       '}',
       '#endregion',
@@ -231,6 +267,7 @@ export class CSharpExecutor {
       ...preamble,
       ...usingLines,
       ...this.getDumpExtensions(),
+      ...this.getProgressExtensions(),
       '',
       'public class Program',
       '{',
@@ -254,6 +291,7 @@ export class CSharpExecutor {
       ...preamble,
       ...usingLines,
       ...this.getDumpExtensions(),
+      ...this.getProgressExtensions(),
       '',
       'public class Program',
       '{',
@@ -268,10 +306,17 @@ export class CSharpExecutor {
   }
 
   private buildProgramScript(preamble: string[], body: string[], extraUsings: string[]): string {
-    // User owns Main() — inject DumpExtensions after user code so it doesn't conflict
-    // with user-defined namespaces or classes
+    // User owns Main() — inject DumpExtensions and ProgressReporter after user code
     const usingLines = extraUsings.map((u) => `using ${u};`);
-    return [...preamble, ...usingLines, '', ...body, '', ...this.getDumpExtensions()].join('\n');
+    return [
+      ...preamble,
+      ...usingLines,
+      '',
+      ...body,
+      '',
+      ...this.getDumpExtensions(),
+      ...this.getProgressExtensions(),
+    ].join('\n');
   }
 
   /**
@@ -432,8 +477,12 @@ export class CSharpExecutor {
               compileStderr += data.toString();
             });
 
+            let compileExitCode = 0;
             compileProcess.on('exit', (code) => {
-              compileResolve({ stdout: compileStdout, stderr: compileStderr, exitCode: code || 0 });
+              compileExitCode = code || 0;
+            });
+            compileProcess.on('close', () => {
+              compileResolve({ stdout: compileStdout, stderr: compileStderr, exitCode: compileExitCode });
             });
 
             compileProcess.on('error', (error) => {
@@ -521,8 +570,16 @@ export class CSharpExecutor {
             }
           });
 
-          // Handle exit
-          childProcess.on('exit', async (code) => {
+          // Use 'close' (not 'exit') so all stdout/stderr data has been flushed
+          // before we resolve. 'exit' fires when the process exits but stdio streams
+          // may still have buffered data that arrives after cleanup() removes the
+          // IPC listener, causing the tail of streaming output to be lost.
+          let exitCode = 0;
+          childProcess.on('exit', (code) => {
+            exitCode = code || 0;
+          });
+
+          childProcess.on('close', async () => {
             if (timer) clearTimeout(timer);
             this.currentProcess = null;
 
@@ -536,7 +593,7 @@ export class CSharpExecutor {
             resolve({
               stdout: stdout.trim(),
               stderr: stderr.trim(),
-              exitCode: code || 0,
+              exitCode,
               executionTime: 0, // Set by caller
               timedOut,
               error: killed ? 'Execution timed out or was stopped' : undefined,

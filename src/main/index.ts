@@ -313,6 +313,10 @@ electron.ipcMain.handle(
       logDebug(
         `Code execution completed: exitCode=${result.exitCode}, time=${result.executionTime}ms`
       );
+      // Send done sentinel through the same IPC channel as the chunks so the
+      // renderer knows all data has arrived before it removes its listener.
+      // The invoke reply travels a separate path and can race past pending chunks.
+      event.sender.send('execution-output-done');
       return result;
     } catch (error) {
       logError('Code execution failed', error);

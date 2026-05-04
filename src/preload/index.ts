@@ -65,6 +65,13 @@ contextBridge.exposeInMainWorld('electronAPI', {
     };
   },
 
+  // Resolves when the main process has finished sending all output chunks.
+  // Awaiting this before cleanup() ensures no trailing chunks are dropped.
+  onOutputDone: () =>
+    new Promise<void>((resolve) => {
+      ipcRenderer.once('execution-output-done', () => resolve());
+    }),
+
   // Menu event listeners
   onMenuEvent: (event: string, callback: () => void) => {
     const listener = () => callback();

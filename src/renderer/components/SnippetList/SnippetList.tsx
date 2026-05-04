@@ -9,7 +9,6 @@ import {
   Input,
   Space,
   Divider,
-  Tabs,
   Tag,
 } from 'antd';
 import {
@@ -67,6 +66,7 @@ export const SnippetList: React.FC<SnippetListProps> = ({
   const [searchText, setSearchText] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState('');
+  const [activeTab, setActiveTab] = useState<'my-snippets' | 'samples'>('my-snippets');
 
   const loadSnippets = useCallback(async () => {
     setLoading(true);
@@ -356,6 +356,29 @@ export const SnippetList: React.FC<SnippetListProps> = ({
     </List.Item>
   );
 
+  const tabBarStyle: React.CSSProperties = {
+    display: 'flex',
+    flexShrink: 0,
+    borderBottom: `1px solid ${border}`,
+    background: bg,
+    padding: '0 8px',
+  };
+
+  const makeTabButtonStyle = (key: string): React.CSSProperties => ({
+    padding: '8px 12px',
+    cursor: 'pointer',
+    border: 'none',
+    background: 'transparent',
+    color: activeTab === key ? '#007acc' : textSecondary,
+    borderBottom: activeTab === key ? '2px solid #007acc' : '2px solid transparent',
+    fontFamily: 'inherit',
+    fontSize: '13px',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '6px',
+    marginBottom: '-1px',
+  });
+
   return (
     <div
       style={{
@@ -363,230 +386,224 @@ export const SnippetList: React.FC<SnippetListProps> = ({
         display: 'flex',
         flexDirection: 'column',
         background: bg,
+        overflow: 'hidden',
       }}
     >
-      <Tabs
-        defaultActiveKey="my-snippets"
-        style={{ height: '100%' }}
-        items={[
-          {
-            key: 'my-snippets',
-            label: (
-              <span>
-                <FolderOutlined /> My Snippets
-              </span>
-            ),
-            children: (
+      {/* Custom tab bar — onMouseDown prevents focus leaving the editor */}
+      <div style={tabBarStyle}>
+        <button
+          style={makeTabButtonStyle('my-snippets')}
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={() => setActiveTab('my-snippets')}
+        >
+          <FolderOutlined /> My Snippets
+        </button>
+        <button
+          style={makeTabButtonStyle('samples')}
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={() => setActiveTab('samples')}
+        >
+          <BookOutlined /> Samples
+        </button>
+      </div>
+
+      {/* My Snippets pane */}
+      {activeTab === 'my-snippets' && (
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+          <div
+            style={{
+              padding: '8px',
+              borderBottom: `1px solid ${border}`,
+              background: bg,
+              flexShrink: 0,
+            }}
+          >
+            <Space direction="vertical" style={{ width: '100%' }} size="small">
+              <Select
+                placeholder="Filter by language"
+                allowClear
+                style={{ width: '100%' }}
+                onChange={setLanguageFilter}
+                value={languageFilter}
+              >
+                <Option value="csharp">C#</Option>
+                <Option value="python">Python</Option>
+                <Option value="javascript">JavaScript</Option>
+              </Select>
+              <Input
+                placeholder="Search snippets..."
+                prefix={<SearchOutlined style={{ color: textSecondary }} />}
+                allowClear
+                value={searchText}
+                onChange={(e) => setSearchText(e.target.value)}
+                style={{
+                  backgroundColor: inputBg,
+                  borderColor: border,
+                  color: textPrimary,
+                }}
+              />
+            </Space>
+          </div>
+
+          {/* Tag filter chips */}
+          {allTags.length > 0 && (
+            <div style={{ padding: '4px 8px 6px', borderBottom: `1px solid ${border}`, display: 'flex', flexWrap: 'wrap', gap: 4, flexShrink: 0 }}>
+              {allTags.map((tag) => (
+                <Tag
+                  key={tag}
+                  color={activeTag === tag ? 'blue' : undefined}
+                  style={{
+                    cursor: 'pointer',
+                    backgroundColor: activeTag === tag ? undefined : (isDark ? '#2d2d30' : '#f0f0f0'),
+                    borderColor: activeTag === tag ? undefined : border,
+                    color: activeTag === tag ? undefined : textSecondary,
+                    margin: 0,
+                  }}
+                  onClick={() => setActiveTag(activeTag === tag ? null : tag)}
+                >
+                  {tag}
+                </Tag>
+              ))}
+            </div>
+          )}
+
+          <div style={{ flex: 1, overflowY: 'auto', background: bg }}>
+            {/* Starred Snippets Section */}
+            {filteredStarred.length > 0 && (
               <>
                 <div
                   style={{
-                    padding: '8px',
+                    padding: '12px 12px 8px',
                     borderBottom: `1px solid ${border}`,
-                    background: bg,
                   }}
                 >
-                  <Space direction="vertical" style={{ width: '100%' }} size="small">
-                    <Select
-                      placeholder="Filter by language"
-                      allowClear
-                      style={{ width: '100%' }}
-                      onChange={setLanguageFilter}
-                      value={languageFilter}
-                    >
-                      <Option value="csharp">C#</Option>
-                      <Option value="python">Python</Option>
-                      <Option value="javascript">JavaScript</Option>
-                    </Select>
-                    <Input
-                      placeholder="Search snippets..."
-                      prefix={<SearchOutlined style={{ color: textSecondary }} />}
-                      allowClear
-                      value={searchText}
-                      onChange={(e) => setSearchText(e.target.value)}
-                      style={{
-                        backgroundColor: inputBg,
-                        borderColor: border,
-                        color: textPrimary,
-                      }}
-                    />
-                  </Space>
-                </div>
-
-                {/* Tag filter chips */}
-                {allTags.length > 0 && (
-                  <div style={{ padding: '4px 8px 6px', borderBottom: `1px solid ${border}`, display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-                    {allTags.map((tag) => (
-                      <Tag
-                        key={tag}
-                        color={activeTag === tag ? 'blue' : undefined}
-                        style={{
-                          cursor: 'pointer',
-                          backgroundColor: activeTag === tag ? undefined : (isDark ? '#2d2d30' : '#f0f0f0'),
-                          borderColor: activeTag === tag ? undefined : border,
-                          color: activeTag === tag ? undefined : textSecondary,
-                          margin: 0,
-                        }}
-                        onClick={() => setActiveTag(activeTag === tag ? null : tag)}
-                      >
-                        {tag}
-                      </Tag>
-                    ))}
-                  </div>
-                )}
-
-                <div style={{ flex: 1, overflowY: 'auto', background: bg }}>
-                  {/* Starred Snippets Section */}
-                  {filteredStarred.length > 0 && (
-                    <>
-                      <div
-                        style={{
-                          padding: '12px 12px 8px',
-                          borderBottom: `1px solid ${border}`,
-                        }}
-                      >
-                        <Text
-                          strong
-                          style={{
-                            color: '#ffc107',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '6px',
-                          }}
-                        >
-                          <StarFilled /> Starred
-                          {searchText && (
-                            <Text
-                              style={{ fontSize: '12px', color: textSecondary, marginLeft: '8px' }}
-                            >
-                              ({filteredStarred.length}/{starredSnippets.length})
-                            </Text>
-                          )}
-                        </Text>
-                      </div>
-                      <List
-                        dataSource={filteredStarred}
-                        renderItem={(snippet) => renderSnippetItem(snippet)}
-                        split={false}
-                      />
-                      <Divider style={{ margin: '8px 0', backgroundColor: border }} />
-                    </>
-                  )}
-
-                  {/* Recently Opened Section */}
-                  {filteredRecent.length > 0 && (
-                    <>
-                      <div
-                        style={{
-                          padding: '12px 12px 8px',
-                          borderBottom: `1px solid ${border}`,
-                        }}
-                      >
-                        <Text
-                          strong
-                          style={{
-                            color: '#569cd6',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '6px',
-                          }}
-                        >
-                          <ClockCircleOutlined /> Recently Opened
-                          {searchText && (
-                            <Text
-                              style={{ fontSize: '12px', color: textSecondary, marginLeft: '8px' }}
-                            >
-                              ({filteredRecent.length}/{recentSnippets.length})
-                            </Text>
-                          )}
-                        </Text>
-                      </div>
-                      <List
-                        dataSource={filteredRecent}
-                        renderItem={(snippet) => renderSnippetItem(snippet)}
-                        split={false}
-                      />
-                      <Divider style={{ margin: '8px 0', backgroundColor: border }} />
-                    </>
-                  )}
-
-                  {/* All Snippets Section */}
-                  <div
+                  <Text
+                    strong
                     style={{
-                      padding: '12px 12px 8px',
-                      borderBottom: `1px solid ${border}`,
+                      color: '#ffc107',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
                     }}
                   >
-                    <Text strong style={{ color: textPrimary }}>
-                      All Snippets
-                      {searchText && (
-                        <Text style={{ fontSize: '12px', color: textSecondary, marginLeft: '8px' }}>
-                          ({filteredSnippets.length}/{snippets.length})
-                        </Text>
-                      )}
-                    </Text>
-                  </div>
-                  <List
-                    loading={loading}
-                    dataSource={filteredSnippets}
-                    locale={{
-                      emptyText: (
-                        <Empty
-                          image={Empty.PRESENTED_IMAGE_SIMPLE}
-                          description={
-                            searchText
-                              ? `No snippets found matching "${searchText}"`
-                              : 'No snippets yet'
-                          }
-                        />
-                      ),
-                    }}
-                    split={false}
-                    renderItem={(snippet) => renderSnippetItem(snippet)}
-                  />
-                </div>
-              </>
-            ),
-          },
-          {
-            key: 'samples',
-            label: (
-              <span>
-                <BookOutlined /> Samples
-              </span>
-            ),
-            children: (
-              <div style={{ height: '100%', overflowY: 'auto', background: bg }}>
-                {SAMPLE_CATEGORIES.map((category) => {
-                  const samples = SAMPLES.filter((s) => s.category === category);
-                  return (
-                    <div key={category}>
-                      <div
-                        style={{
-                          padding: '12px 12px 8px',
-                          borderBottom: `1px solid ${border}`,
-                          background: bgAlt,
-                        }}
+                    <StarFilled /> Starred
+                    {searchText && (
+                      <Text
+                        style={{ fontSize: '12px', color: textSecondary, marginLeft: '8px' }}
                       >
-                        <Text strong style={{ color: '#4ec9b0' }}>
-                          {category}
-                        </Text>
-                      </div>
-                      <List dataSource={samples} renderItem={renderSampleItem} split={false} />
-                    </div>
-                  );
-                })}
+                        ({filteredStarred.length}/{starredSnippets.length})
+                      </Text>
+                    )}
+                  </Text>
+                </div>
+                <List
+                  dataSource={filteredStarred}
+                  renderItem={(snippet) => renderSnippetItem(snippet)}
+                  split={false}
+                />
+                <Divider style={{ margin: '8px 0', backgroundColor: border }} />
+              </>
+            )}
+
+            {/* Recently Opened Section */}
+            {filteredRecent.length > 0 && (
+              <>
+                <div
+                  style={{
+                    padding: '12px 12px 8px',
+                    borderBottom: `1px solid ${border}`,
+                  }}
+                >
+                  <Text
+                    strong
+                    style={{
+                      color: '#569cd6',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                    }}
+                  >
+                    <ClockCircleOutlined /> Recently Opened
+                    {searchText && (
+                      <Text
+                        style={{ fontSize: '12px', color: textSecondary, marginLeft: '8px' }}
+                      >
+                        ({filteredRecent.length}/{recentSnippets.length})
+                      </Text>
+                    )}
+                  </Text>
+                </div>
+                <List
+                  dataSource={filteredRecent}
+                  renderItem={(snippet) => renderSnippetItem(snippet)}
+                  split={false}
+                />
+                <Divider style={{ margin: '8px 0', backgroundColor: border }} />
+              </>
+            )}
+
+            {/* All Snippets Section */}
+            <div
+              style={{
+                padding: '12px 12px 8px',
+                borderBottom: `1px solid ${border}`,
+              }}
+            >
+              <Text strong style={{ color: textPrimary }}>
+                All Snippets
+                {searchText && (
+                  <Text style={{ fontSize: '12px', color: textSecondary, marginLeft: '8px' }}>
+                    ({filteredSnippets.length}/{snippets.length})
+                  </Text>
+                )}
+              </Text>
+            </div>
+            <List
+              loading={loading}
+              dataSource={filteredSnippets}
+              locale={{
+                emptyText: (
+                  <Empty
+                    image={Empty.PRESENTED_IMAGE_SIMPLE}
+                    description={
+                      searchText
+                        ? `No snippets found matching "${searchText}"`
+                        : 'No snippets yet'
+                    }
+                  />
+                ),
+              }}
+              split={false}
+              renderItem={(snippet) => renderSnippetItem(snippet)}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Samples pane */}
+      {activeTab === 'samples' && (
+        <div style={{ flex: 1, overflowY: 'auto', background: bg }}>
+          {SAMPLE_CATEGORIES.map((category) => {
+            const samples = SAMPLES.filter((s) => s.category === category);
+            return (
+              <div key={category}>
+                <div
+                  style={{
+                    padding: '12px 12px 8px',
+                    borderBottom: `1px solid ${border}`,
+                    background: bgAlt,
+                  }}
+                >
+                  <Text strong style={{ color: '#4ec9b0' }}>
+                    {category}
+                  </Text>
+                </div>
+                <List dataSource={samples} renderItem={renderSampleItem} split={false} />
               </div>
-            ),
-          },
-        ]}
-        tabBarStyle={{
-          background: bg,
-          borderBottom: `1px solid ${border}`,
-          margin: 0,
-          padding: '0 8px',
-        }}
-        className="snippet-tabs"
-      />
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 };
