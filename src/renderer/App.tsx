@@ -34,6 +34,7 @@ import { WelcomeModal } from './components/WelcomeModal';
 import ScriptPropertiesModal, { type ScriptProperties } from './components/ScriptPropertiesModal';
 import type { Snippet } from '../backend/database';
 import { extractProgressEvents, stripProgressLines, type ProgressEvent } from '../backend/progress';
+import { processContainerChunk, type ContainerEvent } from '../backend/containers';
 
 const { Header, Content, Sider } = Layout;
 
@@ -143,6 +144,8 @@ function App() {
   const [code, setCode] = useState(DEFAULT_CODE_STATEMENTS);
   const [output, setOutput] = useState('');
   const [progressEvents, setProgressEvents] = useState<ProgressEvent[]>([]);
+  const [containerContents, setContainerContents] = useState<Map<string, string>>(new Map());
+  const containerSeenIdsRef = useRef<Set<string>>(new Set());
   const [isRunning, setIsRunning] = useState(false);
   const [executionTime, setExecutionTime] = useState<number | null>(null);
   const executionTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -205,6 +208,8 @@ function App() {
     setIsRunning(true);
     setOutput('');
     setProgressEvents([]);
+    setContainerContents(new Map());
+    containerSeenIdsRef.current = new Set();
 
     // Start live timer
     executionStartRef.current = performance.now();
@@ -215,13 +220,27 @@ function App() {
       setExecutionTime(elapsed);
     }, 100); // Update every 100ms
 
-    // Subscribe to streaming output — intercept progress sentinel lines
+    // Subscribe to streaming output — intercept progress and container sentinel lines
     const cleanup = window.electronAPI.onOutputChunk((chunk: string, _isError: boolean) => {
-      const events = extractProgressEvents(chunk);
+      // Route container sentinels: insert slot placeholders (first sight) or update contents
+      const { displayChunk, events: containerEvents } = processContainerChunk(
+        chunk,
+        containerSeenIdsRef.current
+      );
+      if (containerEvents.length > 0) {
+        setContainerContents((prev) => {
+          const next = new Map(prev);
+          containerEvents.forEach((e: ContainerEvent) => next.set(e.id, e.content));
+          return next;
+        });
+      }
+
+      // Route progress sentinels
+      const events = extractProgressEvents(displayChunk);
       if (events.length > 0) {
         setProgressEvents((prev) => [...prev, ...events]);
       }
-      const stripped = stripProgressLines(chunk);
+      const stripped = stripProgressLines(displayChunk);
       if (stripped) {
         setOutput((prev) => prev + stripped);
       }
@@ -1025,7 +1044,7 @@ function App() {
                 }}
               >
                 {output ? (
-                  <OutputDisplay output={output} progressEvents={progressEvents} />
+                  <OutputDisplay output={output} progressEvents={progressEvents} containerContents={containerContents} />
                 ) : (
                   <div
                     style={{

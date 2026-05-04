@@ -190,6 +190,86 @@ export class CSharpExecutor {
     ];
   }
 
+  private getContainerExtensions(): string[] {
+    // DumpContainer: a mutable output slot. Each instance owns a stable ID.
+    // Calling Refresh() emits a sentinel that the renderer uses to replace
+    // the slot's content in-place rather than appending a new section.
+    // JSON building uses concatenation — no backslash escapes inside ${}
+    // expression holes (C# restriction).
+    return [
+      '#region CodePad DumpContainer',
+      'public class DumpContainer',
+      '{',
+      '    private const string _prefix = "##CODEPAD:CONTAINER:";',
+      '    private string _id;',
+      '    private string _label;',
+      '    private object _lastEmitted = new object(); // sentinel "not yet emitted"',
+      '    public object Content { get; set; }',
+      '    public DumpContainer(object initialContent = null) : this(null, initialContent) { }',
+      '    public DumpContainer(string label, object initialContent = null)',
+      '    {',
+      '        _id = System.Guid.NewGuid().ToString("N");',
+      '        _label = label;',
+      '        Content = initialContent;',
+      '        Refresh();',
+      '    }',
+      '    public void Refresh()',
+      '    {',
+      '        // Skip if content hasn\'t changed since last emit (avoid flicker)',
+      '        if (System.Object.ReferenceEquals(Content, _lastEmitted)) return;',
+      '        if (Content is System.ValueType || Content == null)',
+      '        {',
+      '            var str = (Content == null) ? "null" : Content.ToString();',
+      '            if (_lastEmitted is string last && last == str) return;',
+      '            _lastEmitted = str;',
+      '            Emit(Content);',
+      '        }',
+      '        else',
+      '        {',
+      '            _lastEmitted = Content;',
+      '            Emit(Content);',
+      '        }',
+      '    }',
+      '    private void Emit(object value)',
+      '    {',
+      '        string payload;',
+      '        if (value == null)',
+      '        {',
+      '            payload = "null";',
+      '        }',
+      '        else if (value is string s)',
+      '        {',
+      '            // Embed string as JSON string value to preserve quoting on the renderer side',
+      '            var escaped = s.Replace("\\\\", "\\\\\\\\").Replace("\\"", "\\\\\\"");',
+      '            payload = "\\"" + escaped + "\\"";',
+      '        }',
+      '        else',
+      '        {',
+      '            try',
+      '            {',
+      '                payload = System.Text.Json.JsonSerializer.Serialize(value, new System.Text.Json.JsonSerializerOptions',
+      '                {',
+      '                    WriteIndented = false,',
+      '                    ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles,',
+      '                });',
+      '            }',
+      '            catch',
+      '            {',
+      '                payload = "\\"" + value.ToString()?.Replace("\\"", "\\\\\\"") + "\\"";',
+      '            }',
+      '        }',
+      '        var labelPart = _label != null',
+      '            ? ",\\"label\\":\\"" + _label.Replace("\\\\", "\\\\\\\\").Replace("\\"", "\\\\\\"") + "\\""',
+      '            : "";',
+      '        System.Console.WriteLine(_prefix + "{\\"id\\":\\"" + _id + "\\"" + labelPart + ",\\"content\\":" + payload + "}");',
+      '        System.Console.Out.Flush();',
+      '    }',
+      '}',
+      '#endregion',
+      '',
+    ];
+  }
+
   private getProgressExtensions(): string[] {
     // NOTE: C# does not allow backslash escapes inside interpolation holes ($"{...}").
     // Build JSON by concatenation so that quote characters never appear inside {}.
@@ -267,6 +347,7 @@ export class CSharpExecutor {
       ...preamble,
       ...usingLines,
       ...this.getDumpExtensions(),
+      ...this.getContainerExtensions(),
       ...this.getProgressExtensions(),
       '',
       'public class Program',
@@ -291,6 +372,7 @@ export class CSharpExecutor {
       ...preamble,
       ...usingLines,
       ...this.getDumpExtensions(),
+      ...this.getContainerExtensions(),
       ...this.getProgressExtensions(),
       '',
       'public class Program',
@@ -315,6 +397,7 @@ export class CSharpExecutor {
       ...body,
       '',
       ...this.getDumpExtensions(),
+      ...this.getContainerExtensions(),
       ...this.getProgressExtensions(),
     ].join('\n');
   }

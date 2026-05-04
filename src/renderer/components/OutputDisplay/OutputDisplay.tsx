@@ -11,10 +11,12 @@ import {
   splitOutputSections,
 } from '../../../backend/output-formatter';
 import type { ProgressEvent } from '../../../backend/progress';
+import { SLOT_PREFIX } from '../../../backend/containers';
 
 interface OutputDisplayProps {
   output: string;
   progressEvents?: ProgressEvent[];
+  containerContents?: Map<string, string>;
 }
 
 const OutputSection: React.FC<{ formatted: FormattedOutput }> = ({ formatted }) => {
@@ -52,7 +54,11 @@ const OutputSection: React.FC<{ formatted: FormattedOutput }> = ({ formatted }) 
   }
 };
 
-export const OutputDisplay: React.FC<OutputDisplayProps> = ({ output, progressEvents = [] }) => {
+export const OutputDisplay: React.FC<OutputDisplayProps> = ({
+  output,
+  progressEvents = [],
+  containerContents = new Map(),
+}) => {
   const sections = useMemo<FormattedOutput[]>(() => {
     if (!output || !output.trim()) {
       return [{ format: 'plain', content: '' }];
@@ -72,8 +78,19 @@ export const OutputDisplay: React.FC<OutputDisplayProps> = ({ output, progressEv
       return [formatOutput(output)];
     }
 
-    return outputSections.map((section) => formatOutput(section));
-  }, [output]);
+    return outputSections.map((section) => {
+      // Slot placeholder: render the current container content (or a spinner)
+      if (section.startsWith(SLOT_PREFIX)) {
+        const id = section.slice(SLOT_PREFIX.length);
+        const content = containerContents.get(id);
+        if (content === undefined) {
+          return { format: 'plain', content: '…' } as FormattedOutput;
+        }
+        return formatOutput(content);
+      }
+      return formatOutput(section);
+    });
+  }, [output, containerContents]);
 
   const progressBar = progressEvents.length > 0 ? <ProgressBar events={progressEvents} /> : null;
 

@@ -16,6 +16,7 @@ export const SAMPLE_CATEGORIES = [
   'Getting Started',
   '.Dump() Extension',
   'Long-Running Tasks',
+  'DumpContainer',
   'Output Formats',
 ] as const;
 
@@ -292,6 +293,57 @@ for (int i = 0; i < total; i++)
 Console.WriteLine($"Progress: 100% ({total}/{total} items)");
 Console.WriteLine();
 Console.WriteLine("✓ All items processed successfully!");`,
+  },
+
+  // DumpContainer
+  {
+    id: 'sample-dump-container-counter',
+    name: 'Live Counter',
+    category: 'DumpContainer',
+    description: 'Update a single output slot in-place using DumpContainer',
+    language: 'csharp',
+    code: `using System;
+using System.Threading;
+
+// DumpContainer reserves a slot in the output.
+// Updating Content and calling Refresh() replaces it in place
+// instead of appending a new line each time.
+
+var counter = new DumpContainer("Counter", 0);
+
+for (int i = 1; i <= 20; i++)
+{
+    Thread.Sleep(150);
+    counter.Content = i;
+    counter.Refresh();
+}
+
+Console.WriteLine("Done!");`,
+  },
+  {
+    id: 'sample-dump-container-table',
+    name: 'Live Table',
+    category: 'DumpContainer',
+    description: 'Replace a table in-place as data arrives',
+    language: 'csharp',
+    code: `using System;
+using System.Linq;
+using System.Threading;
+
+var results = new DumpContainer("Results so far");
+
+var rows = new System.Collections.Generic.List<object>();
+
+for (int i = 1; i <= 5; i++)
+{
+    Thread.Sleep(400);
+    rows.Add(new { Step = i, Value = i * i, Done = true });
+    // Replace the table slot with the growing list each iteration
+    results.Content = rows.ToArray();
+    results.Refresh();
+}
+
+Console.WriteLine($"Finished {rows.Count} steps.");`,
   },
 
   // Output Formats

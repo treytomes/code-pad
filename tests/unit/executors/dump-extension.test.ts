@@ -344,4 +344,55 @@ p.Complete("Done");
     },
     60000
   );
+
+  it.skipIf(!dotnetAvailable)(
+    'DumpContainer should emit sentinel lines and final content should match last Refresh call',
+    async () => {
+      const code = `
+using System;
+using System.Threading;
+
+var counter = new DumpContainer("Test Counter", 0);
+
+for (int i = 1; i <= 3; i++)
+{
+    Thread.Sleep(50);
+    counter.Content = i;
+    counter.Refresh();
+}
+
+Console.WriteLine("done");
+`;
+      const result = await executor.execute(code);
+
+      expect(result.exitCode, result.stderr).toBe(0);
+      expect(result.stdout).toContain('done');
+
+      // Must emit at least one container sentinel
+      const containerLines = result.stdout
+        .split('\n')
+        .filter((l) => l.startsWith('##CODEPAD:CONTAINER:'));
+      expect(containerLines.length).toBeGreaterThanOrEqual(1);
+
+      // All container lines must carry valid JSON with an id field
+      for (const line of containerLines) {
+        const json = JSON.parse(line.slice('##CODEPAD:CONTAINER:'.length));
+        expect(typeof json.id).toBe('string');
+        expect(json.id.length).toBeGreaterThan(0);
+      }
+
+      // All sentinels must share the same id (same container)
+      const ids = containerLines.map((l) => {
+        const json = JSON.parse(l.slice('##CODEPAD:CONTAINER:'.length));
+        return json.id as string;
+      });
+      const uniqueIds = new Set(ids);
+      expect(uniqueIds.size).toBe(1);
+
+      // The last sentinel should have content = 3 (final value)
+      const lastJson = JSON.parse(containerLines.at(-1)!.slice('##CODEPAD:CONTAINER:'.length));
+      expect(lastJson.content).toBe(3);
+    },
+    60000
+  );
 });
