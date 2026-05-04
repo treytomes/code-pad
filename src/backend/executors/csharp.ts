@@ -9,7 +9,7 @@ import { promises as fs } from 'fs';
 import { tmpdir } from 'os';
 import { join } from 'path';
 import { randomUUID } from 'crypto';
-import type { QueryType, NuGetReference } from '../../shared/types';
+import type { QueryType, NuGetReference, LocalAssemblyReference } from '../../shared/types';
 
 // Import logger - but make it optional for tests
 let _logInfo: (msg: string, ...args: any[]) => void = console.log;
@@ -41,6 +41,7 @@ export interface ExecutionOptions {
   queryType?: QueryType; // defaults to 'statements'
   usings?: string[]; // additional namespace imports
   references?: NuGetReference[]; // NuGet package references
+  localReferences?: LocalAssemblyReference[]; // local .dll references
 }
 
 export class CSharpExecutor {
@@ -94,12 +95,12 @@ export class CSharpExecutor {
     _logDebug(`Starting C# code execution (timeout: ${timeout}ms)`);
 
     // Create temporary file for code
-    const tempFile = await this.createTempFile(code, options.queryType ?? 'statements', options.usings ?? [], options.references ?? []);
+    const tempFile = await this.createTempFile(code, options.queryType ?? 'statements', options.usings ?? [], options.references ?? [], options.localReferences ?? []);
 
     _logDebug(`Created temp file: ${tempFile}`);
 
     try {
-      const result = await this.runDotnetScript(tempFile.path, timeout, tempFile.references, onOutputChunk);
+      const result = await this.runDotnetScript(tempFile.path, timeout, tempFile.references, tempFile.localReferences, onOutputChunk);
 
       const executionTime = Date.now() - startTime;
       _logDebug(
@@ -190,6 +191,86 @@ export class CSharpExecutor {
     ];
   }
 
+  private getContainerExtensions(): string[] {
+    // DumpContainer: a mutable output slot. Each instance owns a stable ID.
+    // Calling Refresh() emits a sentinel that the renderer uses to replace
+    // the slot's content in-place rather than appending a new section.
+    // JSON building uses concatenation — no backslash escapes inside ${}
+    // expression holes (C# restriction).
+    return [
+      '#region CodePad DumpContainer',
+      'public class DumpContainer',
+      '{',
+      '    private const string _prefix = "##CODEPAD:CONTAINER:";',
+      '    private string _id;',
+      '    private string _label;',
+      '    private object _lastEmitted = new object(); // sentinel "not yet emitted"',
+      '    public object Content { get; set; }',
+      '    public DumpContainer(object initialContent = null) : this(null, initialContent) { }',
+      '    public DumpContainer(string label, object initialContent = null)',
+      '    {',
+      '        _id = System.Guid.NewGuid().ToString("N");',
+      '        _label = label;',
+      '        Content = initialContent;',
+      '        Refresh();',
+      '    }',
+      '    public void Refresh()',
+      '    {',
+      '        // Skip if content hasn\'t changed since last emit (avoid flicker)',
+      '        if (System.Object.ReferenceEquals(Content, _lastEmitted)) return;',
+      '        if (Content is System.ValueType || Content == null)',
+      '        {',
+      '            var str = (Content == null) ? "null" : Content.ToString();',
+      '            if (_lastEmitted is string last && last == str) return;',
+      '            _lastEmitted = str;',
+      '            Emit(Content);',
+      '        }',
+      '        else',
+      '        {',
+      '            _lastEmitted = Content;',
+      '            Emit(Content);',
+      '        }',
+      '    }',
+      '    private void Emit(object value)',
+      '    {',
+      '        string payload;',
+      '        if (value == null)',
+      '        {',
+      '            payload = "null";',
+      '        }',
+      '        else if (value is string s)',
+      '        {',
+      '            // Embed string as JSON string value to preserve quoting on the renderer side',
+      '            var escaped = s.Replace("\\\\", "\\\\\\\\").Replace("\\"", "\\\\\\"");',
+      '            payload = "\\"" + escaped + "\\"";',
+      '        }',
+      '        else',
+      '        {',
+      '            try',
+      '            {',
+      '                payload = System.Text.Json.JsonSerializer.Serialize(value, new System.Text.Json.JsonSerializerOptions',
+      '                {',
+      '                    WriteIndented = false,',
+      '                    ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles,',
+      '                });',
+      '            }',
+      '            catch',
+      '            {',
+      '                payload = "\\"" + value.ToString()?.Replace("\\"", "\\\\\\"") + "\\"";',
+      '            }',
+      '        }',
+      '        var labelPart = _label != null',
+      '            ? ",\\"label\\":\\"" + _label.Replace("\\\\", "\\\\\\\\").Replace("\\"", "\\\\\\"") + "\\""',
+      '            : "";',
+      '        System.Console.WriteLine(_prefix + "{\\"id\\":\\"" + _id + "\\"" + labelPart + ",\\"content\\":" + payload + "}");',
+      '        System.Console.Out.Flush();',
+      '    }',
+      '}',
+      '#endregion',
+      '',
+    ];
+  }
+
   private getProgressExtensions(): string[] {
     // NOTE: C# does not allow backslash escapes inside interpolation holes ($"{...}").
     // Build JSON by concatenation so that quote characters never appear inside {}.
@@ -234,10 +315,11 @@ export class CSharpExecutor {
    * NuGet references and strips them from the preamble so they don't appear in
    * the compiled source, returning them as structured NuGetReference objects.
    */
-  private splitPreamble(code: string): { preamble: string[]; body: string[]; inlineRefs: NuGetReference[] } {
+  private splitPreamble(code: string): { preamble: string[]; body: string[]; inlineRefs: NuGetReference[]; inlineLocalRefs: LocalAssemblyReference[] } {
     const lines = code.split('\n');
     let splitIndex = 0;
     const inlineRefs: NuGetReference[] = [];
+    const inlineLocalRefs: LocalAssemblyReference[] = [];
 
     for (let i = 0; i < lines.length; i++) {
       const trimmed = lines[i].trim();
@@ -246,19 +328,26 @@ export class CSharpExecutor {
       if (nugetMatch) {
         inlineRefs.push({ name: nugetMatch[1].trim(), version: nugetMatch[2]?.trim() ?? '*' });
         splitIndex = i + 1;
-      } else if (trimmed.startsWith('#r ') || trimmed.startsWith('using ')) {
+      } else if (trimmed.startsWith('#r ')) {
+        // Non-nuget #r — treat as local DLL reference: #r "path/to/assembly.dll"
+        const pathMatch = trimmed.match(/^#r\s+"([^"]+)"/);
+        if (pathMatch) {
+          inlineLocalRefs.push({ path: pathMatch[1] });
+        }
+        splitIndex = i + 1;
+      } else if (trimmed.startsWith('using ')) {
         splitIndex = i + 1;
       } else if (trimmed.length > 0 && !trimmed.startsWith('//')) {
         break;
       }
     }
 
-    // Strip inline nuget directives from preamble — they'd cause compiler errors
+    // Strip all #r directives from preamble — they'd cause compiler errors
     const preamble = lines
       .slice(0, splitIndex)
-      .filter((line) => !line.trim().match(/^#r\s+"nuget:/i));
+      .filter((line) => !line.trim().match(/^#r\s+/i));
 
-    return { preamble, body: lines.slice(splitIndex), inlineRefs };
+    return { preamble, body: lines.slice(splitIndex), inlineRefs, inlineLocalRefs };
   }
 
   private buildStatementsScript(preamble: string[], body: string[], extraUsings: string[]): string {
@@ -267,6 +356,7 @@ export class CSharpExecutor {
       ...preamble,
       ...usingLines,
       ...this.getDumpExtensions(),
+      ...this.getContainerExtensions(),
       ...this.getProgressExtensions(),
       '',
       'public class Program',
@@ -291,6 +381,7 @@ export class CSharpExecutor {
       ...preamble,
       ...usingLines,
       ...this.getDumpExtensions(),
+      ...this.getContainerExtensions(),
       ...this.getProgressExtensions(),
       '',
       'public class Program',
@@ -315,6 +406,7 @@ export class CSharpExecutor {
       ...body,
       '',
       ...this.getDumpExtensions(),
+      ...this.getContainerExtensions(),
       ...this.getProgressExtensions(),
     ].join('\n');
   }
@@ -322,17 +414,25 @@ export class CSharpExecutor {
   /**
    * Create temporary .cs file with code wrapped according to the query type.
    */
-  private async createTempFile(code: string, queryType: QueryType, extraUsings: string[], references: NuGetReference[]): Promise<{ path: string; references: NuGetReference[] }> {
+  private async createTempFile(code: string, queryType: QueryType, extraUsings: string[], references: NuGetReference[], localReferences: LocalAssemblyReference[] = []): Promise<{ path: string; references: NuGetReference[]; localReferences: LocalAssemblyReference[] }> {
     const fileName = `codepad-${randomUUID()}.cs`;
     const filePath = join(tmpdir(), fileName);
 
-    const { preamble, body, inlineRefs } = this.splitPreamble(code);
+    const { preamble, body, inlineRefs, inlineLocalRefs } = this.splitPreamble(code);
 
     // Merge inline #r "nuget:..." refs with per-script references, deduplicating by name
     const mergedRefs = [...references];
     for (const ref of inlineRefs) {
       if (!mergedRefs.some((r) => r.name.toLowerCase() === ref.name.toLowerCase())) {
         mergedRefs.push(ref);
+      }
+    }
+
+    // Merge inline #r "path.dll" refs with per-script local references, deduplicating by path
+    const mergedLocalRefs = [...localReferences];
+    for (const ref of inlineLocalRefs) {
+      if (!mergedLocalRefs.some((r) => r.path === ref.path)) {
+        mergedLocalRefs.push(ref);
       }
     }
 
@@ -359,7 +459,7 @@ export class CSharpExecutor {
       // Ignore debug save errors
     }
 
-    return { path: filePath, references: mergedRefs };
+    return { path: filePath, references: mergedRefs, localReferences: mergedLocalRefs };
   }
 
   /**
@@ -390,6 +490,7 @@ export class CSharpExecutor {
     scriptPath: string,
     timeout: number,
     references: NuGetReference[],
+    localReferences: LocalAssemblyReference[],
     onOutputChunk?: (chunk: string, isError: boolean) => void
   ): Promise<ExecutionResult> {
     return new Promise((resolve) => {
@@ -431,8 +532,22 @@ export class CSharpExecutor {
             .filter((r: NuGetReference) => r.name && r.version)
             .map((r: NuGetReference) => `    <PackageReference Include="${r.name}" Version="${r.version}" />`)
             .join('\n');
-          const itemGroup = nugetRefs
-            ? `\n  <ItemGroup>\n${nugetRefs}\n  </ItemGroup>`
+
+          // Build local assembly references — paths that are relative are resolved
+          // against the project directory so dotnet build can locate them.
+          const localRefs = localReferences
+            .filter((r: LocalAssemblyReference) => r.path)
+            .map((r: LocalAssemblyReference) => {
+              const absPath = r.path.startsWith('/') || /^[A-Za-z]:\\/.test(r.path)
+                ? r.path
+                : join(projectDir, r.path);
+              return `    <Reference Include="${absPath}" />`;
+            })
+            .join('\n');
+
+          const allRefs = [nugetRefs, localRefs].filter(Boolean).join('\n');
+          const itemGroup = allRefs
+            ? `\n  <ItemGroup>\n${allRefs}\n  </ItemGroup>`
             : '';
 
           // Create a proper .csproj file

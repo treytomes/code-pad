@@ -11,10 +11,12 @@ import {
   splitOutputSections,
 } from '../../../backend/output-formatter';
 import type { ProgressEvent } from '../../../backend/progress';
+import { SLOT_PREFIX } from '../../../backend/containers';
 
 interface OutputDisplayProps {
   output: string;
   progressEvents?: ProgressEvent[];
+  containerContents?: Map<string, string>;
 }
 
 const OutputSection: React.FC<{ formatted: FormattedOutput }> = ({ formatted }) => {
@@ -48,11 +50,15 @@ const OutputSection: React.FC<{ formatted: FormattedOutput }> = ({ formatted }) 
 
     case 'plain':
     default:
-      return <PlainOutput content={formatted.content} />;
+      return <PlainOutput content={formatted.content} metadata={formatted.metadata} />;
   }
 };
 
-export const OutputDisplay: React.FC<OutputDisplayProps> = ({ output, progressEvents = [] }) => {
+export const OutputDisplay: React.FC<OutputDisplayProps> = ({
+  output,
+  progressEvents = [],
+  containerContents = new Map(),
+}) => {
   const sections = useMemo<FormattedOutput[]>(() => {
     if (!output || !output.trim()) {
       return [{ format: 'plain', content: '' }];
@@ -61,19 +67,24 @@ export const OutputDisplay: React.FC<OutputDisplayProps> = ({ output, progressEv
     // Split output into sections and format each independently
     const outputSections = splitOutputSections(output);
 
-    // If no sections (single output), format as one
+    // If no sections, format the whole output as one
     if (outputSections.length === 0) {
       return [formatOutput(output)];
     }
 
-    // If only one section, check if it's the entire output
-    // (avoid splitting when there's no blank line separation)
-    if (outputSections.length === 1 && outputSections[0] === output.trim()) {
-      return [formatOutput(output)];
-    }
-
-    return outputSections.map((section) => formatOutput(section));
-  }, [output]);
+    return outputSections.map((section) => {
+      // Slot placeholder: render the current container content (or a spinner)
+      if (section.startsWith(SLOT_PREFIX)) {
+        const id = section.slice(SLOT_PREFIX.length);
+        const content = containerContents.get(id);
+        if (content === undefined) {
+          return { format: 'plain', content: '…' } as FormattedOutput;
+        }
+        return formatOutput(content);
+      }
+      return formatOutput(section);
+    });
+  }, [output, containerContents]);
 
   const progressBar = progressEvents.length > 0 ? <ProgressBar events={progressEvents} /> : null;
 

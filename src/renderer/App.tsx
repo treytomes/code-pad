@@ -34,6 +34,7 @@ import { WelcomeModal } from './components/WelcomeModal';
 import ScriptPropertiesModal, { type ScriptProperties } from './components/ScriptPropertiesModal';
 import type { Snippet } from '../backend/database';
 import { extractProgressEvents, stripProgressLines, type ProgressEvent } from '../backend/progress';
+import { processContainerChunk, type ContainerEvent } from '../backend/containers';
 
 const { Header, Content, Sider } = Layout;
 
@@ -143,6 +144,8 @@ function App() {
   const [code, setCode] = useState(DEFAULT_CODE_STATEMENTS);
   const [output, setOutput] = useState('');
   const [progressEvents, setProgressEvents] = useState<ProgressEvent[]>([]);
+  const [containerContents, setContainerContents] = useState<Map<string, string>>(new Map());
+  const containerSeenIdsRef = useRef<Set<string>>(new Set());
   const [isRunning, setIsRunning] = useState(false);
   const [executionTime, setExecutionTime] = useState<number | null>(null);
   const executionTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -171,12 +174,13 @@ function App() {
   const [saveModalVisible, setSaveModalVisible] = useState(false);
   const [aboutVisible, setAboutVisible] = useState(false);
   const [settingsVisible, setSettingsVisible] = useState(false);
+  const [welcomeVisible, setWelcomeVisible] = useState(false);
   const [snippetName, setSnippetName] = useState('');
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [cursorLine, setCursorLine] = useState(1);
   const [cursorColumn, setCursorColumn] = useState(1);
   const [queryType, setQueryType] = useState<QueryType>('statements');
-  const [scriptProperties, setScriptProperties] = useState<ScriptProperties>({ usings: [], references: [], tags: [] });
+  const [scriptProperties, setScriptProperties] = useState<ScriptProperties>({ usings: [], references: [], localReferences: [], tags: [] });
   const [scriptPropertiesVisible, setScriptPropertiesVisible] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const layoutRef = useRef<HTMLDivElement>(null);
@@ -205,6 +209,8 @@ function App() {
     setIsRunning(true);
     setOutput('');
     setProgressEvents([]);
+    setContainerContents(new Map());
+    containerSeenIdsRef.current = new Set();
 
     // Start live timer
     executionStartRef.current = performance.now();
@@ -215,13 +221,27 @@ function App() {
       setExecutionTime(elapsed);
     }, 100); // Update every 100ms
 
-    // Subscribe to streaming output — intercept progress sentinel lines
+    // Subscribe to streaming output — intercept progress and container sentinel lines
     const cleanup = window.electronAPI.onOutputChunk((chunk: string, _isError: boolean) => {
-      const events = extractProgressEvents(chunk);
+      // Route container sentinels: insert slot placeholders (first sight) or update contents
+      const { displayChunk, events: containerEvents } = processContainerChunk(
+        chunk,
+        containerSeenIdsRef.current
+      );
+      if (containerEvents.length > 0) {
+        setContainerContents((prev) => {
+          const next = new Map(prev);
+          containerEvents.forEach((e: ContainerEvent) => next.set(e.id, e.content));
+          return next;
+        });
+      }
+
+      // Route progress sentinels
+      const events = extractProgressEvents(displayChunk);
       if (events.length > 0) {
         setProgressEvents((prev) => [...prev, ...events]);
       }
-      const stripped = stripProgressLines(chunk);
+      const stripped = stripProgressLines(displayChunk);
       if (stripped) {
         setOutput((prev) => prev + stripped);
       }
@@ -234,6 +254,7 @@ function App() {
           queryType,
           usings: scriptProperties.usings,
           references: scriptProperties.references,
+          localReferences: scriptProperties.localReferences,
         }),
         window.electronAPI.onOutputDone(),
       ]);
@@ -303,6 +324,7 @@ function App() {
         queryType,
         usings: scriptProperties.usings,
         references: scriptProperties.references,
+        localReferences: scriptProperties.localReferences,
         tags: scriptProperties.tags,
       });
       savedCodeRef.current = code;
@@ -328,6 +350,7 @@ function App() {
         queryType,
         usings: scriptProperties.usings,
         references: scriptProperties.references,
+        localReferences: scriptProperties.localReferences,
         tags: scriptProperties.tags,
       });
 
@@ -356,7 +379,7 @@ function App() {
     setHasUnsavedChanges(false);
     setCurrentSnippetId(snippet.id);
     setQueryType(snippet.queryType ?? 'statements');
-    setScriptProperties({ usings: snippet.usings ?? [], references: snippet.references ?? [], tags: snippet.tags ?? [] });
+    setScriptProperties({ usings: snippet.usings ?? [], references: snippet.references ?? [], localReferences: snippet.localReferences ?? [], tags: snippet.tags ?? [] });
     setOutput('');
 
     // Update last opened timestamp
@@ -404,6 +427,7 @@ function App() {
         queryType: snippet.queryType,
         usings: snippet.usings ?? [],
         references: snippet.references ?? [],
+        localReferences: snippet.localReferences ?? [],
         tags: snippet.tags ?? [],
       });
       message.success('Snippet duplicated');
@@ -415,7 +439,7 @@ function App() {
       setHasUnsavedChanges(false);
       setCurrentSnippetId(newSnippet.id);
       setQueryType(newSnippet.queryType ?? 'statements');
-      setScriptProperties({ usings: newSnippet.usings ?? [], references: newSnippet.references ?? [], tags: newSnippet.tags ?? [] });
+      setScriptProperties({ usings: newSnippet.usings ?? [], references: newSnippet.references ?? [], localReferences: newSnippet.localReferences ?? [], tags: newSnippet.tags ?? [] });
       setOutput('');
     } catch (error) {
       message.error('Failed to duplicate snippet');
@@ -436,7 +460,7 @@ function App() {
     setHasUnsavedChanges(false);
     setCurrentSnippetId(null);
     setQueryType('statements');
-    setScriptProperties({ usings: [], references: [], tags: [] });
+    setScriptProperties({ usings: [], references: [], localReferences: [], tags: [] });
     setOutput('');
   };
 
@@ -745,7 +769,7 @@ function App() {
     <ConfigProvider theme={themeConfig}>
       <Layout style={{ height: '100vh', background: bgMain }}>
         <RuntimeWarning />
-        <WelcomeModal />
+        <WelcomeModal forceOpen={welcomeVisible || undefined} onClose={() => setWelcomeVisible(false)} />
         <Header
           style={{
             display: 'flex',
@@ -1025,7 +1049,7 @@ function App() {
                 }}
               >
                 {output ? (
-                  <OutputDisplay output={output} progressEvents={progressEvents} />
+                  <OutputDisplay output={output} progressEvents={progressEvents} containerContents={containerContents} />
                 ) : (
                   <div
                     style={{
@@ -1070,6 +1094,7 @@ function App() {
           visible={settingsVisible}
           onClose={() => setSettingsVisible(false)}
           onThemeChange={setAppTheme}
+          onShowWelcome={() => setWelcomeVisible(true)}
           onSettingsSaved={() => {
             const s = loadSavedSettings();
             setEditorFontSize(s.fontSize);
@@ -1089,6 +1114,7 @@ function App() {
               window.electronAPI.db.updateSnippet(currentSnippetId, {
                 usings: props.usings,
                 references: props.references,
+                localReferences: props.localReferences,
                 tags: props.tags,
               });
             }

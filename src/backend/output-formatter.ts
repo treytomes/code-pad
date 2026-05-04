@@ -422,6 +422,17 @@ export function formatOutput(output: string): FormattedOutput {
       break;
   }
 
+  // Strip label header from plain output so the renderer can display it
+  // consistently (label styled separately, body as plain text).
+  const plainLabelMatch = output.match(/^===\s+(.+?)\s+===\s*\n([\s\S]*)/);
+  if (plainLabelMatch) {
+    return {
+      format: 'plain',
+      content: plainLabelMatch[2],
+      metadata: { label: plainLabelMatch[1] },
+    };
+  }
+
   return {
     format: 'plain',
     content: output,

@@ -15,7 +15,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   },
 
   // Execute C# code
-  executeCode: (code: string, options?: { timeout?: number; queryType?: string; usings?: string[]; references?: { name: string; version: string }[] }) =>
+  executeCode: (code: string, options?: { timeout?: number; queryType?: string; usings?: string[]; references?: { name: string; version: string }[]; localReferences?: { path: string }[] }) =>
     ipcRenderer.invoke('execute-code', code, options),
 
   // Stop running execution

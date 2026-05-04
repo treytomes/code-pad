@@ -1,6 +1,6 @@
 import { ExecutionResult } from '../../backend/executors/csharp';
 import { Snippet } from '../../backend/database';
-import { QueryType, NuGetReference } from '../../shared/types';
+import { QueryType, NuGetReference, LocalAssemblyReference } from '../../shared/types';
 
 export interface ElectronAPI {
   ping: () => string;
@@ -13,7 +13,7 @@ export interface ElectronAPI {
 
   executeCode: (
     code: string,
-    options?: { timeout?: number; queryType?: QueryType; usings?: string[]; references?: NuGetReference[] }
+    options?: { timeout?: number; queryType?: QueryType; usings?: string[]; references?: NuGetReference[]; localReferences?: LocalAssemblyReference[] }
   ) => Promise<ExecutionResult>;
 
   stopExecution: () => Promise<void>;
@@ -57,12 +57,13 @@ export interface ElectronAPI {
       queryType?: QueryType;
       usings?: string[];
       references?: NuGetReference[];
+      localReferences?: LocalAssemblyReference[];
       tags?: string[];
     }) => Promise<Snippet>;
     getSnippet: (id: string) => Promise<Snippet | null>;
     updateSnippet: (
       id: string,
-      updates: { name?: string; code?: string; queryType?: QueryType; usings?: string[]; references?: NuGetReference[]; tags?: string[] }
+      updates: { name?: string; code?: string; queryType?: QueryType; usings?: string[]; references?: NuGetReference[]; localReferences?: LocalAssemblyReference[]; tags?: string[] }
     ) => Promise<boolean>;
     deleteSnippet: (id: string) => Promise<boolean>;
     listSnippets: (language?: string, tag?: string) => Promise<Snippet[]>;

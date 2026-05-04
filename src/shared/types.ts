@@ -7,7 +7,12 @@ export interface NuGetReference {
   version: string;
 }
 
+export interface LocalAssemblyReference {
+  path: string;
+}
+
 export interface ScriptProperties {
   usings: string[];
   references: NuGetReference[];
+  localReferences: LocalAssemblyReference[];
 }
