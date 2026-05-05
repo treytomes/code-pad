@@ -14,12 +14,24 @@
   "win": {
     "target": [
       {
-        "target": "zip",
+        "target": "nsis",
         "arch": ["x64"]
       }
     ],
     "icon": "assets/icon.ico",
     "forceCodeSigning": false
+  },
+  "nsis": {
+    "oneClick": false,
+    "allowToChangeInstallationDirectory": true,
+    "createDesktopShortcut": true,
+    "createStartMenuShortcut": true,
+    "shortcutName": "CodePad",
+    "perMachine": false,
+    "installerIcon": "assets/icon.ico",
+    "uninstallerIcon": "assets/icon.ico",
+    "license": "LICENSE",
+    "deleteAppDataOnUninstall": false
   },
   "mac": {
     "target": "dmg",
