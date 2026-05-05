@@ -45,6 +45,16 @@ export interface ExecutionOptions {
   targetFramework?: string; // e.g. "net8.0", "net9.0" — defaults to "net8.0"
 }
 
+interface CompilerDiagnostic {
+  file: string;
+  line: number;
+  column: number;
+  severity: 'error' | 'warning';
+  code: string;
+  message: string;
+  originalLine?: number;
+}
+
 export class CSharpExecutor {
   private currentProcess: ChildProcess | null = null;
 
@@ -103,7 +113,16 @@ export class CSharpExecutor {
     _logDebug(`Created temp file: ${tempFile}`);
 
     try {
-      const result = await this.runDotnetScript(tempFile.path, timeout, tempFile.references, tempFile.localReferences, targetFramework, onOutputChunk);
+      const result = await this.runDotnetScript(
+        tempFile.path,
+        timeout,
+        tempFile.references,
+        tempFile.localReferences,
+        targetFramework,
+        options.queryType ?? 'statements',
+        tempFile.preambleLines,
+        onOutputChunk
+      );
 
       const executionTime = Date.now() - startTime;
       _logDebug(
@@ -121,6 +140,115 @@ export class CSharpExecutor {
       // Cleanup temp file
       await this.deleteTempFile(tempFile.path);
     }
+  }
+
+  /**
+   * Parse MSBuild diagnostics from build output
+   */
+  private parseDiagnostics(buildOutput: string): CompilerDiagnostic[] {
+    const diagnostics: CompilerDiagnostic[] = [];
+    // Match: file.cs(line,col): error/warning CODE: message [project]
+    const pattern = /^(.+?)\((\d+),(\d+)\):\s+(warning|error)\s+(\w+):\s+(.+?)\s+\[.+?\]$/gm;
+
+    let match;
+    while ((match = pattern.exec(buildOutput)) !== null) {
+      diagnostics.push({
+        file: match[1],
+        line: parseInt(match[2]),
+        column: parseInt(match[3]),
+        severity: match[4] as 'error' | 'warning',
+        code: match[5],
+        message: match[6],
+      });
+    }
+
+    return diagnostics;
+  }
+
+  /**
+   * Calculate the line offset for different query types.
+   * Returns the number of lines to subtract from generated code line numbers
+   * to get back to the user's original code line numbers.
+   */
+  private calculateLineOffset(queryType: QueryType, preambleLines: number): number {
+    // The preamble (using statements, #r directives) are preserved at the top
+    // After that, we inject:
+    // - DumpExtensions (varies, ~60 lines)
+    // - DumpContainer (~30 lines)
+    // - ProgressReporter (~10 lines)
+    // - Empty line
+    // - "public class Program" + "{"
+    // - "    public static void Main(string[] args)" + "{"
+    // - StreamWriter setup lines (2 lines)
+    // - "        " (indent for user code)
+
+    const dumpExtensionsLines = this.getDumpExtensions().length;
+    const containerLines = this.getContainerExtensions().length;
+    const progressLines = this.getProgressExtensions().length;
+
+    switch (queryType) {
+      case 'statements':
+        // Preamble + DumpExtensions + Container + Progress + blank + "public class Program {" + "public static void Main {" + StreamWriter lines
+        return preambleLines + dumpExtensionsLines + containerLines + progressLines + 1 + 2 + 2;
+
+      case 'expression':
+        // Same as statements
+        return preambleLines + dumpExtensionsLines + containerLines + progressLines + 1 + 2 + 2;
+
+      case 'program':
+        // In program mode, extensions are injected AFTER user code
+        // User code starts after: preamble + extraUsings + blank line
+        return preambleLines + 1; // +1 for the blank line after preamble
+
+      default:
+        return preambleLines;
+    }
+  }
+
+  /**
+   * Map generated code line number back to user's original code line number
+   */
+  private mapLineNumber(generatedLine: number, queryType: QueryType, preambleLines: number): number {
+    const offset = this.calculateLineOffset(queryType, preambleLines);
+    const originalLine = generatedLine - offset;
+    return Math.max(1, originalLine);
+  }
+
+  /**
+   * Format diagnostics into a human-readable error message
+   */
+  private formatDiagnostics(diagnostics: CompilerDiagnostic[], queryType: QueryType, preambleLines: number): string {
+    if (diagnostics.length === 0) {
+      return '';
+    }
+
+    // Map line numbers back to original code
+    diagnostics.forEach((d) => {
+      d.originalLine = this.mapLineNumber(d.line, queryType, preambleLines);
+    });
+
+    const errors = diagnostics.filter((d) => d.severity === 'error');
+    const warnings = diagnostics.filter((d) => d.severity === 'warning');
+
+    let output = '';
+
+    if (errors.length > 0) {
+      output += `Compilation Errors (${errors.length})\n\n`;
+      errors.forEach((error) => {
+        output += `  Line ${error.originalLine}, Column ${error.column}\n`;
+        output += `    ${error.code}: ${error.message}\n\n`;
+      });
+    }
+
+    if (warnings.length > 0) {
+      output += `Compilation Warnings (${warnings.length})\n\n`;
+      warnings.forEach((warning) => {
+        output += `  Line ${warning.originalLine}, Column ${warning.column}\n`;
+        output += `    ${warning.code}: ${warning.message}\n\n`;
+      });
+    }
+
+    return output;
   }
 
   /**
@@ -417,7 +545,7 @@ export class CSharpExecutor {
   /**
    * Create temporary .cs file with code wrapped according to the query type.
    */
-  private async createTempFile(code: string, queryType: QueryType, extraUsings: string[], references: NuGetReference[], localReferences: LocalAssemblyReference[] = []): Promise<{ path: string; references: NuGetReference[]; localReferences: LocalAssemblyReference[] }> {
+  private async createTempFile(code: string, queryType: QueryType, extraUsings: string[], references: NuGetReference[], localReferences: LocalAssemblyReference[] = []): Promise<{ path: string; references: NuGetReference[]; localReferences: LocalAssemblyReference[]; preambleLines: number }> {
     const fileName = `codepad-${randomUUID()}.cs`;
     const filePath = join(tmpdir(), fileName);
 
@@ -462,7 +590,10 @@ export class CSharpExecutor {
       // Ignore debug save errors
     }
 
-    return { path: filePath, references: mergedRefs, localReferences: mergedLocalRefs };
+    // Count preamble lines (including extraUsings)
+    const preambleLines = preamble.length + extraUsings.length;
+
+    return { path: filePath, references: mergedRefs, localReferences: mergedLocalRefs, preambleLines };
   }
 
   /**
@@ -495,6 +626,8 @@ export class CSharpExecutor {
     references: NuGetReference[],
     localReferences: LocalAssemblyReference[],
     targetFramework: string,
+    queryType: QueryType,
+    preambleLines: number,
     onOutputChunk?: (chunk: string, isError: boolean) => void
   ): Promise<ExecutionResult> {
     return new Promise((resolve) => {
@@ -617,10 +750,22 @@ export class CSharpExecutor {
               stderr: compileResult.stderr,
             });
 
-            // Combine stdout and stderr for full error context
-            const fullError = [
-              'Compilation failed:',
-              '',
+            // Parse and format diagnostics
+            const buildOutput = compileResult.stdout + '\n' + compileResult.stderr;
+            const diagnostics = this.parseDiagnostics(buildOutput);
+            const formattedErrors = this.formatDiagnostics(diagnostics, queryType, preambleLines);
+
+            // Build user-friendly error message
+            let errorMessage = 'Compilation failed:\n\n';
+
+            if (formattedErrors) {
+              errorMessage += formattedErrors;
+              errorMessage += '\n' + '-'.repeat(80) + '\n';
+              errorMessage += 'Full build output:\n';
+            }
+
+            // Include full output for debugging
+            errorMessage += [
               compileResult.stderr.trim(),
               compileResult.stdout.trim(),
             ]
@@ -629,7 +774,7 @@ export class CSharpExecutor {
 
             resolve({
               stdout: '',
-              stderr: fullError,
+              stderr: errorMessage,
               exitCode: compileResult.exitCode,
               executionTime: 0,
               timedOut: false,
