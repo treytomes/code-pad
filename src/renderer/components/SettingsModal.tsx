@@ -10,6 +10,7 @@ import {
   message,
   Divider,
   Input,
+  Spin,
 } from 'antd';
 import { FolderOpenOutlined } from '@ant-design/icons';
 import type { TabsProps } from 'antd';
@@ -31,10 +32,13 @@ interface Settings {
   wordWrap: boolean;
   minimap: boolean;
   lineNumbers: boolean;
+  folding: boolean;
+  parameterHints: boolean;
 
   // Execution settings
   timeout: number;
   autoSave: boolean;
+  targetFramework: string;
 
   // UI settings
   theme: 'dark' | 'light' | 'system';
@@ -48,8 +52,11 @@ const DEFAULT_SETTINGS: Settings = {
   wordWrap: true,
   minimap: false,
   lineNumbers: true,
+  folding: true,
+  parameterHints: true,
   timeout: 30000,
   autoSave: false,
+  targetFramework: 'net8.0',
   theme: 'system',
   sidebarWidth: 250,
   outputHeight: 200,
@@ -66,6 +73,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const [hasChanges, setHasChanges] = useState(false);
   const [dbPath, setDbPath] = useState('');
   const [dbChanging, setDbChanging] = useState(false);
+  const [installedFrameworks, setInstalledFrameworks] = useState<string[]>(['net8.0']);
+  const [frameworksLoading, setFrameworksLoading] = useState(false);
 
   const loadSettings = () => {
     // TODO: Load from database
@@ -84,6 +93,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       // eslint-disable-next-line react-hooks/set-state-in-effect
       loadSettings();
       window.electronAPI.getDbPath().then(setDbPath).catch(console.error);
+      setFrameworksLoading(true);
+      window.electronAPI.getInstalledFrameworks()
+        .then((frameworks) => {
+          setInstalledFrameworks(frameworks);
+        })
+        .catch(() => setInstalledFrameworks(['net8.0']))
+        .finally(() => setFrameworksLoading(false));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible]);
@@ -178,6 +194,26 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           Show code minimap
         </span>
       </Form.Item>
+
+      <Form.Item label="Code Folding">
+        <Switch
+          checked={settings.folding}
+          onChange={(checked) => updateSetting('folding', checked)}
+        />
+        <span style={{ marginLeft: '8px', color: '#858585', fontSize: '12px' }}>
+          Show fold/unfold controls in the gutter
+        </span>
+      </Form.Item>
+
+      <Form.Item label="Parameter Hints">
+        <Switch
+          checked={settings.parameterHints}
+          onChange={(checked) => updateSetting('parameterHints', checked)}
+        />
+        <span style={{ marginLeft: '8px', color: '#858585', fontSize: '12px' }}>
+          Show method signature help while typing
+        </span>
+      </Form.Item>
     </Form>
   );
 
@@ -197,6 +233,26 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           Maximum execution time. Set to 0 to disable timeout (run indefinitely). Use Stop button to
           cancel.
         </div>
+      </Form.Item>
+
+      <Form.Item
+        label="Target Framework"
+        extra="Select the .NET version to compile against. Use a version that matches your referenced assemblies."
+      >
+        <Spin spinning={frameworksLoading} size="small">
+          <Select
+            value={settings.targetFramework}
+            onChange={(value) => updateSetting('targetFramework', value)}
+            style={{ width: '100%' }}
+          >
+            {installedFrameworks.map((fw) => (
+              <Option key={fw} value={fw}>{fw}</Option>
+            ))}
+            {!installedFrameworks.includes(settings.targetFramework) && (
+              <Option value={settings.targetFramework}>{settings.targetFramework}</Option>
+            )}
+          </Select>
+        </Spin>
       </Form.Item>
 
       <Form.Item label="Auto-Save">

@@ -6,6 +6,7 @@ interface StatusBarProps {
   cursorLine: number;
   cursorColumn: number;
   executionTime: number | null;
+  targetFramework?: string;
 }
 
 export const StatusBar: React.FC<StatusBarProps> = ({
@@ -14,6 +15,7 @@ export const StatusBar: React.FC<StatusBarProps> = ({
   cursorLine,
   cursorColumn,
   executionTime,
+  targetFramework,
 }) => {
   const languageLabel: Record<string, string> = {
     csharp: 'C#',
@@ -39,6 +41,9 @@ export const StatusBar: React.FC<StatusBarProps> = ({
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
         <span>{languageLabel[language] ?? language}</span>
+        {targetFramework && (
+          <span style={{ opacity: 0.8 }}>{targetFramework}</span>
+        )}
         <span
           style={{
             display: 'flex',

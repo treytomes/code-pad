@@ -15,7 +15,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   },
 
   // Execute C# code
-  executeCode: (code: string, options?: { timeout?: number; queryType?: string; usings?: string[]; references?: { name: string; version: string }[]; localReferences?: { path: string }[] }) =>
+  executeCode: (code: string, options?: { timeout?: number; queryType?: string; usings?: string[]; references?: { name: string; version: string }[]; localReferences?: { path: string }[]; targetFramework?: string }) =>
     ipcRenderer.invoke('execute-code', code, options),
 
   // Stop running execution
@@ -30,6 +30,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // Database location
   getDbPath: () => ipcRenderer.invoke('get-db-path'),
   setDbPath: () => ipcRenderer.invoke('set-db-path'),
+
+  // Get installed .NET SDK target frameworks
+  getInstalledFrameworks: (): Promise<string[]> => ipcRenderer.invoke('get-installed-frameworks'),
 
   // Listen for background auto-install result
   onDotnetScriptInstallResult: (

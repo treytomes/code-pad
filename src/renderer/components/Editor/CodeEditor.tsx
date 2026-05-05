@@ -15,6 +15,8 @@ export interface CodeEditorProps {
   wordWrap?: boolean;
   minimap?: boolean;
   lineNumbers?: boolean;
+  folding?: boolean;
+  parameterHints?: boolean;
 }
 
 export const CodeEditor: React.FC<CodeEditorProps> = ({
@@ -30,6 +32,8 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
   wordWrap = false,
   minimap = false,
   lineNumbers = true,
+  folding = true,
+  parameterHints = true,
 }) => {
   const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
 
@@ -74,6 +78,77 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
         return { suggestions };
       },
     });
+
+    // Signature help (parameter hints) for common .NET methods
+    monaco.languages.registerSignatureHelpProvider('csharp', {
+      signatureHelpTriggerCharacters: ['(', ','],
+      signatureHelpRetriggerCharacters: [','],
+      provideSignatureHelp: (model, position) => {
+        const lineContent = model.getLineContent(position.lineNumber);
+        const textBefore = lineContent.substring(0, position.column - 1);
+
+        // Find the nearest open call — walk back to match a known method name
+        const callMatch = textBefore.match(/(\w[\w.]*)\s*\(([^)]*)$/);
+        if (!callMatch) return null;
+
+        const methodName = callMatch[1];
+        const argsBefore = callMatch[2];
+        const activeParameter = (argsBefore.match(/,/g) || []).length;
+
+        type SigDef = { label: string; doc: string; params: { label: string; doc: string }[] };
+        const signatures: Record<string, SigDef> = {
+          'Console.WriteLine': {
+            label: 'Console.WriteLine(value)',
+            doc: 'Writes the specified value, followed by a newline, to the standard output.',
+            params: [{ label: 'value', doc: 'The value to write.' }],
+          },
+          'Console.Write': {
+            label: 'Console.Write(value)',
+            doc: 'Writes the specified value to the standard output.',
+            params: [{ label: 'value', doc: 'The value to write.' }],
+          },
+          'Console.ReadLine': {
+            label: 'Console.ReadLine()',
+            doc: 'Reads the next line of characters from the standard input.',
+            params: [],
+          },
+          Dump: {
+            label: 'Dump(label?)',
+            doc: 'Outputs the object to the CodePad output panel.',
+            params: [{ label: 'label', doc: 'Optional label shown above the output.' }],
+          },
+          'string.Format': {
+            label: 'string.Format(format, args)',
+            doc: 'Replaces format items in a string with the string representations of the args.',
+            params: [
+              { label: 'format', doc: 'A composite format string.' },
+              { label: 'args', doc: 'Objects to format.' },
+            ],
+          },
+        };
+
+        const sig = signatures[methodName];
+        if (!sig) return null;
+
+        return {
+          value: {
+            signatures: [
+              {
+                label: sig.label,
+                documentation: { value: sig.doc },
+                parameters: sig.params.map((p) => ({
+                  label: p.label,
+                  documentation: { value: p.doc },
+                })),
+              },
+            ],
+            activeSignature: 0,
+            activeParameter: Math.min(activeParameter, Math.max(0, sig.params.length - 1)),
+          },
+          dispose: () => {},
+        };
+      },
+    });
   };
 
   const handleEditorChange = (value: string | undefined) => {
@@ -98,11 +173,26 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
         roundedSelection: true,
         scrollBeyondLastLine: false,
         automaticLayout: true,
-        folding: true,
+        // Code folding (#48)
+        folding,
+        foldingStrategy: 'indentation',
+        showFoldingControls: 'always',
+        // Find widget — enabled by default; Ctrl+F / Ctrl+H open it natively (#46)
+        find: {
+          addExtraSpaceOnTop: false,
+          seedSearchStringFromSelection: 'selection',
+        },
+        // Parameter hints and hover (#48)
+        parameterHints: { enabled: parameterHints, cycle: true },
+        hover: { enabled: true, delay: 300 },
+        // General quality-of-life
         renderWhitespace: 'selection',
         wordWrap: wordWrap ? 'on' : 'off',
         tabSize,
         insertSpaces: true,
+        quickSuggestions: { other: true, comments: false, strings: false },
+        suggestOnTriggerCharacters: true,
+        acceptSuggestionOnEnter: 'on',
       }}
     />
   );

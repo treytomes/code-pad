@@ -13,7 +13,7 @@ export interface ElectronAPI {
 
   executeCode: (
     code: string,
-    options?: { timeout?: number; queryType?: QueryType; usings?: string[]; references?: NuGetReference[]; localReferences?: LocalAssemblyReference[] }
+    options?: { timeout?: number; queryType?: QueryType; usings?: string[]; references?: NuGetReference[]; localReferences?: LocalAssemblyReference[]; targetFramework?: string }
   ) => Promise<ExecutionResult>;
 
   stopExecution: () => Promise<void>;
@@ -30,6 +30,7 @@ export interface ElectronAPI {
 
   getDbPath: () => Promise<string>;
   setDbPath: () => Promise<{ success: boolean; path?: string; error?: string }>;
+  getInstalledFrameworks: () => Promise<string[]>;
 
   onDotnetScriptInstallResult: (
     callback: (result: { success: boolean; output?: string; error?: string }) => void

@@ -42,6 +42,7 @@ export interface ExecutionOptions {
   usings?: string[]; // additional namespace imports
   references?: NuGetReference[]; // NuGet package references
   localReferences?: LocalAssemblyReference[]; // local .dll references
+  targetFramework?: string; // e.g. "net8.0", "net9.0" — defaults to "net8.0"
 }
 
 export class CSharpExecutor {
@@ -94,13 +95,15 @@ export class CSharpExecutor {
 
     _logDebug(`Starting C# code execution (timeout: ${timeout}ms)`);
 
+    const targetFramework = options.targetFramework ?? 'net8.0';
+
     // Create temporary file for code
     const tempFile = await this.createTempFile(code, options.queryType ?? 'statements', options.usings ?? [], options.references ?? [], options.localReferences ?? []);
 
     _logDebug(`Created temp file: ${tempFile}`);
 
     try {
-      const result = await this.runDotnetScript(tempFile.path, timeout, tempFile.references, tempFile.localReferences, onOutputChunk);
+      const result = await this.runDotnetScript(tempFile.path, timeout, tempFile.references, tempFile.localReferences, targetFramework, onOutputChunk);
 
       const executionTime = Date.now() - startTime;
       _logDebug(
@@ -491,6 +494,7 @@ export class CSharpExecutor {
     timeout: number,
     references: NuGetReference[],
     localReferences: LocalAssemblyReference[],
+    targetFramework: string,
     onOutputChunk?: (chunk: string, isError: boolean) => void
   ): Promise<ExecutionResult> {
     return new Promise((resolve) => {
@@ -554,7 +558,7 @@ export class CSharpExecutor {
           const csprojContent = `<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>${targetFramework}</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <NoWarn>CS0105;CS8625</NoWarn>
