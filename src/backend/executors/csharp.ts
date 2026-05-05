@@ -147,19 +147,27 @@ export class CSharpExecutor {
    */
   private parseDiagnostics(buildOutput: string): CompilerDiagnostic[] {
     const diagnostics: CompilerDiagnostic[] = [];
+    const seen = new Set<string>();
     // Match: file.cs(line,col): error/warning CODE: message [project]
     const pattern = /^(.+?)\((\d+),(\d+)\):\s+(warning|error)\s+(\w+):\s+(.+?)\s+\[.+?\]$/gm;
 
     let match;
     while ((match = pattern.exec(buildOutput)) !== null) {
-      diagnostics.push({
+      const diagnostic = {
         file: match[1],
         line: parseInt(match[2]),
         column: parseInt(match[3]),
         severity: match[4] as 'error' | 'warning',
         code: match[5],
         message: match[6],
-      });
+      };
+
+      // Deduplicate based on line, column, and code (MSBuild outputs errors twice)
+      const key = `${diagnostic.line}:${diagnostic.column}:${diagnostic.code}`;
+      if (!seen.has(key)) {
+        seen.add(key);
+        diagnostics.push(diagnostic);
+      }
     }
 
     return diagnostics;
