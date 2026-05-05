@@ -123,6 +123,7 @@ function App() {
           lineNumbers: s.lineNumbers ?? true,
           folding: s.folding ?? true,
           parameterHints: s.parameterHints ?? true,
+          targetFramework: s.targetFramework ?? 'net8.0',
         };
       }
     } catch (e) {
@@ -140,6 +141,7 @@ function App() {
       lineNumbers: true,
       folding: true,
       parameterHints: true,
+      targetFramework: 'net8.0',
     };
   };
 
@@ -165,6 +167,7 @@ function App() {
   const [editorLineNumbers, setEditorLineNumbers] = useState(savedSettings.lineNumbers);
   const [editorFolding, setEditorFolding] = useState(savedSettings.folding);
   const [editorParameterHints, setEditorParameterHints] = useState(savedSettings.parameterHints);
+  const [targetFramework, setTargetFramework] = useState(savedSettings.targetFramework);
 
   const resolveTheme = (t: 'dark' | 'light' | 'system'): 'dark' | 'light' => {
     if (t === 'system') {
@@ -261,6 +264,7 @@ function App() {
           usings: scriptProperties.usings,
           references: scriptProperties.references,
           localReferences: scriptProperties.localReferences,
+          targetFramework,
         }),
         window.electronAPI.onOutputDone(),
       ]);
@@ -1081,6 +1085,7 @@ function App() {
           cursorLine={cursorLine}
           cursorColumn={cursorColumn}
           executionTime={executionTime}
+          targetFramework={targetFramework}
         />
 
         <Modal
@@ -1113,6 +1118,7 @@ function App() {
             setEditorLineNumbers(s.lineNumbers);
             setEditorFolding(s.folding);
             setEditorParameterHints(s.parameterHints);
+            setTargetFramework(s.targetFramework);
           }}
         />
         <ScriptPropertiesModal

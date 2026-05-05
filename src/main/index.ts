@@ -449,6 +449,32 @@ electron.ipcMain.handle(
   }
 );
 
+// List installed .NET SDK target frameworks (e.g. ["net8.0", "net9.0"])
+electron.ipcMain.handle('get-installed-frameworks', async (): Promise<string[]> => {
+  return new Promise((resolve) => {
+    const { execFile } = require('child_process');
+    execFile('dotnet', ['--list-sdks'], { timeout: 10000 }, (err: any, stdout: string) => {
+      if (err || !stdout) {
+        resolve(['net8.0']);
+        return;
+      }
+      // Each line: "8.0.300 [/usr/share/dotnet/sdk]" → "net8.0"
+      const versions = (stdout as string)
+        .split('\n')
+        .map((line: string) => line.trim())
+        .filter((line: string) => line.length > 0)
+        .map((line: string) => {
+          const match = line.match(/^(\d+)\.(\d+)\./);
+          return match ? `net${match[1]}.${match[2]}` : null;
+        })
+        .filter((v): v is string => v !== null);
+      // Deduplicate and sort ascending
+      const unique = [...new Set(versions)].sort();
+      resolve(unique.length > 0 ? unique : ['net8.0']);
+    });
+  });
+});
+
 // Import/Export handlers
 electron.ipcMain.handle('export-snippet', async (_event, snippetName: string, code: string) => {
   return await exportSnippetToFile(snippetName, code);
