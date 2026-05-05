@@ -31,6 +31,8 @@ interface Settings {
   wordWrap: boolean;
   minimap: boolean;
   lineNumbers: boolean;
+  folding: boolean;
+  parameterHints: boolean;
 
   // Execution settings
   timeout: number;
@@ -48,6 +50,8 @@ const DEFAULT_SETTINGS: Settings = {
   wordWrap: true,
   minimap: false,
   lineNumbers: true,
+  folding: true,
+  parameterHints: true,
   timeout: 30000,
   autoSave: false,
   theme: 'system',
@@ -176,6 +180,26 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         />
         <span style={{ marginLeft: '8px', color: '#858585', fontSize: '12px' }}>
           Show code minimap
+        </span>
+      </Form.Item>
+
+      <Form.Item label="Code Folding">
+        <Switch
+          checked={settings.folding}
+          onChange={(checked) => updateSetting('folding', checked)}
+        />
+        <span style={{ marginLeft: '8px', color: '#858585', fontSize: '12px' }}>
+          Show fold/unfold controls in the gutter
+        </span>
+      </Form.Item>
+
+      <Form.Item label="Parameter Hints">
+        <Switch
+          checked={settings.parameterHints}
+          onChange={(checked) => updateSetting('parameterHints', checked)}
+        />
+        <span style={{ marginLeft: '8px', color: '#858585', fontSize: '12px' }}>
+          Show method signature help while typing
         </span>
       </Form.Item>
     </Form>

@@ -121,6 +121,8 @@ function App() {
           wordWrap: s.wordWrap ?? false,
           minimap: s.minimap ?? false,
           lineNumbers: s.lineNumbers ?? true,
+          folding: s.folding ?? true,
+          parameterHints: s.parameterHints ?? true,
         };
       }
     } catch (e) {
@@ -136,6 +138,8 @@ function App() {
       wordWrap: false,
       minimap: false,
       lineNumbers: true,
+      folding: true,
+      parameterHints: true,
     };
   };
 
@@ -159,6 +163,8 @@ function App() {
   const [editorWordWrap, setEditorWordWrap] = useState(savedSettings.wordWrap);
   const [editorMinimap, setEditorMinimap] = useState(savedSettings.minimap);
   const [editorLineNumbers, setEditorLineNumbers] = useState(savedSettings.lineNumbers);
+  const [editorFolding, setEditorFolding] = useState(savedSettings.folding);
+  const [editorParameterHints, setEditorParameterHints] = useState(savedSettings.parameterHints);
 
   const resolveTheme = (t: 'dark' | 'light' | 'system'): 'dark' | 'light' => {
     if (t === 'system') {
@@ -954,6 +960,8 @@ function App() {
                 wordWrap={editorWordWrap}
                 minimap={editorMinimap}
                 lineNumbers={editorLineNumbers}
+                folding={editorFolding}
+                parameterHints={editorParameterHints}
               />
             </div>
 
@@ -1103,6 +1111,8 @@ function App() {
             setEditorWordWrap(s.wordWrap);
             setEditorMinimap(s.minimap);
             setEditorLineNumbers(s.lineNumbers);
+            setEditorFolding(s.folding);
+            setEditorParameterHints(s.parameterHints);
           }}
         />
         <ScriptPropertiesModal
