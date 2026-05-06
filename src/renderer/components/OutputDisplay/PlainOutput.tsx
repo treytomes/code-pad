@@ -1,4 +1,5 @@
 import React from 'react';
+import Ansi from 'ansi-to-react';
 
 interface PlainOutputProps {
   content: string;
@@ -23,7 +24,11 @@ export const PlainOutput: React.FC<PlainOutputProps> = ({ content, metadata }) =
           wordBreak: 'break-word',
         }}
       >
-        {content || <span style={{ color: '#858585', fontStyle: 'italic' }}>No output</span>}
+        {content ? (
+          <Ansi useClasses={false}>{content}</Ansi>
+        ) : (
+          <span style={{ color: '#858585', fontStyle: 'italic' }}>No output</span>
+        )}
       </div>
     </div>
   );
