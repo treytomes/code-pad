@@ -10,11 +10,11 @@ Enable developers to write, execute, and visualize code instantly without projec
 
 ---
 
-## Current Status (2026-05-03)
+## Current Status (2026-05-06)
 
-### 🚀 Phase 1 + Phase 2 Polish In Progress
+### 🎉 v0.1.0 Released!
 
-**Phase 1 Complete (v0.1.0 baseline)**:
+**Phase 1 Complete (v0.1.0)**:
 - ✅ C# code execution via dotnet-script
 - ✅ LINQPad-style .Dump() extension method
 - ✅ Samples tab with 12 categorized examples
@@ -26,23 +26,34 @@ Enable developers to write, execute, and visualize code instantly without projec
 - ✅ Import/Export functionality
 - ✅ Automated E2E tests (20+ tests with Playwright)
 - ✅ CI/CD pipeline (GitHub Actions — unit tests + 3-platform builds passing)
-- ✅ Linux packages uploaded to v0.1.0 GitHub pre-release
 
-**Phase 2 Polish (in progress)**:
+**Phase 2 Polish (Complete)**:
 - ✅ Auto-install dotnet-script with Install Now button (#36)
 - ✅ Status bar (language, execution state, cursor position, timing) (#16)
 - ✅ Light/Dark/System theme support (#8)
 - ✅ Configurable database location (#9)
 - ✅ First-run welcome modal (#17)
+- ✅ Configurable target framework for C# execution (#47)
+- ✅ Editor enhancements: code folding, parameter hints, find widget (#46, #48)
+- ✅ Improved compiler error/warning presentation (#51)
+- ✅ Windows NSIS installer built and released (#4)
+- ✅ Ko-fi fundraising integration
 
-**Remaining**:
-- 🎯 Issue #4: Windows installer — needs build + testing (macOS removed, no Mac hardware)
-- ⏳ E2E tests in CI — investigating flakiness after dotnet-script install fix
+**Recent Enhancements (2026-05-06)**:
+- ✅ Full UTF-8 support for emojis and Unicode characters (all query modes)
+- ✅ ANSI color code rendering in output (terminal colors)
+- ✅ Explicit horizontal rule support (Markdown syntax: ---, ___, ***)
+- ✅ Improved label detection for standalone headers
 
-**Milestone**: [v0.1.0 - Pre-Release](https://github.com/treytomes/code-pad/milestone/1)  
+**Release Artifacts**:
+- Windows: CodePad-Setup-0.1.0.exe (NSIS installer)
+- Linux: CodePad-0.1.0.AppImage
+- Available at: https://github.com/treytomes/code-pad/releases/tag/v0.1.0
+
+**Milestone**: [v0.1.0 - Pre-Release](https://github.com/treytomes/code-pad/milestone/1) ✅ Complete  
 **Project Board**: https://github.com/users/treytomes/projects/2
 
-**Note on macOS**: No Mac hardware available. macOS builds are excluded from packaging targets and issue #4.
+**Note on macOS**: No Mac hardware available. macOS builds are excluded from packaging targets.
 
 ---
 
@@ -895,6 +906,102 @@ npm run logs:clear:windows
 
 ---
 
+## Output Formatting Features
+
+### UTF-8 and Unicode Support
+
+CodePad fully supports UTF-8 encoding for emojis and Unicode characters in all query modes:
+
+```csharp
+// Statement, Expression, and Program modes all work
+Console.WriteLine("Hello 🌍 World 🚀");
+Console.WriteLine("Box drawing: ╔═══╗");
+Console.WriteLine("Chinese: 你好");
+Console.WriteLine("Arabic: مرحبا");
+```
+
+**Implementation**: Module Initializer sets up UTF-8 encoding before any user code runs.
+
+### ANSI Color Codes
+
+Terminal color codes are rendered as actual colors in the output:
+
+```csharp
+// Use ANSI escape sequences for colors
+Console.WriteLine("\x1b[31mRed text\x1b[0m");
+Console.WriteLine("\x1b[32m✅ Success\x1b[0m");
+Console.WriteLine("\x1b[33m⚠️  Warning\x1b[0m");
+
+// Helper class for colors (recommended)
+public static class AnsiColors
+{
+    public const string Red = "\x1b[31m";
+    public const string Green = "\x1b[32m";
+    public const string Yellow = "\x1b[33m";
+    public const string Reset = "\x1b[0m";
+}
+
+Console.WriteLine($"{AnsiColors.Green}Success!{AnsiColors.Reset}");
+```
+
+**Supported**: All standard ANSI color codes (foreground, background, formatting)  
+**Note**: Use ANSI codes instead of `Console.ForegroundColor` for best UTF-8 compatibility
+
+### Labeled Output
+
+Use triple equals syntax for section headers:
+
+```csharp
+Console.WriteLine("=== My Section ===");
+Console.WriteLine("Content here");
+```
+
+**Rendering**: Label appears in teal/cyan, bold, separate from content  
+**Works with**: Standalone headers, headers followed by blank lines, or immediate content
+
+### Horizontal Rules
+
+Create visual dividers using Markdown syntax:
+
+```csharp
+Console.WriteLine("Section 1");
+Console.WriteLine("---");    // Three or more dashes
+Console.WriteLine("Section 2");
+Console.WriteLine("___");    // Three or more underscores  
+Console.WriteLine("Section 3");
+Console.WriteLine("***");    // Three or more asterisks
+```
+
+**Implicit dividers**: Double newlines also create dividers  
+**Rendering**: Styled horizontal line matching the dark theme
+
+### JSON and Table Output
+
+Arrays and objects are automatically formatted:
+
+```csharp
+// Arrays become tables
+var data = new[] {
+    new { Name = "Alice", Age = 30 },
+    new { Name = "Bob", Age = 25 }
+};
+data.Dump();  // Renders as a table
+
+// Objects become expandable JSON trees
+var obj = new { Status = "OK", Count = 42 };
+obj.Dump();  // Renders as collapsible JSON tree
+```
+
+### Best Practices for Rich Output
+
+1. **Use ANSI codes** instead of `Console.ForegroundColor` for colors
+2. **Add labels** to sections with `=== Label ===` syntax
+3. **Use `.Dump()`** for structured data (automatic table/JSON formatting)
+4. **Separate sections** with `---` or blank lines for readability
+5. **Include emojis** for visual indicators (✅ ❌ ⚠️ 🚀 etc.)
+
+---
+
 ## AI Assistant Guidelines
 
 ### For Claude Code Resuming Work
@@ -955,11 +1062,12 @@ npm run logs:clear:windows
 **License**: MIT
 
 **Current Branch**: main  
-**Current Version**: v0.1.0-pre  
-**Status**: 🟢 Ready for release build and testing
+**Current Version**: v0.1.0  
+**Status**: 🎉 Released
 
 ---
 
-**Last Updated**: 2026-05-02  
-**Project Status**: v0.1.0 Pre-Release - Ready for Production Build  
-**Next Steps**: Build production packages, final testing, tag release
+**Last Updated**: 2026-05-06  
+**Project Status**: v0.1.0 Released  
+**Recent Updates**: UTF-8/emoji support, ANSI colors, horizontal rules, label improvements  
+**Next Steps**: Begin Phase 2 planning (NuGet packages, multi-language support)
