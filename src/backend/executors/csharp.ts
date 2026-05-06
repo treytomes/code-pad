@@ -502,8 +502,9 @@ export class CSharpExecutor {
       '{',
       '    public static void Main(string[] args)',
       '    {',
-      '        System.Console.SetOut(new System.IO.StreamWriter(System.Console.OpenStandardOutput()) { AutoFlush = true });',
-      '        System.Console.SetError(new System.IO.StreamWriter(System.Console.OpenStandardError()) { AutoFlush = true });',
+      '        System.Console.OutputEncoding = System.Text.Encoding.UTF8;',
+      '        System.Console.SetOut(new System.IO.StreamWriter(System.Console.OpenStandardOutput(), System.Text.Encoding.UTF8) { AutoFlush = true });',
+      '        System.Console.SetError(new System.IO.StreamWriter(System.Console.OpenStandardError(), System.Text.Encoding.UTF8) { AutoFlush = true });',
       '        ',
       ...body.map((line) => '        ' + line),
       '    }',
@@ -527,8 +528,9 @@ export class CSharpExecutor {
       '{',
       '    public static void Main(string[] args)',
       '    {',
-      '        System.Console.SetOut(new System.IO.StreamWriter(System.Console.OpenStandardOutput()) { AutoFlush = true });',
-      '        System.Console.SetError(new System.IO.StreamWriter(System.Console.OpenStandardError()) { AutoFlush = true });',
+      '        System.Console.OutputEncoding = System.Text.Encoding.UTF8;',
+      '        System.Console.SetOut(new System.IO.StreamWriter(System.Console.OpenStandardOutput(), System.Text.Encoding.UTF8) { AutoFlush = true });',
+      '        System.Console.SetError(new System.IO.StreamWriter(System.Console.OpenStandardError(), System.Text.Encoding.UTF8) { AutoFlush = true });',
       `        (${expression}).Dump();`,
       '    }',
       '}',
@@ -730,11 +732,11 @@ export class CSharpExecutor {
             );
 
             compileProcess.stdout?.on('data', (data) => {
-              compileStdout += data.toString();
+              compileStdout += data.toString('utf8');
             });
 
             compileProcess.stderr?.on('data', (data) => {
-              compileStderr += data.toString();
+              compileStderr += data.toString('utf8');
             });
 
             let compileExitCode = 0;
@@ -797,7 +799,11 @@ export class CSharpExecutor {
 
           const childProcess: ChildProcess = spawn('dotnet', [compiledDll], {
             cwd: projectDir,
-            env,
+            env: {
+              ...env,
+              // Ensure UTF-8 output from .NET console
+              DOTNET_SYSTEM_CONSOLE_ALLOW_ANSI_COLOR_REDIRECTION: 'true',
+            },
           });
 
           // Store reference for stop() method
@@ -822,7 +828,7 @@ export class CSharpExecutor {
 
           // Capture stdout
           childProcess.stdout?.on('data', (data) => {
-            const chunk = data.toString();
+            const chunk = data.toString('utf8');
             stdout += chunk;
 
             // Emit chunk for streaming
@@ -833,7 +839,7 @@ export class CSharpExecutor {
 
           // Capture stderr
           childProcess.stderr?.on('data', (data) => {
-            const chunk = data.toString();
+            const chunk = data.toString('utf8');
             stderr += chunk;
 
             // Emit chunk for streaming

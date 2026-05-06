@@ -16,7 +16,7 @@ export const PlainOutput: React.FC<PlainOutputProps> = ({ content, metadata }) =
       <div
         style={{
           color: '#cccccc',
-          fontFamily: "'Consolas', 'Courier New', monospace",
+          fontFamily: "'Consolas', 'Courier New', monospace, 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji'",
           fontSize: '13px',
           lineHeight: '1.6',
           whiteSpace: 'pre-wrap',
