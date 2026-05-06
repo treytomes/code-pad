@@ -502,9 +502,13 @@ export class CSharpExecutor {
       '{',
       '    public static void Main(string[] args)',
       '    {',
+      '        // Force UTF-8 encoding for console I/O',
+      '        System.Console.InputEncoding = System.Text.Encoding.UTF8;',
       '        System.Console.OutputEncoding = System.Text.Encoding.UTF8;',
-      '        System.Console.SetOut(new System.IO.StreamWriter(System.Console.OpenStandardOutput(), System.Text.Encoding.UTF8) { AutoFlush = true });',
-      '        System.Console.SetError(new System.IO.StreamWriter(System.Console.OpenStandardError(), System.Text.Encoding.UTF8) { AutoFlush = true });',
+      '        var stdout = new System.IO.StreamWriter(System.Console.OpenStandardOutput(), new System.Text.UTF8Encoding(false)) { AutoFlush = true };',
+      '        var stderr = new System.IO.StreamWriter(System.Console.OpenStandardError(), new System.Text.UTF8Encoding(false)) { AutoFlush = true };',
+      '        System.Console.SetOut(stdout);',
+      '        System.Console.SetError(stderr);',
       '        ',
       ...body.map((line) => '        ' + line),
       '    }',
@@ -528,9 +532,13 @@ export class CSharpExecutor {
       '{',
       '    public static void Main(string[] args)',
       '    {',
+      '        // Force UTF-8 encoding for console I/O',
+      '        System.Console.InputEncoding = System.Text.Encoding.UTF8;',
       '        System.Console.OutputEncoding = System.Text.Encoding.UTF8;',
-      '        System.Console.SetOut(new System.IO.StreamWriter(System.Console.OpenStandardOutput(), System.Text.Encoding.UTF8) { AutoFlush = true });',
-      '        System.Console.SetError(new System.IO.StreamWriter(System.Console.OpenStandardError(), System.Text.Encoding.UTF8) { AutoFlush = true });',
+      '        var stdout = new System.IO.StreamWriter(System.Console.OpenStandardOutput(), new System.Text.UTF8Encoding(false)) { AutoFlush = true };',
+      '        var stderr = new System.IO.StreamWriter(System.Console.OpenStandardError(), new System.Text.UTF8Encoding(false)) { AutoFlush = true };',
+      '        System.Console.SetOut(stdout);',
+      '        System.Console.SetError(stderr);',
       `        (${expression}).Dump();`,
       '    }',
       '}',
@@ -803,6 +811,11 @@ export class CSharpExecutor {
               ...env,
               // Ensure UTF-8 output from .NET console
               DOTNET_SYSTEM_CONSOLE_ALLOW_ANSI_COLOR_REDIRECTION: 'true',
+              // Force UTF-8 encoding on Windows
+              DOTNET_SYSTEM_GLOBALIZATION_INVARIANT: 'false',
+              // Set console code page to UTF-8 (65001)
+              LANG: 'en_US.UTF-8',
+              LC_ALL: 'en_US.UTF-8',
             },
           });
 
