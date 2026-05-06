@@ -23,10 +23,16 @@ export function detectOutputFormat(output: string): OutputFormat {
 
   // Check for labeled output (e.g., "=== Label ===\n{...}")
   // Strip label lines before format detection
+  // Also handle standalone labels (label with no content)
   let contentToCheck = trimmed;
-  const labelMatch = trimmed.match(/^===\s+.+?\s+===\s*\n(.+)/s);
+  const labelMatch = trimmed.match(/^===\s+.+?\s+===\s*\n?([\s\S]*)$/);
   if (labelMatch) {
     contentToCheck = labelMatch[1].trim();
+  }
+
+  // If only a label with no content, treat as plain text
+  if (!contentToCheck) {
+    return 'plain';
   }
 
   // Check for JSON
@@ -430,12 +436,16 @@ export function formatOutput(output: string): FormattedOutput {
 
   // Strip label header from plain output so the renderer can display it
   // consistently (label styled separately, body as plain text).
-  const plainLabelMatch = output.match(/^===\s+(.+?)\s+===\s*\n([\s\S]*)/);
+  // Also handle standalone labels (label with no content after it)
+  const plainLabelMatch = output.match(/^===\s+(.+?)\s+===\s*\n?([\s\S]*)$/);
   if (plainLabelMatch) {
+    const label = plainLabelMatch[1];
+    const content = plainLabelMatch[2].trim();
+
     return {
       format: 'plain',
-      content: plainLabelMatch[2],
-      metadata: { label: plainLabelMatch[1] },
+      content: content,
+      metadata: { label },
     };
   }
 
