@@ -396,35 +396,37 @@ export function splitOutputSections(output: string): string[] {
   // Split on:
   // 1. Double newlines (blank lines)
   // 2. Horizontal rule markers
-  // 3. Label boundaries (when a label immediately follows another label's content)
-  //    This handles cases like: Console.WriteLine("=== Label1 ==="); something.Dump("Label2");
+  // 3. Label boundaries - each label starts a new section
+  //    This handles cases like:
+  //    - Console.WriteLine("=== Label1 ==="); something.Dump("Label2");
+  //    - "text".Dump("Label") where label appears after other content
   //    where no blank line separates the sections.
 
   // First split on blank lines and HR markers
   let sections = withMarkers.split(/\n\s*\n/);
 
-  // Then split any section that contains multiple labels
+  // Then split any section that contains labels so each label starts its own section
   const finalSections: string[] = [];
   for (const section of sections) {
     // Match all label lines in this section
     const labelPattern = /^===\s+.+?\s+===/gm;
     const labels = [...section.matchAll(labelPattern)];
 
-    if (labels.length <= 1) {
-      // Single label or no labels - keep as-is
+    if (labels.length === 0) {
+      // No labels - keep as-is
       finalSections.push(section.trim());
     } else {
-      // Multiple labels - split on label boundaries
+      // One or more labels - split so each label starts a new section
       let lastIndex = 0;
       for (let i = 0; i < labels.length; i++) {
         const labelMatch = labels[i];
         const labelStart = labelMatch.index!;
 
-        if (i > 0) {
-          // Extract content from last label to this label (excluding this label)
-          const sectionContent = section.substring(lastIndex, labelStart).trim();
-          if (sectionContent) {
-            finalSections.push(sectionContent);
+        // If there's content before the first label, add it as a separate section
+        if (labelStart > lastIndex) {
+          const contentBefore = section.substring(lastIndex, labelStart).trim();
+          if (contentBefore) {
+            finalSections.push(contentBefore);
           }
         }
 
