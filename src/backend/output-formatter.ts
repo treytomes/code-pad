@@ -373,16 +373,22 @@ function formatImage(raw: string): FormattedOutput {
 }
 
 /**
- * Split output into sections separated by blank lines
+ * Split output into sections separated by blank lines or explicit horizontal rules
  * Each section can have its own format (JSON, table, plain text)
+ * Supports Markdown horizontal rule syntax: ---, ___, ***
  */
 export function splitOutputSections(output: string): string[] {
   if (!output || !output.trim()) {
     return [];
   }
 
-  // Split on double newlines (blank lines) to separate sections
-  const sections = output.split(/\n\s*\n/);
+  // First, replace explicit horizontal rules with a special marker
+  // Markdown HR syntax: --- (3+ dashes), ___ (3+ underscores), or *** (3+ asterisks)
+  // Must be on their own line
+  const withMarkers = output.replace(/^[ \t]*(-{3,}|_{3,}|\*{3,})[ \t]*$/gm, '\n___HR___\n');
+
+  // Split on double newlines (blank lines) or horizontal rule markers
+  const sections = withMarkers.split(/\n\s*\n/);
 
   return sections.map((section) => section.trim()).filter((section) => section.length > 0);
 }

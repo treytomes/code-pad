@@ -20,6 +20,11 @@ interface OutputDisplayProps {
 }
 
 const OutputSection: React.FC<{ formatted: FormattedOutput }> = ({ formatted }) => {
+  // Check if this is a horizontal rule marker
+  if (formatted.format === 'plain' && formatted.content === '___HR___') {
+    return <Divider style={{ margin: '16px 0', borderColor: '#434343' }} />;
+  }
+
   switch (formatted.format) {
     case 'json':
       return <JsonOutput content={formatted.content} metadata={formatted.metadata} />;
