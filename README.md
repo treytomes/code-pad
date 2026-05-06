@@ -1,5 +1,7 @@
 # CodePad
 
+[![Ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/treytomes)
+
 A cross-platform code scratchpad and rapid prototyping tool inspired by LINQPad. Execute code snippets across multiple programming languages without the overhead of creating full projects.
 
 ![CodePad Screenshot](docs/images/screenshot-1.png)

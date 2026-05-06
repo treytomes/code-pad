@@ -19,8 +19,11 @@
       }
     ],
     "icon": "assets/icon.ico",
-    "forceCodeSigning": false
+    "forceCodeSigning": false,
+    "sign": null,
+    "asar": true
   },
+  "asarUnpack": [],
   "nsis": {
     "oneClick": false,
     "allowToChangeInstallationDirectory": true,
