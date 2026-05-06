@@ -546,12 +546,34 @@ export class CSharpExecutor {
   }
 
   private buildProgramScript(preamble: string[], body: string[], extraUsings: string[]): string {
-    // User owns Main() — inject DumpExtensions and ProgressReporter after user code
+    // User owns Main() — inject UTF-8 setup and extensions
     const usingLines = extraUsings.map((u) => `using ${u};`);
+
+    // Inject a static class with a module initializer to set up UTF-8 encoding
+    // This runs before any user code, ensuring UTF-8 is configured even in Program mode
+    const utf8Setup = [
+      '// Auto-injected by CodePad - ensures UTF-8 encoding for console I/O',
+      'internal static class CodePadConsoleSetup',
+      '{',
+      '    [System.Runtime.CompilerServices.ModuleInitializer]',
+      '    internal static void Initialize()',
+      '    {',
+      '        System.Console.InputEncoding = System.Text.Encoding.UTF8;',
+      '        System.Console.OutputEncoding = System.Text.Encoding.UTF8;',
+      '        var stdout = new System.IO.StreamWriter(System.Console.OpenStandardOutput(), new System.Text.UTF8Encoding(false)) { AutoFlush = true };',
+      '        var stderr = new System.IO.StreamWriter(System.Console.OpenStandardError(), new System.Text.UTF8Encoding(false)) { AutoFlush = true };',
+      '        System.Console.SetOut(stdout);',
+      '        System.Console.SetError(stderr);',
+      '    }',
+      '}',
+      '',
+    ];
+
     return [
       ...preamble,
       ...usingLines,
       '',
+      ...utf8Setup,
       ...body,
       '',
       ...this.getDumpExtensions(),
