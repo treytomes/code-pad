@@ -476,7 +476,100 @@ try {
 }
 ```
 
+## Output Formatting Patterns
+
+### UTF-8 and Unicode
+All C# code (Statement, Expression, Program modes) automatically has UTF-8 encoding configured via Module Initializer. Emojis and Unicode characters work correctly:
+
+```csharp
+Console.WriteLine("✅ Success");
+Console.WriteLine("🚀 Launching...");
+Console.WriteLine("╔═══╗ Box drawing works");
+```
+
+### ANSI Color Codes (Recommended)
+Use ANSI escape sequences instead of `Console.ForegroundColor` for best UTF-8 compatibility:
+
+```csharp
+// Create a helper class
+public static class AnsiColors
+{
+    public const string Red = "\x1b[31m";
+    public const string Green = "\x1b[32m";
+    public const string Yellow = "\x1b[33m";
+    public const string Reset = "\x1b[0m";
+}
+
+// Use inline
+Console.WriteLine($"{AnsiColors.Green}✅ Test passed{AnsiColors.Reset}");
+```
+
+**Why not Console.ForegroundColor?**
+- Windows Console API can break UTF-8 encoding
+- ANSI codes work consistently across all platforms
+- CodePad's ANSI renderer handles them perfectly
+
+### Labeled Sections
+Use triple equals for section headers:
+
+```csharp
+Console.WriteLine("=== Test Results ===");
+Console.WriteLine("All tests passed");
+```
+
+Renders with teal/cyan label styling, separated from content.
+
+### Horizontal Rules
+Create visual separators using Markdown syntax:
+
+```csharp
+Console.WriteLine("Section 1");
+Console.WriteLine("---");  // or ___ or ***
+Console.WriteLine("Section 2");
+```
+
+Renders as a styled horizontal divider.
+
+### Structured Data
+Use `.Dump()` for automatic formatting:
+
+```csharp
+// Arrays become tables
+var data = new[] { 
+    new { Name = "Alice", Age = 30 },
+    new { Name = "Bob", Age = 25 }
+};
+data.Dump("User Data");  // Table with label
+
+// Objects become JSON trees
+var result = new { Status = "OK", Count = 42 };
+result.Dump();  // Expandable JSON tree
+```
+
+### Rich Output Template
+Combine all features for professional output:
+
+```csharp
+Console.WriteLine("=== Integration Test Results ===");
+Console.WriteLine();
+
+Console.WriteLine($"{AnsiColors.Cyan}🕒 Started: {DateTime.Now}{AnsiColors.Reset}");
+Console.WriteLine("---");
+
+// Test 1
+Console.WriteLine($"Test 1: {AnsiColors.Green}✅ PASSED{AnsiColors.Reset}");
+
+// Test 2
+Console.WriteLine($"Test 2: {AnsiColors.Red}❌ FAILED{AnsiColors.Reset}");
+
+Console.WriteLine("---");
+
+// Summary
+var summary = new { Passed = 1, Failed = 1, Total = 2 };
+summary.Dump("Summary");
+```
+
 ---
 
-**Last Updated**: 2026-05-03
+**Last Updated**: 2026-05-06
 **Review**: Update when establishing new patterns
