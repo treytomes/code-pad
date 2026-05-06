@@ -111,12 +111,16 @@ export const OutputDisplay: React.FC<OutputDisplayProps> = ({
   return (
     <div>
       {progressBar}
-      {sections.map((formatted, index) => (
-        <React.Fragment key={index}>
-          {index > 0 && <Divider style={{ margin: '16px 0', borderColor: '#434343' }} />}
-          <OutputSection formatted={formatted} />
-        </React.Fragment>
-      ))}
+      {sections.map((formatted, index) => {
+        // Generate stable key based on content to avoid React reuse issues
+        const contentKey = `${formatted.format}-${formatted.metadata?.label ?? ''}-${index}`;
+        return (
+          <React.Fragment key={contentKey}>
+            {index > 0 && <Divider style={{ margin: '16px 0', borderColor: '#434343' }} />}
+            <OutputSection formatted={formatted} />
+          </React.Fragment>
+        );
+      })}
     </div>
   );
 };

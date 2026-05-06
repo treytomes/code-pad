@@ -393,10 +393,53 @@ export function splitOutputSections(output: string): string[] {
   // Must be on their own line
   const withMarkers = output.replace(/^[ \t]*(-{3,}|_{3,}|\*{3,})[ \t]*$/gm, '\n___HR___\n');
 
-  // Split on double newlines (blank lines) or horizontal rule markers
-  const sections = withMarkers.split(/\n\s*\n/);
+  // Split on:
+  // 1. Double newlines (blank lines)
+  // 2. Horizontal rule markers
+  // 3. Label boundaries (when a label immediately follows another label's content)
+  //    This handles cases like: Console.WriteLine("=== Label1 ==="); something.Dump("Label2");
+  //    where no blank line separates the sections.
 
-  return sections.map((section) => section.trim()).filter((section) => section.length > 0);
+  // First split on blank lines and HR markers
+  let sections = withMarkers.split(/\n\s*\n/);
+
+  // Then split any section that contains multiple labels
+  const finalSections: string[] = [];
+  for (const section of sections) {
+    // Match all label lines in this section
+    const labelPattern = /^===\s+.+?\s+===/gm;
+    const labels = [...section.matchAll(labelPattern)];
+
+    if (labels.length <= 1) {
+      // Single label or no labels - keep as-is
+      finalSections.push(section.trim());
+    } else {
+      // Multiple labels - split on label boundaries
+      let lastIndex = 0;
+      for (let i = 0; i < labels.length; i++) {
+        const labelMatch = labels[i];
+        const labelStart = labelMatch.index!;
+
+        if (i > 0) {
+          // Extract content from last label to this label (excluding this label)
+          const sectionContent = section.substring(lastIndex, labelStart).trim();
+          if (sectionContent) {
+            finalSections.push(sectionContent);
+          }
+        }
+
+        lastIndex = labelStart;
+      }
+
+      // Add final section from last label to end
+      const finalContent = section.substring(lastIndex).trim();
+      if (finalContent) {
+        finalSections.push(finalContent);
+      }
+    }
+  }
+
+  return finalSections.filter((section) => section.length > 0);
 }
 
 /**
