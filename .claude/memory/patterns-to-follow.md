@@ -569,7 +569,29 @@ var summary = new { Passed = 1, Failed = 1, Total = 2 };
 summary.Dump("Summary");
 ```
 
+### Async/Await Support
+Statement and Expression modes support async/await with async Main:
+
+```csharp
+// Statements mode - await works directly
+await Task.Delay(100);
+Console.WriteLine("Async completed");
+
+// Async method calls with .Dump()
+var result = await FetchDataAsync().Dump("API Response");
+
+// Task<T>.Dump() awaits internally - cleaner syntax
+await QueryAsync("param").Dump("Query Result");  // Recommended
+(await QueryAsync("param")).Dump("Query Result");  // Also works but verbose
+```
+
+**Key Points**:
+- Statement and Expression modes have `async Task Main()` wrapper
+- Use `await` directly in Statements mode (no need for Program mode)
+- `.Dump()` has `Task<T>` overload that awaits internally
+- Prevents serialization errors when dumping unawaited tasks
+
 ---
 
-**Last Updated**: 2026-05-06
+**Last Updated**: 2026-05-08
 **Review**: Update when establishing new patterns

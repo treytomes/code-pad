@@ -10,7 +10,7 @@ Enable developers to write, execute, and visualize code instantly without projec
 
 ---
 
-## Current Status (2026-05-06)
+## Current Status (2026-05-08)
 
 ### 🎉 v0.1.0 Released!
 
@@ -39,11 +39,16 @@ Enable developers to write, execute, and visualize code instantly without projec
 - ✅ Windows NSIS installer built and released (#4)
 - ✅ Ko-fi fundraising integration
 
-**Recent Enhancements (2026-05-06)**:
+**Recent Enhancements (2026-05-06 to 2026-05-08)**:
 - ✅ Full UTF-8 support for emojis and Unicode characters (all query modes)
 - ✅ ANSI color code rendering in output (terminal colors)
 - ✅ Explicit horizontal rule support (Markdown syntax: ---, ___, ***)
 - ✅ Improved label detection for standalone headers
+- ✅ Async Main support in Statement and Expression modes (enables await)
+- ✅ Async Task<T>.Dump() overload for cleaner async code
+- ✅ Fixed label rendering for consecutive output sections
+- ✅ Fixed Monaco editor freeze from duplicate language provider registrations
+- ✅ Enhanced label section splitting for mixed output patterns
 
 **Release Artifacts**:
 - Windows: CodePad-Setup-0.1.0.exe (NSIS installer)
@@ -54,6 +59,48 @@ Enable developers to write, execute, and visualize code instantly without projec
 **Project Board**: https://github.com/users/treytomes/projects/2
 
 **Note on macOS**: No Mac hardware available. macOS builds are excluded from packaging targets.
+
+---
+
+### 🚀 v0.2.0 - Multi-Language & NuGet (In Progress)
+
+**Status**: Ready for Implementation - All specs complete  
+**Target**: Q2 2026  
+**Milestone**: [v0.2.0 - Multi-Language & NuGet](https://github.com/treytomes/code-pad/milestone/2)  
+**Roadmap**: [docs/v0.2.0-ROADMAP.md](docs/v0.2.0-ROADMAP.md)
+
+**Theme**: Expand beyond C# with Python support and complete the NuGet integration story.
+
+**Open Issues (9 total, all spec-compliant)**:
+
+**Core Features (P0)**:
+- [ ] #10: Add Python Language Support - Multi-language foundation with Python executor
+- [ ] #52: NuGet Package Search and Browse UI - Completes NuGet discoverability
+
+**Editor & Extensibility (P1)**:
+- [ ] #6: Implement User-Defined Extension Scripts - Reusable .csx extensions
+- [ ] #49: Improve C# autocomplete and IntelliSense - Enhanced code completion
+- [ ] #50: Add snippet suggestions in Monaco editor - Template snippets
+
+**Performance & UX (P1)**:
+- [ ] #53: Optimize Application Startup Time - Target <2s on reference hardware
+- [ ] #54: Implement Virtual Scrolling for Large Output - Handle 10k+ line outputs
+- [ ] #55: Debounce Search and Filter Operations - Reduce unnecessary re-renders
+- [ ] #56: Keyboard Navigation Completeness Audit - Full keyboard accessibility
+
+**Completed Milestones**:
+- ✅ Normalized milestone names (Phase 2/3/4 → v0.2.0/v0.3.0/v1.0.0)
+- ✅ All issues added to project board
+- ✅ All issues spec-compliant (user stories, acceptance criteria, edge cases, API contracts)
+- ✅ Gap analysis completed (identified missing NuGet search UI)
+- ✅ Deferred #11 (Git Integration) to v1.0.0
+- ✅ Deferred #12 (Database Connectivity) to v0.3.0
+
+**Key Decisions**:
+- Python chosen as first non-C# language to prove multi-language architecture
+- NuGet Package Search UI added to complete v0.2.0 NuGet story
+- Performance and accessibility issues decomposed into focused, testable features
+- Git integration and database features deferred to focus on core multi-language + NuGet goals
 
 ---
 
