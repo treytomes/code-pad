@@ -1,4 +1,7 @@
 // Electron Main Process
+// Track startup time from process start
+const startupStartTime = performance.now();
+
 import * as electron from 'electron';
 import * as path from 'path';
 import * as fs from 'fs';
@@ -220,6 +223,7 @@ try {
 }
 
 function createWindow() {
+  const windowCreateStart = performance.now();
   logInfo('Creating main window');
 
   // Load saved window state
@@ -294,6 +298,16 @@ function createWindow() {
 
   // Create application menu
   createApplicationMenu(mainWindow);
+
+  // Log window creation time in development
+  if (process.env.NODE_ENV === 'development') {
+    const windowCreateTime = performance.now() - windowCreateStart;
+    logInfo(`Window created in ${Math.round(windowCreateTime)}ms`);
+    mainWindow.webContents.send('startup-timing', {
+      electronReady: Math.round(performance.now() - startupStartTime),
+      windowCreated: Math.round(windowCreateTime),
+    });
+  }
 }
 
 // IPC Handlers

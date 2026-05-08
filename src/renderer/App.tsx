@@ -1,3 +1,6 @@
+// Track React initialization time
+const reactStartTime = performance.now();
+
 import React, { useState, useRef, useCallback } from 'react';
 import {
   Button,
@@ -11,6 +14,7 @@ import {
   theme as antTheme,
 } from 'antd';
 import type { QueryType, NuGetReference } from '../shared/types';
+import { startupTiming, logStartupTiming } from '../shared/startup-timing';
 import {
   SaveOutlined,
   PlusOutlined,
@@ -195,6 +199,25 @@ function App() {
   const [scriptPropertiesVisible, setScriptPropertiesVisible] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const layoutRef = useRef<HTMLDivElement>(null);
+
+  // Startup timing - track React mount
+  React.useEffect(() => {
+    const reactMountTime = performance.now() - reactStartTime;
+    startupTiming.mark('reactMounted');
+
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`React mounted in ${Math.round(reactMountTime)}ms`);
+    }
+
+    // Mark app as interactive once database and Monaco are ready
+    // This will be updated by database load and Monaco load events
+    const checkInteractive = setTimeout(() => {
+      startupTiming.mark('appInteractive');
+      logStartupTiming();
+    }, 100);
+
+    return () => clearTimeout(checkInteractive);
+  }, []);
 
   const handleCodeChange = useCallback((newCode: string) => {
     setCode(newCode);
