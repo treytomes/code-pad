@@ -28,6 +28,7 @@ import {
 } from '@ant-design/icons';
 import type { Snippet } from '../../../backend/database';
 import { SAMPLES, SAMPLE_CATEGORIES, type SampleSnippet } from '../../../shared/samples';
+import { useDebouncedValue } from '../../hooks/useDebouncedValue';
 
 const { Text } = Typography;
 const { Option } = Select;
@@ -67,6 +68,9 @@ export const SnippetList: React.FC<SnippetListProps> = ({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState('');
   const [activeTab, setActiveTab] = useState<'my-snippets' | 'samples'>('my-snippets');
+
+  // Debounce search text with 300ms delay (local database query, fast)
+  const debouncedSearchText = useDebouncedValue(searchText, 300);
 
   const loadSnippets = useCallback(async () => {
     setLoading(true);
@@ -130,25 +134,31 @@ export const SnippetList: React.FC<SnippetListProps> = ({
     }
   };
 
-  // Filter snippets by search text
-  const filterBySearch = (snippetList: Snippet[]) => {
-    if (!searchText.trim()) {
-      return snippetList;
-    }
-    const search = searchText.toLowerCase();
-    return snippetList.filter((snippet) => snippet.name.toLowerCase().includes(search));
-  };
+  // Filter snippets by search text (uses debounced value)
+  const filterBySearch = useCallback(
+    (snippetList: Snippet[]) => {
+      if (!debouncedSearchText.trim()) {
+        return snippetList;
+      }
+      const search = debouncedSearchText.toLowerCase();
+      return snippetList.filter((snippet) => snippet.name.toLowerCase().includes(search));
+    },
+    [debouncedSearchText]
+  );
 
-  // Memoized filtered lists
+  // Memoized filtered lists (use debounced search text)
   const filteredStarred = useMemo(
     () => filterBySearch(starredSnippets),
-    [starredSnippets, searchText]
+    [starredSnippets, filterBySearch]
   );
   const filteredRecent = useMemo(
     () => filterBySearch(recentSnippets),
-    [recentSnippets, searchText]
+    [recentSnippets, filterBySearch]
   );
-  const filteredSnippets = useMemo(() => filterBySearch(snippets), [snippets, searchText]);
+  const filteredSnippets = useMemo(
+    () => filterBySearch(snippets),
+    [snippets, filterBySearch]
+  );
 
   const renderSnippetItem = (snippet: Snippet) => (
     <List.Item
