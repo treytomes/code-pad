@@ -31,6 +31,7 @@ import { SettingsModal } from './components/SettingsModal';
 import { OutputDisplay } from './components/OutputDisplay';
 import { StatusBar } from './components/StatusBar';
 import { WelcomeModal } from './components/WelcomeModal';
+import { KeyboardShortcutsModal } from './components/KeyboardShortcutsModal';
 import ScriptPropertiesModal, { type ScriptProperties } from './components/ScriptPropertiesModal';
 import type { Snippet } from '../backend/database';
 import { extractProgressEvents, stripProgressLines, type ProgressEvent } from '../backend/progress';
@@ -184,6 +185,7 @@ function App() {
   const [aboutVisible, setAboutVisible] = useState(false);
   const [settingsVisible, setSettingsVisible] = useState(false);
   const [welcomeVisible, setWelcomeVisible] = useState(false);
+  const [keyboardShortcutsVisible, setKeyboardShortcutsVisible] = useState(false);
   const [snippetName, setSnippetName] = useState('');
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [cursorLine, setCursorLine] = useState(1);
@@ -682,6 +684,13 @@ function App() {
     // Settings
     cleanups.push(window.electronAPI.onMenuEvent('menu-settings', () => setSettingsVisible(true)));
 
+    // Keyboard Shortcuts
+    cleanups.push(
+      window.electronAPI.onMenuEvent('menu-keyboard-shortcuts', () =>
+        setKeyboardShortcutsVisible(true)
+      )
+    );
+
     return () => {
       cleanups.forEach((cleanup) => cleanup());
     };
@@ -719,6 +728,11 @@ function App() {
         if (!isRunning) {
           handleRun();
         }
+      }
+      // F1 - Keyboard shortcuts
+      else if (e.key === 'F1') {
+        e.preventDefault();
+        setKeyboardShortcutsVisible(true);
       }
       // Ctrl+N or Cmd+N - New snippet
       else if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
@@ -1104,6 +1118,11 @@ function App() {
         </Modal>
 
         <AboutDialog visible={aboutVisible} onClose={() => setAboutVisible(false)} />
+        <KeyboardShortcutsModal
+          visible={keyboardShortcutsVisible}
+          onClose={() => setKeyboardShortcutsVisible(false)}
+          isDark={isDark}
+        />
         <SettingsModal
           visible={settingsVisible}
           onClose={() => setSettingsVisible(false)}

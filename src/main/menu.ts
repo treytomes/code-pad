@@ -194,6 +194,15 @@ export function createApplicationMenu(mainWindow: BrowserWindow) {
       label: 'Help',
       submenu: [
         {
+          label: 'Keyboard Shortcuts',
+          accelerator: 'F1',
+          click: () => {
+            logInfo('Menu: Keyboard Shortcuts');
+            mainWindow.webContents.send('menu-keyboard-shortcuts');
+          },
+        },
+        { type: 'separator' },
+        {
           label: 'About CodePad',
           click: () => {
             logInfo('Menu: About');
