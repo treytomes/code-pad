@@ -30,13 +30,30 @@ import {
 import { CodeEditor } from './components/Editor';
 import { SnippetList } from './components/SnippetList';
 import { RuntimeWarning } from './components/RuntimeWarning';
-import { AboutDialog } from './components/AboutDialog';
-import { SettingsModal } from './components/SettingsModal';
 import { OutputDisplay } from './components/OutputDisplay';
 import { StatusBar } from './components/StatusBar';
-import { WelcomeModal } from './components/WelcomeModal';
-import { KeyboardShortcutsModal } from './components/KeyboardShortcutsModal';
-import ScriptPropertiesModal, { type ScriptProperties } from './components/ScriptPropertiesModal';
+
+// Lazy-load modal components - they're not needed on initial render
+const AboutDialog = React.lazy(() =>
+  import('./components/AboutDialog').then((m) => ({ default: m.AboutDialog }))
+);
+const SettingsModal = React.lazy(() =>
+  import('./components/SettingsModal').then((m) => ({ default: m.SettingsModal }))
+);
+const WelcomeModal = React.lazy(() =>
+  import('./components/WelcomeModal').then((m) => ({ default: m.WelcomeModal }))
+);
+const KeyboardShortcutsModal = React.lazy(() =>
+  import('./components/KeyboardShortcutsModal').then((m) => ({
+    default: m.KeyboardShortcutsModal,
+  }))
+);
+const ScriptPropertiesModal = React.lazy(() =>
+  import('./components/ScriptPropertiesModal').then((m) => ({ default: m.default }))
+);
+
+// Import types separately (types don't affect bundle)
+import type { ScriptProperties } from './components/ScriptPropertiesModal';
 import type { Snippet } from '../backend/database';
 import { extractProgressEvents, stripProgressLines, type ProgressEvent } from '../backend/progress';
 import { processContainerChunk, type ContainerEvent } from '../backend/containers';
@@ -816,7 +833,9 @@ function App() {
     <ConfigProvider theme={themeConfig}>
       <Layout style={{ height: '100vh', background: bgMain }}>
         <RuntimeWarning />
-        <WelcomeModal forceOpen={welcomeVisible || undefined} onClose={() => setWelcomeVisible(false)} />
+        <React.Suspense fallback={null}>
+          <WelcomeModal forceOpen={welcomeVisible || undefined} onClose={() => setWelcomeVisible(false)} />
+        </React.Suspense>
         <Header
           style={{
             display: 'flex',
@@ -1140,47 +1159,55 @@ function App() {
           />
         </Modal>
 
-        <AboutDialog visible={aboutVisible} onClose={() => setAboutVisible(false)} />
-        <KeyboardShortcutsModal
-          visible={keyboardShortcutsVisible}
-          onClose={() => setKeyboardShortcutsVisible(false)}
-          isDark={isDark}
-        />
-        <SettingsModal
-          visible={settingsVisible}
-          onClose={() => setSettingsVisible(false)}
-          onThemeChange={setAppTheme}
-          onShowWelcome={() => setWelcomeVisible(true)}
-          onSettingsSaved={() => {
-            const s = loadSavedSettings();
-            setEditorFontSize(s.fontSize);
-            setEditorTabSize(s.tabSize);
-            setEditorWordWrap(s.wordWrap);
-            setEditorMinimap(s.minimap);
-            setEditorLineNumbers(s.lineNumbers);
-            setEditorFolding(s.folding);
-            setEditorParameterHints(s.parameterHints);
-            setTargetFramework(s.targetFramework);
-          }}
-        />
-        <ScriptPropertiesModal
-          open={scriptPropertiesVisible}
-          properties={scriptProperties}
-          isDark={isDark}
-          onOk={(props) => {
-            setScriptProperties(props);
-            if (currentSnippetId) {
-              window.electronAPI.db.updateSnippet(currentSnippetId, {
-                usings: props.usings,
-                references: props.references,
-                localReferences: props.localReferences,
-                tags: props.tags,
-              });
-            }
-            setScriptPropertiesVisible(false);
-          }}
-          onCancel={() => setScriptPropertiesVisible(false)}
-        />
+        <React.Suspense fallback={null}>
+          <AboutDialog visible={aboutVisible} onClose={() => setAboutVisible(false)} />
+        </React.Suspense>
+        <React.Suspense fallback={null}>
+          <KeyboardShortcutsModal
+            visible={keyboardShortcutsVisible}
+            onClose={() => setKeyboardShortcutsVisible(false)}
+            isDark={isDark}
+          />
+        </React.Suspense>
+        <React.Suspense fallback={null}>
+          <SettingsModal
+            visible={settingsVisible}
+            onClose={() => setSettingsVisible(false)}
+            onThemeChange={setAppTheme}
+            onShowWelcome={() => setWelcomeVisible(true)}
+            onSettingsSaved={() => {
+              const s = loadSavedSettings();
+              setEditorFontSize(s.fontSize);
+              setEditorTabSize(s.tabSize);
+              setEditorWordWrap(s.wordWrap);
+              setEditorMinimap(s.minimap);
+              setEditorLineNumbers(s.lineNumbers);
+              setEditorFolding(s.folding);
+              setEditorParameterHints(s.parameterHints);
+              setTargetFramework(s.targetFramework);
+            }}
+          />
+        </React.Suspense>
+        <React.Suspense fallback={null}>
+          <ScriptPropertiesModal
+            open={scriptPropertiesVisible}
+            properties={scriptProperties}
+            isDark={isDark}
+            onOk={(props) => {
+              setScriptProperties(props);
+              if (currentSnippetId) {
+                window.electronAPI.db.updateSnippet(currentSnippetId, {
+                  usings: props.usings,
+                  references: props.references,
+                  localReferences: props.localReferences,
+                  tags: props.tags,
+                });
+              }
+              setScriptPropertiesVisible(false);
+            }}
+            onCancel={() => setScriptPropertiesVisible(false)}
+          />
+        </React.Suspense>
       </Layout>
     </ConfigProvider>
   );
