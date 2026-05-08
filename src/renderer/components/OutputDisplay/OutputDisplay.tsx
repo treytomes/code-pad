@@ -1,5 +1,6 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef, useCallback } from 'react';
 import { Divider } from 'antd';
+import { VariableSizeList as List } from 'react-window';
 import { JsonOutput } from './JsonOutput';
 import { TableOutput } from './TableOutput';
 import { PlainOutput } from './PlainOutput';
@@ -12,6 +13,9 @@ import {
 } from '../../../backend/output-formatter';
 import type { ProgressEvent } from '../../../backend/progress';
 import { SLOT_PREFIX } from '../../../backend/containers';
+
+// Threshold for enabling virtual scrolling (number of sections)
+const VIRTUALIZATION_THRESHOLD = 100;
 
 interface OutputDisplayProps {
   output: string;
@@ -64,6 +68,26 @@ export const OutputDisplay: React.FC<OutputDisplayProps> = ({
   progressEvents = [],
   containerContents = new Map(),
 }) => {
+  const listRef = useRef<List>(null);
+  const sectionHeightsRef = useRef<Map<number, number>>(new Map());
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [containerHeight, setContainerHeight] = React.useState(600);
+
+  // Observe container size changes
+  React.useEffect(() => {
+    if (!containerRef.current) return;
+
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        setContainerHeight(entry.contentRect.height);
+      }
+    });
+
+    resizeObserver.observe(containerRef.current);
+
+    return () => resizeObserver.disconnect();
+  }, []);
+
   const sections = useMemo<FormattedOutput[]>(() => {
     if (!output || !output.trim()) {
       return [{ format: 'plain', content: '' }];
@@ -91,6 +115,63 @@ export const OutputDisplay: React.FC<OutputDisplayProps> = ({
     });
   }, [output, containerContents]);
 
+  // Estimate height for each section based on format and content
+  const getItemSize = useCallback(
+    (index: number): number => {
+      // Return cached height if available
+      const cached = sectionHeightsRef.current.get(index);
+      if (cached) return cached;
+
+      const section = sections[index];
+      if (!section) return 100; // Fallback
+
+      // Estimate based on format
+      let estimatedHeight = 50; // Base height
+
+      switch (section.format) {
+        case 'json': {
+          const lines = section.content.split('\n').length;
+          estimatedHeight = Math.min(lines * 20 + 40, 600); // Max 600px for collapsed JSON
+          break;
+        }
+        case 'table': {
+          const lines = section.content.split('\n').length;
+          estimatedHeight = lines * 32 + 60; // Row height + header + padding
+          break;
+        }
+        case 'image':
+        case 'svg':
+          estimatedHeight = 300; // Default image height
+          break;
+        case 'html':
+          estimatedHeight = 100;
+          break;
+        case 'plain':
+        default: {
+          const lines = section.content.split('\n').length;
+          estimatedHeight = lines * 20 + 24; // Line height + padding
+          break;
+        }
+      }
+
+      // Add divider height (except for first item)
+      if (index > 0) {
+        estimatedHeight += 32; // Divider margin + height
+      }
+
+      return estimatedHeight;
+    },
+    [sections]
+  );
+
+  // Reset section heights when output changes
+  React.useEffect(() => {
+    sectionHeightsRef.current.clear();
+    if (listRef.current) {
+      listRef.current.resetAfterIndex(0);
+    }
+  }, [output]);
+
   const progressBar = progressEvents.length > 0 ? <ProgressBar events={progressEvents} /> : null;
 
   if (sections.length === 0 || (sections.length === 1 && !sections[0].content)) {
@@ -107,7 +188,36 @@ export const OutputDisplay: React.FC<OutputDisplayProps> = ({
     );
   }
 
-  // Multiple sections - render with dividers between
+  // Use virtual scrolling for large outputs
+  if (sections.length >= VIRTUALIZATION_THRESHOLD) {
+    const Row = ({ index, style }: { index: number; style: React.CSSProperties }) => {
+      const contentKey = `${sections[index].format}-${sections[index].metadata?.label ?? ''}-${index}`;
+      return (
+        <div style={style} key={contentKey}>
+          {index > 0 && <Divider style={{ margin: '16px 0', borderColor: '#434343' }} />}
+          <OutputSection formatted={sections[index]} />
+        </div>
+      );
+    };
+
+    return (
+      <div ref={containerRef} style={{ height: '100%', width: '100%' }}>
+        {progressBar}
+        <List
+          ref={listRef}
+          height={containerHeight}
+          itemCount={sections.length}
+          itemSize={getItemSize}
+          width="100%"
+          overscanCount={5}
+        >
+          {Row}
+        </List>
+      </div>
+    );
+  }
+
+  // Small output - render all sections without virtualization
   return (
     <div>
       {progressBar}
