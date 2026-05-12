@@ -19,27 +19,36 @@ if ! gh release view "$VERSION" --repo "$REPO" >/dev/null 2>&1; then
     exit 1
 fi
 
-# Check for Windows installer
+# Check for Windows build (zip or exe)
+ZIP="$RELEASE_DIR/CodePad-0.1.0-win.zip"
 INSTALLER="$RELEASE_DIR/CodePad-Setup-0.1.0.exe"
-if [ ! -f "$INSTALLER" ]; then
-    echo "❌ Error: $INSTALLER not found"
-    echo "   Build it with: npm run build"
-    echo "   Then: npx electron-builder --windows nsis"
+
+if [ -f "$ZIP" ]; then
+    BUILD_FILE="$ZIP"
+    BUILD_TYPE="portable zip"
+elif [ -f "$INSTALLER" ]; then
+    BUILD_FILE="$INSTALLER"
+    BUILD_TYPE="installer"
+else
+    echo "❌ Error: No Windows build found"
+    echo "   Expected: $ZIP or $INSTALLER"
+    echo "   Build with: npm run build"
+    echo "   Then: npx electron-builder --config electron-builder-nosign.json"
     exit 1
 fi
 
-echo "📦 Found Windows installer:"
-ls -lh "$INSTALLER"
+echo "📦 Found Windows $BUILD_TYPE:"
+ls -lh "$BUILD_FILE"
 echo ""
 
-# Upload installer
-echo "⬆️  Uploading Windows installer..."
-gh release upload "$VERSION" "$INSTALLER" \
+# Upload build
+echo "⬆️  Uploading Windows $BUILD_TYPE..."
+gh release upload "$VERSION" "$BUILD_FILE" \
     --repo "$REPO" \
     --clobber
 
 echo ""
-echo "✅ Windows installer uploaded successfully!"
+echo "✅ Windows $BUILD_TYPE uploaded successfully!"
 echo ""
 echo "🎉 Upload complete!"
 echo ""
