@@ -13,7 +13,7 @@ import {
   ConfigProvider,
   theme as antTheme,
 } from 'antd';
-import type { QueryType, NuGetReference } from '../shared/types';
+import type { QueryType, NuGetReference, Language } from '../shared/types';
 import { startupTiming, logStartupTiming } from '../shared/startup-timing';
 import {
   SaveOutlined,
@@ -30,6 +30,7 @@ import {
 import { CodeEditor } from './components/Editor';
 import { SnippetList } from './components/SnippetList';
 import { RuntimeWarning } from './components/RuntimeWarning';
+import { PythonWarning } from './components/PythonWarning';
 import { OutputDisplay } from './components/OutputDisplay';
 import { StatusBar } from './components/StatusBar';
 
@@ -211,6 +212,8 @@ function App() {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [cursorLine, setCursorLine] = useState(1);
   const [cursorColumn, setCursorColumn] = useState(1);
+  const [language, setLanguage] = useState<Language>('csharp');
+  const [pythonAvailable, setPythonAvailable] = useState<boolean | null>(null);
   const [queryType, setQueryType] = useState<QueryType>('statements');
   const [scriptProperties, setScriptProperties] = useState<ScriptProperties>({ usings: [], references: [], localReferences: [], tags: [] });
   const [scriptPropertiesVisible, setScriptPropertiesVisible] = useState(false);
@@ -299,30 +302,56 @@ function App() {
     });
 
     try {
-      const [result] = await Promise.all([
-        window.electronAPI.executeCode(code, {
-          timeout,
-          queryType,
-          usings: scriptProperties.usings,
-          references: scriptProperties.references,
-          localReferences: scriptProperties.localReferences,
-          targetFramework,
-        }),
-        window.electronAPI.onOutputDone(),
-      ]);
+      let result: any;
+      if (language === 'python') {
+        // Python execution - no streaming output yet, no onOutputDone needed
+        result = await window.electronAPI.executePython(code, { timeout });
 
-      // Stop timer and set final time
-      if (executionTimerRef.current) {
-        clearInterval(executionTimerRef.current);
-        executionTimerRef.current = null;
+        // Stop timer and set final time
+        if (executionTimerRef.current) {
+          clearInterval(executionTimerRef.current);
+          executionTimerRef.current = null;
+        }
+        const finalTime = result.executionTime;
+        setExecutionTime(finalTime);
+
+        // Clean up output subscription
+        cleanup();
+
+        // Display Python output
+        if (result.stdout) {
+          setOutput(result.stdout);
+        }
+        if (result.stderr) {
+          setOutput((prev) => prev + (prev ? '\n' : '') + result.stderr);
+        }
+      } else {
+        // C# execution with streaming output
+        [result] = await Promise.all([
+          window.electronAPI.executeCode(code, {
+            timeout,
+            queryType,
+            usings: scriptProperties.usings,
+            references: scriptProperties.references,
+            localReferences: scriptProperties.localReferences,
+            targetFramework,
+          }),
+          window.electronAPI.onOutputDone(),
+        ]);
+
+        // Stop timer and set final time
+        if (executionTimerRef.current) {
+          clearInterval(executionTimerRef.current);
+          executionTimerRef.current = null;
+        }
+        const finalTime = Math.round(performance.now() - executionStartRef.current);
+        setExecutionTime(finalTime);
+
+        // Clean up output subscription — safe now that onOutputDone has resolved,
+        // meaning the 'execution-output-done' sentinel has been received and all
+        // preceding chunks are guaranteed to have arrived.
+        cleanup();
       }
-      const finalTime = Math.round(performance.now() - executionStartRef.current);
-      setExecutionTime(finalTime);
-
-      // Clean up output subscription — safe now that onOutputDone has resolved,
-      // meaning the 'execution-output-done' sentinel has been received and all
-      // preceding chunks are guaranteed to have arrived.
-      cleanup();
 
       // Show error if execution failed
       if (result.exitCode !== 0) {
@@ -397,7 +426,7 @@ function App() {
     try {
       const snippet = await window.electronAPI.db.createSnippet({
         name: snippetName,
-        language: 'csharp',
+        language,
         code,
         queryType,
         usings: scriptProperties.usings,
@@ -430,6 +459,7 @@ function App() {
     savedCodeRef.current = snippet.code;
     setHasUnsavedChanges(false);
     setCurrentSnippetId(snippet.id);
+    setLanguage((snippet.language as Language) ?? 'csharp');
     setQueryType(snippet.queryType ?? 'statements');
     setScriptProperties({ usings: snippet.usings ?? [], references: snippet.references ?? [], localReferences: snippet.localReferences ?? [], tags: snippet.tags ?? [] });
     setOutput('');
@@ -490,6 +520,7 @@ function App() {
       savedCodeRef.current = newSnippet.code;
       setHasUnsavedChanges(false);
       setCurrentSnippetId(newSnippet.id);
+      setLanguage((newSnippet.language as Language) ?? 'csharp');
       setQueryType(newSnippet.queryType ?? 'statements');
       setScriptProperties({ usings: newSnippet.usings ?? [], references: newSnippet.references ?? [], localReferences: newSnippet.localReferences ?? [], tags: newSnippet.tags ?? [] });
       setOutput('');
@@ -745,6 +776,22 @@ function App() {
     };
   }, []);
 
+  // Check Python runtime availability on mount and when settings change
+  React.useEffect(() => {
+    const checkPython = async () => {
+      try {
+        const stored = localStorage.getItem('codepad-settings');
+        const pythonPath = stored ? JSON.parse(stored).pythonPath : undefined;
+        const runtimeInfo = await window.electronAPI.checkPythonRuntime(pythonPath);
+        setPythonAvailable(runtimeInfo.available);
+      } catch (error) {
+        console.error('Failed to check Python runtime:', error);
+        setPythonAvailable(false);
+      }
+    };
+    checkPython();
+  }, []);
+
   // Keyboard shortcuts
   React.useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -862,6 +909,23 @@ function App() {
           <div style={{ flex: 1 }} />
           <Space>
             <Select
+              value={language}
+              onChange={(val: Language) => {
+                setLanguage(val);
+                if (currentSnippetId) {
+                  window.electronAPI.db.updateSnippet(currentSnippetId, { language: val });
+                }
+                // Clear output when switching languages
+                setOutput('');
+              }}
+              style={{ width: 100 }}
+              title="Programming Language"
+              options={[
+                { value: 'csharp', label: 'C#' },
+                { value: 'python', label: 'Python' },
+              ]}
+            />
+            <Select
               value={queryType}
               onChange={(val: QueryType) => {
                 setQueryType(val);
@@ -882,6 +946,7 @@ function App() {
                 { value: 'expression', label: 'Expression' },
                 { value: 'program', label: 'Program' },
               ]}
+              disabled={language === 'python'}
             />
             <Button
               icon={<SettingOutlined />}
@@ -1013,6 +1078,7 @@ function App() {
               <CodeEditor
                 value={code}
                 onChange={handleCodeChange}
+                language={language}
                 theme={monacoTheme}
                 onCursorChange={handleCursorChange}
                 fontSize={editorFontSize}
@@ -1120,14 +1186,19 @@ function App() {
                 {output ? (
                   <OutputDisplay output={output} progressEvents={progressEvents} containerContents={containerContents} />
                 ) : (
-                  <div
-                    style={{
-                      padding: '12px',
-                      color: isDark ? '#858585' : '#666666',
-                      fontStyle: 'italic',
-                    }}
-                  >
-                    Click &ldquo;Run Code&rdquo; to execute
+                  <div style={{ padding: '12px' }}>
+                    {language === 'python' && pythonAvailable === false ? (
+                      <PythonWarning isDark={isDark} />
+                    ) : (
+                      <div
+                        style={{
+                          color: isDark ? '#858585' : '#666666',
+                          fontStyle: 'italic',
+                        }}
+                      >
+                        Click &ldquo;Run Code&rdquo; to execute
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -1136,7 +1207,7 @@ function App() {
         </Layout>
 
         <StatusBar
-          language="csharp"
+          language={language}
           isRunning={isRunning}
           cursorLine={cursorLine}
           cursorColumn={cursorColumn}

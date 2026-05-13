@@ -231,7 +231,7 @@ export class SnippetDatabase {
   // Update
   updateSnippet(
     id: string,
-    updates: Partial<Pick<Snippet, 'name' | 'code' | 'queryType' | 'usings' | 'references' | 'localReferences' | 'tags'>>
+    updates: Partial<Pick<Snippet, 'name' | 'language' | 'code' | 'queryType' | 'usings' | 'references' | 'localReferences' | 'tags'>>
   ): boolean {
     const sets: string[] = [];
     const values: any[] = [];
@@ -239,6 +239,11 @@ export class SnippetDatabase {
     if (updates.name !== undefined) {
       sets.push('name = ?');
       values.push(updates.name);
+    }
+
+    if (updates.language !== undefined) {
+      sets.push('language = ?');
+      values.push(updates.language);
     }
 
     if (updates.code !== undefined) {

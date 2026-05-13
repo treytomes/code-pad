@@ -9,6 +9,8 @@ import * as os from 'os';
 import { execFile } from 'child_process';
 import { promisify } from 'util';
 import { CSharpExecutor } from '../backend/executors/csharp';
+import { PythonExecutor } from '../backend/executors/python';
+import { detectPythonRuntime } from '../backend/executors/python-runtime';
 import { SnippetDatabase } from '../backend/database';
 import { checkRuntimeRequirements, RuntimeInfo } from '../backend/runtime-checker';
 import {
@@ -43,6 +45,7 @@ async function runInstallDotnetScript(): Promise<InstallResult> {
 
 let mainWindow: electron.BrowserWindow | null = null;
 const csharpExecutor = new CSharpExecutor();
+const pythonExecutor = new PythonExecutor();
 let snippetDb: SnippetDatabase;
 
 // App settings (separate from window state)
@@ -350,7 +353,38 @@ electron.ipcMain.handle(
 electron.ipcMain.handle('stop-execution', async () => {
   logInfo('Stop execution request received');
   csharpExecutor.stop();
+  pythonExecutor.stop();
   return { success: true };
+});
+
+// Python execution handlers
+electron.ipcMain.handle('python-execute', async (event, code: string, options?: { timeout?: number }) => {
+  logDebug('Python execute request received');
+  try {
+    const result = await pythonExecutor.execute(code, options);
+    logDebug(`Python execution completed: exitCode=${result.exitCode}, time=${result.executionTime}ms`);
+    return result;
+  } catch (error) {
+    logError('Python execution failed', error);
+    return {
+      stdout: '',
+      stderr: error instanceof Error ? error.message : String(error),
+      exitCode: -1,
+      executionTime: 0,
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
+});
+
+electron.ipcMain.handle('python-stop', async () => {
+  logInfo('Python stop execution request received');
+  pythonExecutor.stop();
+  return { success: true };
+});
+
+electron.ipcMain.handle('python-check-runtime', async (_, customPath?: string) => {
+  logDebug('Python runtime check request received');
+  return await detectPythonRuntime(customPath);
 });
 
 // Database IPC Handlers

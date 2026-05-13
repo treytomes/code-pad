@@ -11,8 +11,9 @@ A cross-platform code scratchpad and rapid prototyping tool inspired by LINQPad.
 ### Installation
 
 1. **Download** the latest release for your platform from [Releases](https://github.com/treytomes/code-pad/releases)
-2. **Install .NET SDK 8.0+** if not already installed: [Download .NET](https://dotnet.microsoft.com/download)
-3. **Extract and run** the CodePad executable
+2. **Install .NET SDK 8.0+** for C# support: [Download .NET](https://dotnet.microsoft.com/download)
+3. **Install Python 3.8+** (optional) for Python support: [Download Python](https://www.python.org/downloads/)
+4. **Extract and run** the CodePad executable
 
 ### First Run
 
@@ -33,11 +34,13 @@ A cross-platform code scratchpad and rapid prototyping tool inspired by LINQPad.
 ### ✅ v0.1.0 - Pre-Release (Complete)
 
 #### Code Execution
-- **C# code execution** using `dotnet build` (no external tools required)
-- **LINQPad-style .Dump()** - Format objects as JSON with optional labels
+- **Multi-language support** - C# and Python (more coming soon)
+- **C# code execution** using `dotnet-script` with three query modes (Statements, Expression, Program)
+- **Python code execution** using system Python interpreter (3.8+)
+- **LINQPad-style .Dump()** - Format objects as JSON with optional labels (C# only)
 - **Configurable timeout** - Set execution limit or disable (run indefinitely)
 - **Stop button** - Cancel long-running executions immediately
-- **Real-time output streaming** - See results as code runs
+- **Real-time output streaming** - See results as code runs (C#)
 - **Execution timing** - Live millisecond counter
 
 #### Snippet Management
@@ -49,11 +52,12 @@ A cross-platform code scratchpad and rapid prototyping tool inspired by LINQPad.
 - **Import/Export** - Share .cs files or backup to JSON
 
 #### Samples & Learning
-- **12 built-in samples** organized into 4 categories:
-  - Getting Started (3 examples)
-  - .Dump() Extension (4 examples)
-  - Long-Running Tasks (2 examples)
-  - Output Formats (3 examples)
+- **16+ built-in samples** organized into categories:
+  - Getting Started (3 C# examples)
+  - .Dump() Extension (4 C# examples)
+  - Long-Running Tasks (2 C# examples)
+  - Output Formats (3 C# examples)
+  - Python (4 Python examples)
 
 #### User Interface
 - **Monaco Editor** - VS Code's editor with IntelliSense
@@ -73,11 +77,12 @@ A cross-platform code scratchpad and rapid prototyping tool inspired by LINQPad.
 - Windows, macOS, and Linux support
 - Off-screen window protection for multi-display setups
 
-### 🚧 Coming in Phase 2
+### 🚧 v0.2.0 - Multi-Language & NuGet (In Progress)
 
 - **NuGet package support** - Add packages with `#r "nuget:..."` directives
-- **Multi-language support** - Python, JavaScript, and more
-- **Database connectivity** - Query databases directly
+- **Additional languages** - JavaScript, TypeScript, and more
+- **Python enhancements** - Package management (pip), better IntelliSense
+- **Database connectivity** - Query databases directly (coming in v0.3.0)
 - **Light theme** - Additional color scheme option
 - **Multiple tabs** - Work on several snippets simultaneously
 

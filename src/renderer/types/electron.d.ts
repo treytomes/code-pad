@@ -1,6 +1,6 @@
 import { ExecutionResult } from '../../backend/executors/csharp';
 import { Snippet } from '../../backend/database';
-import { QueryType, NuGetReference, LocalAssemblyReference } from '../../shared/types';
+import { QueryType, NuGetReference, LocalAssemblyReference, ExecutionResult as PythonExecutionResult, PythonRuntimeInfo } from '../../shared/types';
 
 export interface ElectronAPI {
   ping: () => string;
@@ -17,6 +17,10 @@ export interface ElectronAPI {
   ) => Promise<ExecutionResult>;
 
   stopExecution: () => Promise<void>;
+
+  executePython: (code: string, options?: { timeout?: number }) => Promise<PythonExecutionResult>;
+  stopPython: () => Promise<void>;
+  checkPythonRuntime: (customPath?: string) => Promise<PythonRuntimeInfo>;
 
   checkRuntime: () => Promise<{
     hasDotnet: boolean;
@@ -64,7 +68,7 @@ export interface ElectronAPI {
     getSnippet: (id: string) => Promise<Snippet | null>;
     updateSnippet: (
       id: string,
-      updates: { name?: string; code?: string; queryType?: QueryType; usings?: string[]; references?: NuGetReference[]; localReferences?: LocalAssemblyReference[]; tags?: string[] }
+      updates: { name?: string; language?: string; code?: string; queryType?: QueryType; usings?: string[]; references?: NuGetReference[]; localReferences?: LocalAssemblyReference[]; tags?: string[] }
     ) => Promise<boolean>;
     deleteSnippet: (id: string) => Promise<boolean>;
     listSnippets: (language?: string, tag?: string) => Promise<Snippet[]>;

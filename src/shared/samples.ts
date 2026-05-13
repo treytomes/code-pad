@@ -18,6 +18,7 @@ export const SAMPLE_CATEGORIES = [
   'Long-Running Tasks',
   'DumpContainer',
   'Output Formats',
+  'Python',
 ] as const;
 
 export const SAMPLES: SampleSnippet[] = [
@@ -522,6 +523,112 @@ $@"<svg xmlns='http://www.w3.org/2000/svg' width='380' height='220' style='backg
   {paths}
   {legend}
 </svg>".Dump("Pie Chart");`,
+  },
+
+  // Python Samples
+  {
+    id: 'sample-python-hello',
+    name: 'Python Hello World',
+    category: 'Python',
+    description: 'Your first Python snippet in CodePad',
+    language: 'python',
+    code: `# Welcome to Python in CodePad!
+# Press F5 to run this code
+
+print("Hello, Python!")
+print("CodePad supports multiple languages.")
+print("🐍 Let's get started!")`,
+  },
+  {
+    id: 'sample-python-basics',
+    name: 'Python Basics',
+    category: 'Python',
+    description: 'Variables, types, and basic operations',
+    language: 'python',
+    code: `# Variables and types
+name = "CodePad"
+version = 0.1
+is_awesome = True
+
+print(f"Welcome to {name} v{version}")
+print(f"Is it awesome? {is_awesome}")
+
+# Lists
+numbers = [1, 2, 3, 4, 5]
+print(f"Numbers: {numbers}")
+print(f"Sum: {sum(numbers)}")
+
+# Dictionary
+user = {"name": "Alice", "age": 30, "role": "Developer"}
+print(f"User: {user['name']}, Age: {user['age']}")
+
+# List comprehension
+squares = [x**2 for x in range(1, 6)]
+print(f"Squares: {squares}")`,
+  },
+  {
+    id: 'sample-python-libs',
+    name: 'Python Standard Libraries',
+    category: 'Python',
+    description: 'Using built-in Python modules',
+    language: 'python',
+    code: `import sys
+import os
+import datetime
+import random
+import json
+
+# System information
+print(f"Python version: {sys.version.split()[0]}")
+print(f"Platform: {sys.platform}")
+print(f"Current directory: {os.getcwd()}")
+
+# Date and time
+now = datetime.datetime.now()
+print(f"\\nCurrent time: {now.strftime('%Y-%m-%d %H:%M:%S')}")
+
+# Random numbers
+print(f"\\nRandom number: {random.randint(1, 100)}")
+colors = ["red", "blue", "green", "yellow"]
+print(f"Random color: {random.choice(colors)}")
+
+# JSON handling
+data = {"name": "CodePad", "languages": ["C#", "Python"]}
+json_string = json.dumps(data, indent=2)
+print(f"\\nJSON output:\\n{json_string}")`,
+  },
+  {
+    id: 'sample-python-data',
+    name: 'Data Processing',
+    category: 'Python',
+    description: 'Working with data structures',
+    language: 'python',
+    code: `# Data processing example
+users = [
+    {"name": "Alice", "age": 30, "score": 95},
+    {"name": "Bob", "age": 25, "score": 87},
+    {"name": "Carol", "age": 35, "score": 92},
+    {"name": "Dave", "age": 28, "score": 78},
+]
+
+print("=== All Users ===")
+for user in users:
+    print(f"{user['name']:10} Age: {user['age']} Score: {user['score']}")
+
+print("\\n=== High Scorers (>= 90) ===")
+high_scorers = [u for u in users if u['score'] >= 90]
+for user in high_scorers:
+    print(f"{user['name']:10} Score: {user['score']}")
+
+# Statistics
+ages = [u['age'] for u in users]
+scores = [u['score'] for u in users]
+
+print("\\n=== Statistics ===")
+print(f"Average age: {sum(ages) / len(ages):.1f}")
+print(f"Average score: {sum(scores) / len(scores):.1f}")
+print(f"Min score: {min(scores)}")
+print(f"Max score: {max(scores)}")`,
   },
 ];
 

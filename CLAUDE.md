@@ -2,15 +2,15 @@
 
 ## Project Overview
 
-**CodePad** is a cross-platform code scratchpad inspired by LINQPad - a rapid prototyping tool for C# developers.
+**CodePad** is a cross-platform code scratchpad inspired by LINQPad - a rapid prototyping tool supporting C# and Python (with more languages planned).
 
 ### Mission
 
-Enable developers to write, execute, and visualize code instantly without project setup overhead. Focus on exploration, experimentation, and learning.
+Enable developers to write, execute, and visualize code instantly without project setup overhead. Focus on exploration, experimentation, and learning across multiple programming languages.
 
 ---
 
-## Current Status (2026-05-08)
+## Current Status (2026-05-13)
 
 ### 🎉 v0.1.0 Released!
 
@@ -39,7 +39,17 @@ Enable developers to write, execute, and visualize code instantly without projec
 - ✅ Windows NSIS installer built and released (#4)
 - ✅ Ko-fi fundraising integration
 
-**Recent Enhancements (2026-05-06 to 2026-05-08)**:
+**Recent Enhancements (2026-05-13)**:
+- ✅ **Python language support (#10)** - Execute Python 3.8+ scripts
+- ✅ Language selector in toolbar (C# / Python)
+- ✅ Monaco editor auto-switches syntax highlighting
+- ✅ Python runtime detection and warning UI
+- ✅ Custom Python interpreter path in Settings
+- ✅ 4 Python sample snippets (Hello World, Basics, Std Libraries, Data Processing)
+- ✅ Status bar shows current language
+- ✅ Database schema supports multi-language snippets
+
+**Previous Enhancements (2026-05-06 to 2026-05-08)**:
 - ✅ Full UTF-8 support for emojis and Unicode characters (all query modes)
 - ✅ ANSI color code rendering in output (terminal colors)
 - ✅ Explicit horizontal rule support (Markdown syntax: ---, ___, ***)
@@ -950,6 +960,101 @@ npm run logs:clear
 # Clear logs (Windows)
 npm run logs:clear:windows
 ```
+
+---
+
+## Python Language Support
+
+CodePad supports Python 3.8+ alongside C#. Python execution uses the system Python interpreter.
+
+### Requirements
+
+- **Python 3.8 or higher** installed and in PATH
+- Alternatively, specify custom interpreter path in Settings → Execution
+
+### Python Execution Details
+
+**Runtime Detection**:
+- Auto-detects `python3` (preferred) or `python` in PATH
+- Validates version >= 3.8
+- Shows warning UI if Python not found
+- Custom path can be configured in Settings
+
+**Execution Method**:
+- Creates temporary `.py` file in system temp directory
+- Spawns Python process with UTF-8 encoding (`PYTHONIOENCODING=utf-8`)
+- Captures stdout and stderr
+- Maps temp file paths in errors to `script.py` for readability
+- Cleans up temp file after execution
+
+**Features**:
+- ✅ Standard library imports (sys, os, datetime, json, random, etc.)
+- ✅ UTF-8/emoji support in output
+- ✅ Configurable timeout (default 30s, or disable)
+- ✅ Stop button to cancel execution
+- ✅ Error messages with line numbers
+- ❌ No `.Dump()` extension (C# only)
+- ❌ No real-time streaming output (batch after completion)
+- ❌ No pip package installation UI (use system Python packages)
+
+**Example Python Code**:
+
+```python
+# Variables and types
+import sys
+import datetime
+
+print(f"Python {sys.version.split()[0]}")
+print(f"Platform: {sys.platform}")
+
+# Date and time
+now = datetime.datetime.now()
+print(f"Current time: {now.strftime('%Y-%m-%d %H:%M:%S')}")
+
+# Lists and comprehensions
+numbers = [1, 2, 3, 4, 5]
+squares = [x**2 for x in numbers]
+print(f"Squares: {squares}")
+
+# Dictionary
+user = {"name": "Alice", "age": 30}
+print(f"User: {user['name']}, Age: {user['age']}")
+```
+
+### Language Switching
+
+1. **Select language** from dropdown in toolbar (C# / Python)
+2. **Monaco editor** automatically switches syntax highlighting
+3. **Query Type** selector disabled for Python (only applies to C#)
+4. **Status bar** shows current language
+5. **Language persists** per snippet in database
+
+### Python Samples
+
+4 Python sample snippets included:
+- **Python Hello World** - Basic print statements with emojis
+- **Python Basics** - Variables, lists, dictionaries, comprehensions
+- **Python Standard Libraries** - sys, os, datetime, random, json
+- **Data Processing** - Working with lists of dictionaries, statistics
+
+### Troubleshooting Python
+
+**Python not found**:
+- Install Python 3.8+ from python.org
+- Windows: Check "Add Python to PATH" during installation
+- macOS: `brew install python3`
+- Linux: `sudo apt install python3` (Ubuntu/Debian)
+- Or specify custom path in Settings → Execution → Python Interpreter Path
+
+**Wrong Python version**:
+- CodePad requires Python 3.8 or higher
+- Python 2.x is not supported
+- Check version: `python3 --version`
+
+**Import errors**:
+- Use packages installed in system Python
+- Install packages: `pip install package-name` or `pip3 install package-name`
+- CodePad uses the same Python environment as your terminal
 
 ---
 

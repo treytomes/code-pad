@@ -21,6 +21,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // Stop running execution
   stopExecution: () => ipcRenderer.invoke('stop-execution'),
 
+  // Python execution
+  executePython: (code: string, options?: { timeout?: number }) =>
+    ipcRenderer.invoke('python-execute', code, options),
+  stopPython: () => ipcRenderer.invoke('python-stop'),
+  checkPythonRuntime: (customPath?: string) => ipcRenderer.invoke('python-check-runtime', customPath),
+
   // Check runtime requirements
   checkRuntime: () => ipcRenderer.invoke('check-runtime'),
 

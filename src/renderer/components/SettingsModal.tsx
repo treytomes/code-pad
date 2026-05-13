@@ -39,6 +39,7 @@ interface Settings {
   timeout: number;
   autoSave: boolean;
   targetFramework: string;
+  pythonPath?: string;
 
   // UI settings
   theme: 'dark' | 'light' | 'system';
@@ -57,6 +58,7 @@ const DEFAULT_SETTINGS: Settings = {
   timeout: 30000,
   autoSave: false,
   targetFramework: 'net8.0',
+  pythonPath: undefined,
   theme: 'system',
   sidebarWidth: 250,
   outputHeight: 200,
@@ -263,6 +265,20 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         <span style={{ marginLeft: '8px', color: '#858585', fontSize: '12px' }}>
           Automatically save snippets after execution
         </span>
+      </Form.Item>
+
+      <Divider />
+
+      <Form.Item
+        label="Python Interpreter Path"
+        extra="Optional: Specify a custom Python interpreter path. Leave empty to auto-detect python3/python in PATH."
+      >
+        <Input
+          placeholder="e.g., /usr/bin/python3 or C:\Python312\python.exe"
+          value={settings.pythonPath}
+          onChange={(e) => updateSetting('pythonPath', e.target.value || undefined)}
+          allowClear
+        />
       </Form.Item>
     </Form>
   );
