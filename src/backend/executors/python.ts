@@ -7,7 +7,8 @@ import { detectPythonRuntime } from './python-runtime';
 
 export class PythonExecutor {
   private process: ChildProcess | null = null;
-  private pythonCommand: string = 'python3';
+  private pythonCommand: string | null = null;
+  private initialized: boolean = false;
 
   /**
    * Initialize executor and detect Python runtime
@@ -16,15 +17,33 @@ export class PythonExecutor {
     const runtimeInfo = await detectPythonRuntime(customPath);
     if (runtimeInfo.available && runtimeInfo.path) {
       this.pythonCommand = runtimeInfo.path;
+      this.initialized = true;
       return true;
     }
+    this.initialized = true; // Mark as attempted
     return false;
   }
 
   /**
    * Execute Python code and return result
+   * Auto-initializes on first use if not already initialized
    */
   async execute(code: string, options: ExecutionOptions = {}): Promise<ExecutionResult> {
+    // Auto-initialize on first use
+    if (!this.initialized) {
+      await this.initialize();
+    }
+
+    // Check if Python is available
+    if (!this.pythonCommand) {
+      return {
+        stdout: '',
+        stderr: 'Python runtime not found. Please install Python 3.8+ and ensure it is in PATH.',
+        exitCode: -1,
+        executionTime: 0,
+        error: 'Python runtime not found',
+      };
+    }
     const startTime = Date.now();
     const timeout = options.timeout ?? 30000;
 
@@ -32,6 +51,9 @@ export class PythonExecutor {
       let stdout = '';
       let stderr = '';
       let timedOut = false;
+
+      // Store command in local variable for type safety
+      const pythonCmd = this.pythonCommand!;
 
       // Create temporary script file
       const tempFile = join(tmpdir(), `codepad-${Date.now()}-${Math.random().toString(36).slice(2)}.py`);
@@ -50,7 +72,7 @@ export class PythonExecutor {
       }
 
       // Spawn Python process
-      this.process = spawn(this.pythonCommand, [tempFile], {
+      this.process = spawn(pythonCmd, [tempFile], {
         cwd: options.workingDirectory,
         env: {
           ...process.env,
