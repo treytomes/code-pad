@@ -79,8 +79,10 @@ export async function detectPythonRuntime(
         const { stdout: pathOutput } = await execAsync(whichCmd, {
           timeout: 5000,
         });
-        path = pathOutput.trim().split('\n')[0]; // Take first result on Windows
-        logInfo(`Python path: ${path}`);
+        // Split by newlines (handle both \r\n and \n), take first, and trim whitespace
+        const paths = pathOutput.split(/\r?\n/).map(p => p.trim()).filter(p => p.length > 0);
+        path = paths[0];
+        logInfo(`Python path: "${path}" (found ${paths.length} matches)`);
       } catch (pathError) {
         // Path detection failed, but we know it's available
         logInfo(`Path detection failed, using command name: ${cmd}`);
