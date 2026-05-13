@@ -14,22 +14,25 @@ export const PlainOutput: React.FC<PlainOutputProps> = ({ content, metadata }) =
           {metadata.label}
         </div>
       )}
-      <div
-        style={{
-          color: '#cccccc',
-          fontFamily: "'Consolas', 'Courier New', monospace, 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji'",
-          fontSize: '13px',
-          lineHeight: '1.6',
-          whiteSpace: 'pre-wrap',
-          wordBreak: 'break-word',
-        }}
-      >
-        {content ? (
-          <Ansi useClasses={false}>{content}</Ansi>
-        ) : (
-          <span style={{ color: '#858585', fontStyle: 'italic' }}>No output</span>
-        )}
-      </div>
+      {/* Only show content div if there is content, or if there's no label */}
+      {(content || !metadata?.label) && (
+        <div
+          style={{
+            color: '#cccccc',
+            fontFamily: "'Consolas', 'Courier New', monospace, 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji'",
+            fontSize: '13px',
+            lineHeight: '1.6',
+            whiteSpace: 'pre-wrap',
+            wordBreak: 'break-word',
+          }}
+        >
+          {content ? (
+            <Ansi useClasses={false}>{content}</Ansi>
+          ) : (
+            <span style={{ color: '#858585', fontStyle: 'italic' }}>No output</span>
+          )}
+        </div>
+      )}
     </div>
   );
 };
