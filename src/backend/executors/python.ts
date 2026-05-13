@@ -1,7 +1,7 @@
 import { spawn, ChildProcess } from 'child_process';
-import { writeFileSync, unlinkSync } from 'fs';
+import { writeFileSync, unlinkSync, readFileSync } from 'fs';
 import { tmpdir } from 'os';
-import { join } from 'path';
+import { join, dirname } from 'path';
 import type { ExecutionOptions, ExecutionResult } from '../../shared/types';
 import { detectPythonRuntime } from './python-runtime';
 
@@ -55,11 +55,12 @@ export class PythonExecutor {
       // Store command in local variable for type safety
       const pythonCmd = this.pythonCommand!;
 
-      // Create temporary script file
+      // Create temporary script file with injected dump function
       const tempFile = join(tmpdir(), `codepad-${Date.now()}-${Math.random().toString(36).slice(2)}.py`);
 
       try {
-        writeFileSync(tempFile, code, 'utf-8');
+        const fullCode = this.injectDumpExtensions(code);
+        writeFileSync(tempFile, fullCode, 'utf-8');
       } catch (error) {
         resolve({
           stdout: '',
@@ -167,6 +168,25 @@ export class PythonExecutor {
           this.process = null;
         }
       }, 1000);
+    }
+  }
+
+  /**
+   * Inject dump() function at the beginning of user code
+   */
+  private injectDumpExtensions(userCode: string): string {
+    try {
+      // Read the dump extensions from the file
+      const dumpExtensionsPath = join(__dirname, 'python-dump.py');
+      const dumpExtensions = readFileSync(dumpExtensionsPath, 'utf-8');
+
+      // Inject at the beginning with a separator comment
+      return `${dumpExtensions}\n\n# === User Code ===\n${userCode}`;
+    } catch (error) {
+      // If we can't load the extensions, just return user code
+      // (dump() won't be available but code will still run)
+      console.error('Failed to load Python dump extensions:', error);
+      return userCode;
     }
   }
 
