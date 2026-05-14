@@ -34,14 +34,19 @@ A cross-platform code scratchpad and rapid prototyping tool inspired by LINQPad.
 ### ✅ v0.1.0 - Pre-Release (Complete)
 
 #### Code Execution
-- **Multi-language support** - C# and Python (more coming soon)
+- **Multi-language support** - C# and Python with language selector in toolbar
 - **C# code execution** using `dotnet-script` with three query modes (Statements, Expression, Program)
-- **Python code execution** using system Python interpreter (3.8+)
-- **LINQPad-style .Dump()** - Format objects as JSON with optional labels (C# only)
+- **Python code execution** using system Python interpreter (3.8+) with auto-detection
+- **LINQPad-style .Dump()** - Format objects as JSON with optional labels
+  - C#: `.Dump("Label")` extension method on any object
+  - Python: `dump(obj, "Label")` function (also alias `d()`)
+  - Automatic table formatting for arrays of objects
+  - Chaining support (returns original object)
 - **Configurable timeout** - Set execution limit or disable (run indefinitely)
 - **Stop button** - Cancel long-running executions immediately
 - **Real-time output streaming** - See results as code runs (C#)
 - **Execution timing** - Live millisecond counter
+- **UTF-8/emoji support** - Full Unicode in output for both languages
 
 #### Snippet Management
 - **Full CRUD operations** - Create, save, update, delete snippets
@@ -53,11 +58,11 @@ A cross-platform code scratchpad and rapid prototyping tool inspired by LINQPad.
 
 #### Samples & Learning
 - **16+ built-in samples** organized into categories:
-  - Getting Started (3 C# examples)
-  - .Dump() Extension (4 C# examples)
-  - Long-Running Tasks (2 C# examples)
-  - Output Formats (3 C# examples)
-  - Python (4 Python examples)
+  - **Getting Started** (3 C# examples) - Hello World, basics, variables
+  - **.Dump() Extension** (4 C# examples) - Object visualization techniques
+  - **Long-Running Tasks** (2 C# examples) - Progress tracking, async operations
+  - **Output Formats** (3 C# examples) - Labels, sections, JSON formatting
+  - **Python** (4 Python examples) - Hello World, basics, standard libraries, data processing
 
 #### User Interface
 - **Monaco Editor** - VS Code's editor with IntelliSense
@@ -79,12 +84,14 @@ A cross-platform code scratchpad and rapid prototyping tool inspired by LINQPad.
 
 ### 🚧 v0.2.0 - Multi-Language & NuGet (In Progress)
 
-- **NuGet package support** - Add packages with `#r "nuget:..."` directives
-- **Additional languages** - JavaScript, TypeScript, and more
-- **Python enhancements** - Package management (pip), better IntelliSense
-- **Database connectivity** - Query databases directly (coming in v0.3.0)
-- **Light theme** - Additional color scheme option
-- **Multiple tabs** - Work on several snippets simultaneously
+- ✅ **Python language support** - Full Python 3.8+ execution with dump() visualization
+- **NuGet package support** - Add C# packages with `#r "nuget:..."` directives
+- **Python pip packages** - Add Python packages via Script Properties modal
+- **Enhanced samples** - Language filtering, more examples for both C# and Python
+- **Additional languages** - JavaScript, TypeScript (future)
+- **Python IntelliSense** - Better autocomplete and signature help
+- **Light/Dark/System themes** - Theme selector in settings
+- **Database connectivity** - Query databases directly (deferred to v0.3.0)
 
 ## Development Setup
 
@@ -277,11 +284,59 @@ Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) for de
 ### Quick Start
 
 1. **Create a new snippet**: Click "New" or press Ctrl+N
-2. **Write your C# code**: Use the Monaco editor with IntelliSense
-3. **Run your code**: Click "Run Code" or press F5
-4. **Save your work**: Click "Save As..." or press Ctrl+S
-5. **Star favorites**: Click the star icon to mark important snippets
-6. **Search snippets**: Use the search box in the sidebar
+2. **Choose your language**: Select C# or Python from the language dropdown in the toolbar
+3. **Write your code**: Use the Monaco editor with IntelliSense
+4. **Run your code**: Click "Run Code" or press F5
+5. **Save your work**: Click "Save As..." or press Ctrl+S
+6. **Star favorites**: Click the star icon to mark important snippets
+7. **Search snippets**: Use the search box in the sidebar
+
+### Using Python
+
+CodePad supports Python 3.8+ with the same intuitive experience as C#:
+
+```python
+# Use dump() to visualize objects
+import datetime
+
+# Simple values
+dump(42, "The Answer")
+dump("Hello, Python!", "Greeting")
+
+# Lists and comprehensions
+numbers = [1, 2, 3, 4, 5]
+squares = [x**2 for x in numbers]
+dump(squares, "Squares")
+
+# Dictionaries
+user = {"name": "Alice", "age": 30, "city": "NYC"}
+dump(user, "User Info")
+
+# Arrays of objects (renders as table)
+users = [
+    {"name": "Alice", "age": 30, "city": "NYC"},
+    {"name": "Bob", "age": 25, "city": "SF"}
+]
+dump(users, "Users Table")
+
+# Chaining
+result = dump(datetime.datetime.now(), "Current Time")
+print(f"Type: {type(result)}")  # Returns original object
+```
+
+**Python-specific features:**
+- Auto-detects python3/python in PATH
+- Custom Python interpreter path in Settings → Execution
+- Full standard library support (sys, os, datetime, json, etc.)
+- UTF-8 and emoji support
+- Stop button works with Python processes
+- Configurable timeout
+
+**If Python is not found:**
+- CodePad will show installation instructions
+- Windows: [Download Python](https://www.python.org/downloads/)
+- macOS: `brew install python3`
+- Linux: `sudo apt install python3` (Ubuntu/Debian)
 
 ### Import/Export
 
