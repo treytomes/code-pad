@@ -68,9 +68,19 @@ export const SnippetList: React.FC<SnippetListProps> = ({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState('');
   const [activeTab, setActiveTab] = useState<'my-snippets' | 'samples'>('my-snippets');
+  const [sampleLanguageFilter, setSampleLanguageFilter] = useState<'all' | 'csharp' | 'python'>(() => {
+    // Load from localStorage or default to 'all'
+    const saved = localStorage.getItem('codepad:samples:languageFilter');
+    return (saved as 'all' | 'csharp' | 'python') || 'all';
+  });
 
   // Debounce search text with 300ms delay (local database query, fast)
   const debouncedSearchText = useDebouncedValue(searchText, 300);
+
+  // Save sample language filter to localStorage when it changes
+  useEffect(() => {
+    localStorage.setItem('codepad:samples:languageFilter', sampleLanguageFilter);
+  }, [sampleLanguageFilter]);
 
   const loadSnippets = useCallback(async () => {
     setLoading(true);
@@ -595,26 +605,105 @@ export const SnippetList: React.FC<SnippetListProps> = ({
 
       {/* Samples pane */}
       {activeTab === 'samples' && (
-        <div style={{ flex: 1, overflowY: 'auto', background: bg }}>
-          {SAMPLE_CATEGORIES.map((category) => {
-            const samples = SAMPLES.filter((s) => s.category === category);
-            return (
-              <div key={category}>
-                <div
-                  style={{
-                    padding: '12px 12px 8px',
-                    borderBottom: `1px solid ${border}`,
-                    background: bgAlt,
-                  }}
-                >
-                  <Text strong style={{ color: '#4ec9b0' }}>
-                    {category}
-                  </Text>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: bg }}>
+          {/* Language filter for samples */}
+          <div
+            style={{
+              padding: '12px',
+              borderBottom: `1px solid ${border}`,
+              background: bgAlt,
+            }}
+          >
+            <Space size="small">
+              <Text style={{ color: textSecondary, fontSize: '12px' }}>Language:</Text>
+              <Button
+                size="small"
+                type={sampleLanguageFilter === 'all' ? 'primary' : 'text'}
+                onClick={() => setSampleLanguageFilter('all')}
+                style={{
+                  borderRadius: '4px',
+                  fontSize: '12px',
+                  height: '24px',
+                  padding: '0 12px',
+                }}
+              >
+                All
+              </Button>
+              <Button
+                size="small"
+                type={sampleLanguageFilter === 'csharp' ? 'primary' : 'text'}
+                onClick={() => setSampleLanguageFilter('csharp')}
+                style={{
+                  borderRadius: '4px',
+                  fontSize: '12px',
+                  height: '24px',
+                  padding: '0 12px',
+                }}
+              >
+                C#
+              </Button>
+              <Button
+                size="small"
+                type={sampleLanguageFilter === 'python' ? 'primary' : 'text'}
+                onClick={() => setSampleLanguageFilter('python')}
+                style={{
+                  borderRadius: '4px',
+                  fontSize: '12px',
+                  height: '24px',
+                  padding: '0 12px',
+                }}
+              >
+                Python
+              </Button>
+            </Space>
+          </div>
+
+          {/* Samples list with filtering */}
+          <div style={{ flex: 1, overflowY: 'auto' }}>
+            {SAMPLE_CATEGORIES.map((category) => {
+              // Filter samples by category and language
+              const samples = SAMPLES.filter((s) => {
+                if (s.category !== category) return false;
+                if (sampleLanguageFilter === 'all') return true;
+                return s.language === sampleLanguageFilter;
+              });
+
+              // Skip empty categories
+              if (samples.length === 0) return null;
+
+              return (
+                <div key={category}>
+                  <div
+                    style={{
+                      padding: '12px 12px 8px',
+                      borderBottom: `1px solid ${border}`,
+                      background: bgAlt,
+                    }}
+                  >
+                    <Text strong style={{ color: '#4ec9b0' }}>
+                      {category} ({samples.length})
+                    </Text>
+                  </div>
+                  <List dataSource={samples} renderItem={renderSampleItem} split={false} />
                 </div>
-                <List dataSource={samples} renderItem={renderSampleItem} split={false} />
-              </div>
-            );
-          })}
+              );
+            })}
+            {/* Empty state when no samples match filter */}
+            {SAMPLES.filter((s) =>
+              sampleLanguageFilter === 'all' ? true : s.language === sampleLanguageFilter
+            ).length === 0 && (
+              <Empty
+                description={
+                  <span style={{ color: textSecondary }}>
+                    No samples found for {sampleLanguageFilter === 'csharp' ? 'C#' : 'Python'}.
+                    <br />
+                    Switch to &quot;All&quot; to see all available samples.
+                  </span>
+                }
+                style={{ marginTop: '60px' }}
+              />
+            )}
+          </div>
         </div>
       )}
     </div>
