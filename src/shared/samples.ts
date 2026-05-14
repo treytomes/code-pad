@@ -695,13 +695,16 @@ dump(divide(10, "invalid"), "Type Error (10/'invalid')")
 
 # Context manager (file auto-closes)
 import tempfile
+import os
+
 temp_file = tempfile.NamedTemporaryFile(mode='w', delete=False)
+temp_file.close()  # Close the handle before reopening
+
 try:
     with open(temp_file.name, 'w') as f:
         f.write("Context manager ensures file closes")
     dump("✓ File written with context manager", "Status")
 finally:
-    import os
     os.unlink(temp_file.name)`,
   },
 
