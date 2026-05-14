@@ -24,7 +24,7 @@ def dump(obj: Any, label: Optional[str] = None) -> Any:
 
     # Handle different types
     if obj is None:
-        print("null")
+        print("None")
     elif isinstance(obj, str):
         # Strings print directly (no JSON encoding)
         print(obj)
