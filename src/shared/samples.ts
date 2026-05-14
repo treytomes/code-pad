@@ -18,7 +18,8 @@ export const SAMPLE_CATEGORIES = [
   'Long-Running Tasks',
   'DumpContainer',
   'Output Formats',
-  'Python',
+  'Python Basics',
+  'Python dump() Function',
 ] as const;
 
 export const SAMPLES: SampleSnippet[] = [
@@ -525,11 +526,11 @@ $@"<svg xmlns='http://www.w3.org/2000/svg' width='380' height='220' style='backg
 </svg>".Dump("Pie Chart");`,
   },
 
-  // Python Samples
+  // Python Basics Samples
   {
     id: 'sample-python-hello',
     name: 'Python Hello World',
-    category: 'Python',
+    category: 'Python Basics',
     description: 'Your first Python snippet in CodePad',
     language: 'python',
     code: `# Welcome to Python in CodePad!
@@ -541,35 +542,36 @@ print("🐍 Let's get started!")`,
   },
   {
     id: 'sample-python-basics',
-    name: 'Python Basics',
-    category: 'Python',
+    name: 'Variables and Types',
+    category: 'Python Basics',
     description: 'Variables, types, and basic operations',
     language: 'python',
     code: `# Variables and types
 name = "CodePad"
-version = 0.1
+version = 0.2
 is_awesome = True
 
-print(f"Welcome to {name} v{version}")
-print(f"Is it awesome? {is_awesome}")
+dump(name, "App Name")
+dump(version, "Version")
+dump(is_awesome, "Is Awesome?")
 
 # Lists
 numbers = [1, 2, 3, 4, 5]
-print(f"Numbers: {numbers}")
-print(f"Sum: {sum(numbers)}")
+dump(numbers, "Numbers")
+dump(sum(numbers), "Sum")
 
 # Dictionary
 user = {"name": "Alice", "age": 30, "role": "Developer"}
-print(f"User: {user['name']}, Age: {user['age']}")
+dump(user, "User Info")
 
 # List comprehension
 squares = [x**2 for x in range(1, 6)]
-print(f"Squares: {squares}")`,
+dump(squares, "Squares (1-5)")`,
   },
   {
     id: 'sample-python-libs',
-    name: 'Python Standard Libraries',
-    category: 'Python',
+    name: 'Standard Libraries',
+    category: 'Python Basics',
     description: 'Using built-in Python modules',
     language: 'python',
     code: `import sys
@@ -579,29 +581,31 @@ import random
 import json
 
 # System information
-print(f"Python version: {sys.version.split()[0]}")
-print(f"Platform: {sys.platform}")
-print(f"Current directory: {os.getcwd()}")
+sys_info = {
+    "python_version": sys.version.split()[0],
+    "platform": sys.platform,
+    "current_dir": os.getcwd()
+}
+dump(sys_info, "System Info")
 
 # Date and time
 now = datetime.datetime.now()
-print(f"\\nCurrent time: {now.strftime('%Y-%m-%d %H:%M:%S')}")
+dump(now.strftime('%Y-%m-%d %H:%M:%S'), "Current Time")
 
 # Random numbers
-print(f"\\nRandom number: {random.randint(1, 100)}")
+dump(random.randint(1, 100), "Random Number (1-100)")
 colors = ["red", "blue", "green", "yellow"]
-print(f"Random color: {random.choice(colors)}")
+dump(random.choice(colors), "Random Color")
 
 # JSON handling
 data = {"name": "CodePad", "languages": ["C#", "Python"]}
-json_string = json.dumps(data, indent=2)
-print(f"\\nJSON output:\\n{json_string}")`,
+dump(data, "App Data")`,
   },
   {
     id: 'sample-python-data',
     name: 'Data Processing',
-    category: 'Python',
-    description: 'Working with data structures',
+    category: 'Python Basics',
+    description: 'Working with data structures and filtering',
     language: 'python',
     code: `# Data processing example
 users = [
@@ -611,24 +615,219 @@ users = [
     {"name": "Dave", "age": 28, "score": 78},
 ]
 
-print("=== All Users ===")
-for user in users:
-    print(f"{user['name']:10} Age: {user['age']} Score: {user['score']}")
+dump(users, "All Users")
 
-print("\\n=== High Scorers (>= 90) ===")
+# Filter high scorers
 high_scorers = [u for u in users if u['score'] >= 90]
-for user in high_scorers:
-    print(f"{user['name']:10} Score: {user['score']}")
+dump(high_scorers, "High Scorers (>= 90)")
 
 # Statistics
 ages = [u['age'] for u in users]
 scores = [u['score'] for u in users]
 
-print("\\n=== Statistics ===")
-print(f"Average age: {sum(ages) / len(ages):.1f}")
-print(f"Average score: {sum(scores) / len(scores):.1f}")
-print(f"Min score: {min(scores)}")
-print(f"Max score: {max(scores)}")`,
+stats = {
+    "avg_age": round(sum(ages) / len(ages), 1),
+    "avg_score": round(sum(scores) / len(scores), 1),
+    "min_score": min(scores),
+    "max_score": max(scores)
+}
+dump(stats, "Statistics")`,
+  },
+  {
+    id: 'sample-python-file-io',
+    name: 'File I/O',
+    category: 'Python Basics',
+    description: 'Reading and writing files',
+    language: 'python',
+    code: `from pathlib import Path
+import os
+import tempfile
+
+# Get temp directory
+temp_dir = tempfile.gettempdir()
+file_path = Path(temp_dir) / "codepad_test.txt"
+
+# Write to file
+content = "Hello from CodePad!\\nLine 2\\nLine 3"
+file_path.write_text(content)
+dump("✓ File written", "Status")
+
+# Read from file
+data = file_path.read_text()
+dump(data, "File Contents")
+
+# File metadata
+stat = os.stat(file_path)
+file_info = {
+    "path": str(file_path),
+    "size_bytes": stat.st_size,
+    "modified": stat.st_mtime
+}
+dump(file_info, "File Info")
+
+# Cleanup
+file_path.unlink()
+dump("✓ File deleted", "Cleanup")`,
+  },
+  {
+    id: 'sample-python-errors',
+    name: 'Error Handling',
+    category: 'Python Basics',
+    description: 'Try/except/finally for robust code',
+    language: 'python',
+    code: `def divide(a, b):
+    """Safely divide two numbers"""
+    try:
+        result = a / b
+        return {"success": True, "result": result}
+    except ZeroDivisionError:
+        return {"success": False, "error": "Division by zero"}
+    except TypeError:
+        return {"success": False, "error": "Invalid types"}
+    finally:
+        # Always executes (cleanup code)
+        pass
+
+# Test cases
+dump(divide(10, 2), "Valid Division (10/2)")
+dump(divide(10, 0), "Zero Division (10/0)")
+dump(divide(10, "invalid"), "Type Error (10/'invalid')")
+
+# Context manager (file auto-closes)
+import tempfile
+temp_file = tempfile.NamedTemporaryFile(mode='w', delete=False)
+try:
+    with open(temp_file.name, 'w') as f:
+        f.write("Context manager ensures file closes")
+    dump("✓ File written with context manager", "Status")
+finally:
+    import os
+    os.unlink(temp_file.name)`,
+  },
+
+  // Python dump() Function Samples
+  {
+    id: 'sample-python-dump-basic',
+    name: 'Basic Object Dumping',
+    category: 'Python dump() Function',
+    description: 'Visualize any Python object with dump()',
+    language: 'python',
+    code: `# Primitives
+dump(42, "Integer")
+dump(3.14159, "Float")
+dump("Hello, World!", "String")
+dump(True, "Boolean")
+dump(None, "None")
+
+# Collections
+dump([1, 2, 3, 4, 5], "List")
+dump({"name": "Alice", "age": 30}, "Dict")
+dump({1, 2, 3}, "Set")
+dump((10, 20, 30), "Tuple")
+
+# Nested structures
+nested = {
+    "user": {"name": "Bob", "id": 123},
+    "scores": [85, 90, 92],
+    "metadata": {
+        "active": True,
+        "tags": ["python", "developer"]
+    }
+}
+dump(nested, "Nested Object")`,
+  },
+  {
+    id: 'sample-python-dump-labels',
+    name: 'Labeled Dumps',
+    category: 'Python dump() Function',
+    description: 'Organize output with labeled sections',
+    language: 'python',
+    code: `import datetime
+
+# Labels help organize output into sections
+dump("Starting data analysis...", "Status")
+
+# Load data
+data = {
+    "timestamp": datetime.datetime.now().isoformat(),
+    "source": "user_database",
+    "records": 1000
+}
+dump(data, "Data Source Info")
+
+# Process data
+users = [
+    {"id": 1, "name": "Alice", "active": True},
+    {"id": 2, "name": "Bob", "active": False},
+    {"id": 3, "name": "Charlie", "active": True}
+]
+dump(users, "User Records")
+
+# Results
+active_users = [u for u in users if u["active"]]
+dump(active_users, "Active Users Only")
+dump(len(active_users), "Active User Count")`,
+  },
+  {
+    id: 'sample-python-dump-chaining',
+    name: 'Chaining Dumps',
+    category: 'Python dump() Function',
+    description: 'Use dump() in data pipelines',
+    language: 'python',
+    code: `# dump() returns the object for chaining
+data = [
+    {"name": "Alice", "score": 85, "grade": "B"},
+    {"name": "Bob", "score": 92, "grade": "A"},
+    {"name": "Charlie", "score": 78, "grade": "C"},
+    {"name": "Diana", "score": 95, "grade": "A"}
+]
+
+# Show data at each transformation step
+original = dump(data, "Original Data")
+
+# Filter A students
+a_students = [s for s in original if s["grade"] == "A"]
+dump(a_students, "A Students Only")
+
+# Get high scorers
+high_scorers = [s for s in a_students if s["score"] >= 90]
+dump(high_scorers, "High Scorers (>=90)")
+
+# Extract names
+names = [s["name"] for s in high_scorers]
+result = dump(names, "Final Names")
+
+# dump() returns the value
+print(f"\\nResult type: {type(result)}")
+print(f"Result value: {result}")`,
+  },
+  {
+    id: 'sample-python-dump-tables',
+    name: 'Arrays as Tables',
+    category: 'Python dump() Function',
+    description: 'Arrays of objects render as tables',
+    language: 'python',
+    code: `# Arrays of dictionaries render as tables
+products = [
+    {"id": 101, "name": "Laptop", "price": 999.99, "stock": 15},
+    {"id": 102, "name": "Mouse", "price": 29.99, "stock": 50},
+    {"id": 103, "name": "Keyboard", "price": 79.99, "stock": 30},
+    {"id": 104, "name": "Monitor", "price": 349.99, "stock": 8},
+]
+
+dump(products, "Product Catalog")
+
+# Filter low stock
+low_stock = [p for p in products if p["stock"] < 20]
+dump(low_stock, "Low Stock Items")
+
+# Calculate totals
+inventory_value = sum(p["price"] * p["stock"] for p in products)
+dump("{:,.2f}".format(inventory_value), "Total Inventory Value")
+
+# Top 3 by price
+top_by_price = sorted(products, key=lambda p: p["price"], reverse=True)[:3]
+dump(top_by_price, "Top 3 Most Expensive")`,
   },
 ];
 
