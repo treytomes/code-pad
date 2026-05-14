@@ -27,6 +27,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
   stopPython: () => ipcRenderer.invoke('python-stop'),
   checkPythonRuntime: (customPath?: string) => ipcRenderer.invoke('python-check-runtime', customPath),
 
+  // pip/venv management
+  pipInstallPackages: (packages: string[]) => ipcRenderer.invoke('pip-install-packages', packages),
+  pipListInstalled: () => ipcRenderer.invoke('pip-list-installed'),
+  venvGetInfo: () => ipcRenderer.invoke('venv-get-info'),
+  venvCreate: () => ipcRenderer.invoke('venv-create'),
+
   // Check runtime requirements
   checkRuntime: () => ipcRenderer.invoke('check-runtime'),
 
@@ -122,5 +128,14 @@ contextBridge.exposeInMainWorld('electronAPI', {
     getRecentlyOpened: (limit?: number) => ipcRenderer.invoke('db-get-recently-opened', limit),
 
     getAllTags: () => ipcRenderer.invoke('db-get-all-tags'),
+
+    // Snippet packages (pip)
+    getSnippetPackages: (snippetId: string) => ipcRenderer.invoke('db-get-snippet-packages', snippetId),
+    addSnippetPackage: (snippetId: string, packageName: string, packageVersion?: string) =>
+      ipcRenderer.invoke('db-add-snippet-package', snippetId, packageName, packageVersion),
+    removeSnippetPackage: (snippetId: string, packageName: string) =>
+      ipcRenderer.invoke('db-remove-snippet-package', snippetId, packageName),
+    clearSnippetPackages: (snippetId: string) =>
+      ipcRenderer.invoke('db-clear-snippet-packages', snippetId),
   },
 });

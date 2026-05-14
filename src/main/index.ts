@@ -387,6 +387,30 @@ electron.ipcMain.handle('python-check-runtime', async (_, customPath?: string) =
   return await detectPythonRuntime(customPath);
 });
 
+// pip/venv IPC Handlers
+import { PipManager } from '../backend/pip-manager';
+const pipManager = new PipManager();
+
+electron.ipcMain.handle('pip-install-packages', async (_, packages: string[]) => {
+  logInfo(`pip install request for packages: ${packages.join(', ')}`);
+  return await pipManager.installPackages(packages);
+});
+
+electron.ipcMain.handle('pip-list-installed', async () => {
+  logDebug('pip list request received');
+  return await pipManager.listInstalled();
+});
+
+electron.ipcMain.handle('venv-get-info', async () => {
+  logDebug('venv info request received');
+  return await pipManager.getVenvInfo();
+});
+
+electron.ipcMain.handle('venv-create', async () => {
+  logInfo('venv create request received');
+  return await pipManager.createVenv();
+});
+
 // Database IPC Handlers
 electron.ipcMain.handle('db-create-snippet', async (_event, snippet) => {
   return snippetDb.createSnippet(snippet);
@@ -435,6 +459,26 @@ electron.ipcMain.handle('db-get-all-tags', async () => {
 // Get recently opened snippets
 electron.ipcMain.handle('db-get-recently-opened', async (_event, limit?: number) => {
   return snippetDb.getRecentlyOpenedSnippets(limit);
+});
+
+// Snippet packages (pip) handlers
+electron.ipcMain.handle('db-get-snippet-packages', async (_event, snippetId: string) => {
+  return snippetDb.getSnippetPackages(snippetId);
+});
+
+electron.ipcMain.handle(
+  'db-add-snippet-package',
+  async (_event, snippetId: string, packageName: string, packageVersion?: string) => {
+    return snippetDb.addSnippetPackage(snippetId, packageName, packageVersion);
+  }
+);
+
+electron.ipcMain.handle('db-remove-snippet-package', async (_event, snippetId: string, packageName: string) => {
+  return snippetDb.removeSnippetPackage(snippetId, packageName);
+});
+
+electron.ipcMain.handle('db-clear-snippet-packages', async (_event, snippetId: string) => {
+  return snippetDb.clearSnippetPackages(snippetId);
 });
 
 // Check runtime requirements

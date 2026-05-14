@@ -1,6 +1,7 @@
 import { ExecutionResult } from '../../backend/executors/csharp';
-import { Snippet } from '../../backend/database';
+import { Snippet, SnippetPackage } from '../../backend/database';
 import { QueryType, NuGetReference, LocalAssemblyReference, ExecutionResult as PythonExecutionResult, PythonRuntimeInfo } from '../../shared/types';
+import { VirtualEnvironmentInfo, PackageInstallResult } from '../../backend/pip-manager';
 
 export interface ElectronAPI {
   ping: () => string;
@@ -21,6 +22,12 @@ export interface ElectronAPI {
   executePython: (code: string, options?: { timeout?: number }) => Promise<PythonExecutionResult>;
   stopPython: () => Promise<void>;
   checkPythonRuntime: (customPath?: string) => Promise<PythonRuntimeInfo>;
+
+  // pip/venv management
+  pipInstallPackages: (packages: string[]) => Promise<PackageInstallResult>;
+  pipListInstalled: () => Promise<Record<string, string>>;
+  venvGetInfo: () => Promise<VirtualEnvironmentInfo>;
+  venvCreate: () => Promise<{ success: boolean; error?: string }>;
 
   checkRuntime: () => Promise<{
     hasDotnet: boolean;
@@ -78,6 +85,12 @@ export interface ElectronAPI {
     getRecentlyOpened: (limit: number) => Promise<Snippet[]>;
     getAllTags: () => Promise<string[]>;
     updateLastOpened: (id: string) => Promise<boolean>;
+
+    // Snippet packages (pip)
+    getSnippetPackages: (snippetId: string) => Promise<SnippetPackage[]>;
+    addSnippetPackage: (snippetId: string, packageName: string, packageVersion?: string) => Promise<SnippetPackage>;
+    removeSnippetPackage: (snippetId: string, packageName: string) => Promise<void>;
+    clearSnippetPackages: (snippetId: string) => Promise<void>;
   };
 }
 

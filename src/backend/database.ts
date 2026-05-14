@@ -37,6 +37,14 @@ export interface Snippet {
   lastOpenedAt: number | null;
 }
 
+export interface SnippetPackage {
+  id: number;
+  snippetId: string;
+  packageName: string;
+  packageVersion?: string;
+  createdAt: number;
+}
+
 export class SnippetDatabase {
   private db: Database.Database;
 
@@ -168,6 +176,30 @@ export class SnippetDatabase {
         logInfo('Running migration: Add local_references column');
         this.db.exec(`ALTER TABLE snippets ADD COLUMN local_references TEXT NOT NULL DEFAULT '[]';`);
         logInfo('Migration completed: local_references column added');
+        ranAny = true;
+      }
+
+      // Migration 7: Create snippet_packages table for pip packages
+      const hasSnippetPackagesTable = this.db
+        .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='snippet_packages'")
+        .get();
+
+      if (!hasSnippetPackagesTable) {
+        logInfo('Running migration: Create snippet_packages table');
+        this.db.exec(`
+          CREATE TABLE snippet_packages (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            snippet_id TEXT NOT NULL,
+            package_name TEXT NOT NULL,
+            package_version TEXT,
+            created_at INTEGER NOT NULL,
+            FOREIGN KEY (snippet_id) REFERENCES snippets(id) ON DELETE CASCADE,
+            UNIQUE(snippet_id, package_name)
+          );
+
+          CREATE INDEX idx_snippet_packages_snippet_id ON snippet_packages(snippet_id);
+        `);
+        logInfo('Migration completed: snippet_packages table created');
         ranAny = true;
       }
 
@@ -425,5 +457,63 @@ export class SnippetDatabase {
 
   close() {
     this.db.close();
+  }
+
+  // ==================== Snippet Packages (pip) ====================
+
+  /**
+   * Get all packages for a snippet
+   */
+  getSnippetPackages(snippetId: string): SnippetPackage[] {
+    const stmt = this.db.prepare(`
+      SELECT id, snippet_id as snippetId, package_name as packageName,
+             package_version as packageVersion, created_at as createdAt
+      FROM snippet_packages
+      WHERE snippet_id = ?
+      ORDER BY package_name
+    `);
+    return stmt.all(snippetId) as SnippetPackage[];
+  }
+
+  /**
+   * Add a package to a snippet (or update version if already exists)
+   */
+  addSnippetPackage(
+    snippetId: string,
+    packageName: string,
+    packageVersion?: string
+  ): SnippetPackage {
+    const now = Date.now();
+    const stmt = this.db.prepare(`
+      INSERT INTO snippet_packages (snippet_id, package_name, package_version, created_at)
+      VALUES (?, ?, ?, ?)
+      ON CONFLICT(snippet_id, package_name) DO UPDATE SET
+        package_version = excluded.package_version
+      RETURNING id, snippet_id as snippetId, package_name as packageName,
+                package_version as packageVersion, created_at as createdAt
+    `);
+    return stmt.get(snippetId, packageName, packageVersion || null, now) as SnippetPackage;
+  }
+
+  /**
+   * Remove a package from a snippet
+   */
+  removeSnippetPackage(snippetId: string, packageName: string): void {
+    const stmt = this.db.prepare(`
+      DELETE FROM snippet_packages
+      WHERE snippet_id = ? AND package_name = ?
+    `);
+    stmt.run(snippetId, packageName);
+  }
+
+  /**
+   * Remove all packages for a snippet
+   */
+  clearSnippetPackages(snippetId: string): void {
+    const stmt = this.db.prepare(`
+      DELETE FROM snippet_packages
+      WHERE snippet_id = ?
+    `);
+    stmt.run(snippetId);
   }
 }

@@ -1,7 +1,8 @@
 import { spawn, ChildProcess } from 'child_process';
-import { writeFileSync, unlinkSync, readFileSync } from 'fs';
+import { writeFileSync, unlinkSync, readFileSync, existsSync } from 'fs';
 import { tmpdir } from 'os';
 import { join, dirname } from 'path';
+import { app } from 'electron';
 import type { ExecutionOptions, ExecutionResult } from '../../shared/types';
 import { detectPythonRuntime } from './python-runtime';
 
@@ -12,8 +13,25 @@ export class PythonExecutor {
 
   /**
    * Initialize executor and detect Python runtime
+   * Prefers venv Python if available, falls back to system Python
    */
-  async initialize(customPath?: string): Promise<boolean> {
+  async initialize(customPath?: string, useVenv: boolean = true): Promise<boolean> {
+    // Check for venv Python first (if useVenv is true)
+    if (useVenv && !customPath) {
+      const venvPath = join(app.getPath('userData'), 'venv');
+      const venvPython =
+        process.platform === 'win32'
+          ? join(venvPath, 'Scripts', 'python.exe')
+          : join(venvPath, 'bin', 'python');
+
+      if (existsSync(venvPython)) {
+        this.pythonCommand = venvPython;
+        this.initialized = true;
+        return true;
+      }
+    }
+
+    // Fall back to system Python detection
     const runtimeInfo = await detectPythonRuntime(customPath);
     if (runtimeInfo.available && runtimeInfo.path) {
       this.pythonCommand = runtimeInfo.path;

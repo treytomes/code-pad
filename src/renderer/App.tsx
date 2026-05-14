@@ -52,6 +52,9 @@ const KeyboardShortcutsModal = React.lazy(() =>
 const ScriptPropertiesModal = React.lazy(() =>
   import('./components/ScriptPropertiesModal').then((m) => ({ default: m.default }))
 );
+const PythonPackagesModal = React.lazy(() =>
+  import('./components/PythonPackagesModal').then((m) => ({ default: m.default }))
+);
 
 // Import types separately (types don't affect bundle)
 import type { ScriptProperties } from './components/ScriptPropertiesModal';
@@ -217,6 +220,7 @@ function App() {
   const [queryType, setQueryType] = useState<QueryType>('statements');
   const [scriptProperties, setScriptProperties] = useState<ScriptProperties>({ usings: [], references: [], localReferences: [], tags: [] });
   const [scriptPropertiesVisible, setScriptPropertiesVisible] = useState(false);
+  const [pythonPackagesVisible, setPythonPackagesVisible] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const layoutRef = useRef<HTMLDivElement>(null);
 
@@ -950,8 +954,18 @@ function App() {
             />
             <Button
               icon={<SettingOutlined />}
-              onClick={() => setScriptPropertiesVisible(true)}
-              title="Script Properties (namespaces & NuGet references)"
+              onClick={() => {
+                if (language === 'python') {
+                  setPythonPackagesVisible(true);
+                } else {
+                  setScriptPropertiesVisible(true);
+                }
+              }}
+              title={
+                language === 'python'
+                  ? 'Python Packages (pip)'
+                  : 'Script Properties (namespaces & NuGet references)'
+              }
             />
             <Button icon={<PlusOutlined />} onClick={handleNewSnippet} title="New Snippet (Ctrl+N)">
               New
@@ -1277,6 +1291,14 @@ function App() {
               setScriptPropertiesVisible(false);
             }}
             onCancel={() => setScriptPropertiesVisible(false)}
+          />
+        </React.Suspense>
+        <React.Suspense fallback={null}>
+          <PythonPackagesModal
+            open={pythonPackagesVisible}
+            snippetId={currentSnippetId}
+            isDark={isDark}
+            onCancel={() => setPythonPackagesVisible(false)}
           />
         </React.Suspense>
       </Layout>
