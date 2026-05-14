@@ -281,6 +281,162 @@ describe('SnippetDatabase', () => {
     });
   });
 
+  describe('snippet packages', () => {
+    it('should add a package to a snippet', () => {
+      const snippet = db.createSnippet({
+        name: 'Python Snippet',
+        language: 'python',
+        code: 'import requests',
+      });
+
+      const pkg = db.addSnippetPackage(snippet.id, 'requests', '>=2.0.0');
+
+      expect(pkg.id).toBeGreaterThan(0);
+      expect(pkg.snippetId).toBe(snippet.id);
+      expect(pkg.packageName).toBe('requests');
+      expect(pkg.packageVersion).toBe('>=2.0.0');
+      expect(pkg.createdAt).toBeGreaterThan(0);
+    });
+
+    it('should add a package without version', () => {
+      const snippet = db.createSnippet({
+        name: 'Python Snippet',
+        language: 'python',
+        code: 'import numpy',
+      });
+
+      const pkg = db.addSnippetPackage(snippet.id, 'numpy');
+
+      expect(pkg.packageName).toBe('numpy');
+      expect(pkg.packageVersion).toBeUndefined();
+    });
+
+    it('should get all packages for a snippet', () => {
+      const snippet = db.createSnippet({
+        name: 'Python Snippet',
+        language: 'python',
+        code: 'import requests, numpy',
+      });
+
+      db.addSnippetPackage(snippet.id, 'requests', '>=2.0.0');
+      db.addSnippetPackage(snippet.id, 'numpy', '>=1.20.0');
+
+      const packages = db.getSnippetPackages(snippet.id);
+
+      expect(packages.length).toBe(2);
+      expect(packages[0].packageName).toBe('numpy');
+      expect(packages[1].packageName).toBe('requests');
+    });
+
+    it('should return empty array for snippet with no packages', () => {
+      const snippet = db.createSnippet({
+        name: 'Python Snippet',
+        language: 'python',
+        code: 'print("hello")',
+      });
+
+      const packages = db.getSnippetPackages(snippet.id);
+
+      expect(packages).toEqual([]);
+    });
+
+    it('should update package version on duplicate add', () => {
+      const snippet = db.createSnippet({
+        name: 'Python Snippet',
+        language: 'python',
+        code: 'import requests',
+      });
+
+      const pkg1 = db.addSnippetPackage(snippet.id, 'requests', '>=2.0.0');
+      const pkg2 = db.addSnippetPackage(snippet.id, 'requests', '>=2.31.0');
+
+      expect(pkg2.id).toBe(pkg1.id);
+      expect(pkg2.packageVersion).toBe('>=2.31.0');
+
+      const packages = db.getSnippetPackages(snippet.id);
+      expect(packages.length).toBe(1);
+      expect(packages[0].packageVersion).toBe('>=2.31.0');
+    });
+
+    it('should remove a package from a snippet', () => {
+      const snippet = db.createSnippet({
+        name: 'Python Snippet',
+        language: 'python',
+        code: 'import requests, numpy',
+      });
+
+      db.addSnippetPackage(snippet.id, 'requests');
+      db.addSnippetPackage(snippet.id, 'numpy');
+
+      db.removeSnippetPackage(snippet.id, 'requests');
+
+      const packages = db.getSnippetPackages(snippet.id);
+      expect(packages.length).toBe(1);
+      expect(packages[0].packageName).toBe('numpy');
+    });
+
+    it('should clear all packages for a snippet', () => {
+      const snippet = db.createSnippet({
+        name: 'Python Snippet',
+        language: 'python',
+        code: 'import requests, numpy, pandas',
+      });
+
+      db.addSnippetPackage(snippet.id, 'requests');
+      db.addSnippetPackage(snippet.id, 'numpy');
+      db.addSnippetPackage(snippet.id, 'pandas');
+
+      db.clearSnippetPackages(snippet.id);
+
+      const packages = db.getSnippetPackages(snippet.id);
+      expect(packages).toEqual([]);
+    });
+
+    it('should delete packages when snippet is deleted (cascade)', () => {
+      const snippet = db.createSnippet({
+        name: 'Python Snippet',
+        language: 'python',
+        code: 'import requests',
+      });
+
+      db.addSnippetPackage(snippet.id, 'requests');
+      db.addSnippetPackage(snippet.id, 'numpy');
+
+      db.deleteSnippet(snippet.id);
+
+      const packages = db.getSnippetPackages(snippet.id);
+      expect(packages).toEqual([]);
+    });
+
+    it('should handle packages for multiple snippets', () => {
+      const snippet1 = db.createSnippet({
+        name: 'Snippet 1',
+        language: 'python',
+        code: 'import requests',
+      });
+
+      const snippet2 = db.createSnippet({
+        name: 'Snippet 2',
+        language: 'python',
+        code: 'import numpy',
+      });
+
+      db.addSnippetPackage(snippet1.id, 'requests');
+      db.addSnippetPackage(snippet2.id, 'numpy');
+      db.addSnippetPackage(snippet2.id, 'pandas');
+
+      const packages1 = db.getSnippetPackages(snippet1.id);
+      const packages2 = db.getSnippetPackages(snippet2.id);
+
+      expect(packages1.length).toBe(1);
+      expect(packages1[0].packageName).toBe('requests');
+
+      expect(packages2.length).toBe(2);
+      expect(packages2[0].packageName).toBe('numpy');
+      expect(packages2[1].packageName).toBe('pandas');
+    });
+  });
+
   describe('database lifecycle', () => {
     it('should create database directory if not exists', () => {
       const customPath = './test-dir/test.db';
