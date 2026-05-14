@@ -20,6 +20,8 @@ export const SAMPLE_CATEGORIES = [
   'Output Formats',
   'Python Basics',
   'Python dump() Function',
+  'Python Async & Concurrency',
+  'Python pip Packages',
 ] as const;
 
 export const SAMPLES: SampleSnippet[] = [
@@ -801,8 +803,8 @@ names = [s["name"] for s in high_scorers]
 result = dump(names, "Final Names")
 
 # dump() returns the value
-print(f"\\nResult type: {type(result)}")
-print(f"Result value: {result}")`,
+print("\\nResult type: {0}".format(type(result)))
+print("Result value: {0}".format(result))`,
   },
   {
     id: 'sample-python-dump-tables',
@@ -831,6 +833,170 @@ dump("{:,.2f}".format(inventory_value), "Total Inventory Value")
 # Top 3 by price
 top_by_price = sorted(products, key=lambda p: p["price"], reverse=True)[:3]
 dump(top_by_price, "Top 3 Most Expensive")`,
+  },
+
+  // Python Async & Concurrency Samples
+  {
+    id: 'sample-python-async-basics',
+    name: 'Async/Await Basics',
+    category: 'Python Async & Concurrency',
+    description: 'Asynchronous programming with async/await',
+    language: 'python',
+    code: `import asyncio
+import time
+
+async def fetch_data(name: str, delay: float):
+    """Simulate async data fetching"""
+    print("Fetching {0}...".format(name))
+    await asyncio.sleep(delay)
+    return {"name": name, "delay": delay, "timestamp": time.time()}
+
+async def main():
+    # Sequential execution
+    start = time.time()
+    result1 = await fetch_data("User 1", 1.0)
+    result2 = await fetch_data("User 2", 1.5)
+    sequential_time = time.time() - start
+
+    dump([result1, result2], "Sequential Results")
+    dump("{:.2f}s".format(sequential_time), "Sequential Time")
+
+    # Concurrent execution
+    start = time.time()
+    results = await asyncio.gather(
+        fetch_data("User 3", 1.0),
+        fetch_data("User 4", 1.5)
+    )
+    concurrent_time = time.time() - start
+
+    dump(results, "Concurrent Results")
+    dump("{:.2f}s".format(concurrent_time), "Concurrent Time (should be ~1.5s)")
+
+# Run async main
+asyncio.run(main())`,
+  },
+  {
+    id: 'sample-python-concurrent-tasks',
+    name: 'Concurrent Tasks',
+    category: 'Python Async & Concurrency',
+    description: 'Run multiple async operations in parallel',
+    language: 'python',
+    code: `import asyncio
+import random
+
+async def process_item(item_id: int):
+    """Simulate processing an item"""
+    delay = random.uniform(0.5, 2.0)
+    await asyncio.sleep(delay)
+    return {
+        "id": item_id,
+        "status": "completed",
+        "processing_time": "{:.2f}s".format(delay)
+    }
+
+async def main():
+    # Process 5 items concurrently
+    item_ids = [1, 2, 3, 4, 5]
+    dump(item_ids, "Items to Process")
+
+    # Create tasks
+    tasks = [process_item(item_id) for item_id in item_ids]
+
+    # Wait for all to complete
+    import time
+    start = time.time()
+    results = await asyncio.gather(*tasks)
+    total_time = time.time() - start
+
+    dump(results, "Processing Results")
+    dump("{:.2f}s".format(total_time), "Total Time (parallel execution)")
+
+    # Sequential would take sum of all delays (5-10s)
+    # Concurrent takes max delay (~2s)
+
+asyncio.run(main())`,
+  },
+
+  // Python pip Packages Samples
+  {
+    id: 'sample-python-requests',
+    name: 'Using requests',
+    category: 'Python pip Packages',
+    description: 'HTTP requests with the requests library',
+    language: 'python',
+    code: `# Requires: requests
+# Add "requests" in Script Properties -> Python Packages -> Install
+
+import requests
+
+# GET request to GitHub API
+response = requests.get("https://api.github.com/repos/python/cpython")
+dump(response.status_code, "Status Code")
+
+data = response.json()
+repo_info = {
+    "name": data["name"],
+    "description": data["description"],
+    "stars": data["stargazers_count"],
+    "forks": data["forks_count"],
+    "language": data["language"],
+    "open_issues": data["open_issues_count"]
+}
+dump(repo_info, "Python CPython Repository")
+
+# Response headers
+interesting_headers = {
+    "content-type": response.headers.get("content-type"),
+    "x-ratelimit-remaining": response.headers.get("x-ratelimit-remaining"),
+}
+dump(interesting_headers, "Response Headers")
+
+# POST example (demonstration only - won't actually work without auth)
+payload = {"title": "Test Issue", "body": "Example POST request"}
+dump(payload, "Example POST Payload")
+print("Note: Actual POST would require authentication")`,
+  },
+  {
+    id: 'sample-python-pandas',
+    name: 'Using pandas',
+    category: 'Python pip Packages',
+    description: 'Data analysis with pandas DataFrames',
+    language: 'python',
+    code: `# Requires: pandas
+# Add "pandas" in Script Properties -> Python Packages -> Install
+
+import pandas as pd
+
+# Create DataFrame from dictionary
+data = {
+    "Name": ["Alice", "Bob", "Charlie", "Diana", "Eve"],
+    "Age": [25, 30, 35, 28, 32],
+    "Department": ["Engineering", "Sales", "Engineering", "HR", "Sales"],
+    "Salary": [75000, 65000, 85000, 60000, 70000]
+}
+
+df = pd.DataFrame(data)
+dump(df.to_dict('records'), "Employee Data")
+
+# Basic statistics
+stats = {
+    "Average Age": df["Age"].mean(),
+    "Average Salary": df["Salary"].mean(),
+    "Total Employees": len(df)
+}
+dump(stats, "Summary Statistics")
+
+# Filter by department
+engineering = df[df["Department"] == "Engineering"]
+dump(engineering.to_dict('records'), "Engineering Department")
+
+# Group by department
+dept_avg = df.groupby("Department")["Salary"].mean().to_dict()
+dump(dept_avg, "Average Salary by Department")
+
+# Sort by salary (descending)
+top_earners = df.nlargest(3, "Salary")[["Name", "Salary"]].to_dict('records')
+dump(top_earners, "Top 3 Earners")`,
   },
 ];
 
