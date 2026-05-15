@@ -7,10 +7,10 @@ import {
   Layout,
   Modal,
   Input,
-  message,
   Space,
   Select,
   ConfigProvider,
+  App as AntApp,
   theme as antTheme,
 } from 'antd';
 import type { QueryType, NuGetReference, Language } from '../shared/types';
@@ -130,7 +130,8 @@ const DEFAULT_CODE: Record<string, string> = {
   program: DEFAULT_CODE_PROGRAM,
 };
 
-function App() {
+function AppContent() {
+  const { message } = AntApp.useApp();
   // Load saved settings from localStorage
   const loadSavedSettings = () => {
     try {
@@ -930,7 +931,8 @@ function App() {
 
   return (
     <ConfigProvider theme={themeConfig}>
-      <Layout style={{ height: '100vh', background: bgMain }}>
+      <AntApp>
+        <Layout style={{ height: '100vh', background: bgMain }}>
         <RuntimeWarning />
         <React.Suspense fallback={null}>
           <WelcomeModal forceOpen={welcomeVisible || undefined} onClose={() => setWelcomeVisible(false)} />
@@ -1350,8 +1352,9 @@ function App() {
           />
         </React.Suspense>
       </Layout>
+      </AntApp>
     </ConfigProvider>
   );
 }
 
-export default App;
+export default AppContent;
