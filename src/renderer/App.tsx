@@ -206,6 +206,7 @@ function App() {
   const [isDraggingOutput, setIsDraggingOutput] = useState(false);
   const [isDraggingSidebar, setIsDraggingSidebar] = useState(false);
   const [currentSnippetId, setCurrentSnippetId] = useState<string | null>(null);
+  const [currentSamplePackages, setCurrentSamplePackages] = useState<string[] | null>(null);
   const [saveModalVisible, setSaveModalVisible] = useState(false);
   const [aboutVisible, setAboutVisible] = useState(false);
   const [settingsVisible, setSettingsVisible] = useState(false);
@@ -264,6 +265,41 @@ function App() {
   };
 
   const handleRun = async () => {
+    // Check if this sample requires packages that aren't installed
+    if (currentSamplePackages && currentSamplePackages.length > 0) {
+      const packageList = currentSamplePackages.join(', ');
+      const userChoice = window.confirm(
+        `This sample requires the following pip packages:\n${packageList}\n\n` +
+        `These packages are not installed yet. Would you like to:\n\n` +
+        `• Click OK to copy this sample to "My Snippets" where you can install the packages\n` +
+        `• Click Cancel to run anyway (will fail with ModuleNotFoundError)`
+      );
+
+      if (userChoice) {
+        // Copy the sample to My Snippets
+        await handleDuplicateSnippet({
+          id: `sample-temp-${Date.now()}`,
+          name: snippetName || 'Untitled',
+          language,
+          code,
+          createdAt: Date.now(),
+          modifiedAt: Date.now(),
+          executionCount: 0,
+          starred: false,
+          lastOpenedAt: null,
+          queryType,
+          usings: scriptProperties.usings,
+          references: scriptProperties.references,
+          localReferences: scriptProperties.localReferences,
+          tags: scriptProperties.tags,
+        } as Snippet, currentSamplePackages);
+
+        message.info(`Sample copied to "My Snippets". Click Script Properties to install packages.`);
+        return; // Don't run
+      }
+      // User chose to run anyway despite missing packages
+    }
+
     setIsRunning(true);
     setOutput('');
     setProgressEvents([]);
@@ -468,6 +504,10 @@ function App() {
     setScriptProperties({ usings: snippet.usings ?? [], references: snippet.references ?? [], localReferences: snippet.localReferences ?? [], tags: snippet.tags ?? [] });
     setOutput('');
 
+    // Store sample packages if this is a sample (has _samplePackages property)
+    const samplePackages = (snippet as any)._samplePackages;
+    setCurrentSamplePackages(samplePackages || null);
+
     // Update last opened timestamp
     try {
       await window.electronAPI.db.updateLastOpened(snippet.id);
@@ -506,8 +546,6 @@ function App() {
 
   const handleDuplicateSnippet = async (snippet: Snippet, packages?: string[]) => {
     try {
-      console.log('handleDuplicateSnippet called with packages:', packages);
-      alert(`handleDuplicateSnippet received:\nSnippet: ${snippet.name}\nPackages: ${JSON.stringify(packages)}\nLanguage: ${snippet.language}`);
       const newSnippet = await window.electronAPI.db.createSnippet({
         name: `${snippet.name} (Copy)`,
         language: snippet.language,
@@ -518,22 +556,12 @@ function App() {
         localReferences: snippet.localReferences ?? [],
         tags: snippet.tags ?? [],
       });
-      console.log('Created snippet with id:', newSnippet.id);
 
       // Add packages if provided (for Python samples)
       if (packages && packages.length > 0 && snippet.language === 'python') {
-        console.log('Adding packages:', packages);
-        alert(`About to add ${packages.length} packages to snippet ${newSnippet.id}`);
         for (const pkg of packages) {
-          console.log('Adding package:', pkg);
-          const result = await window.electronAPI.db.addSnippetPackage(newSnippet.id, pkg);
-          console.log('Package add result:', result);
+          await window.electronAPI.db.addSnippetPackage(newSnippet.id, pkg);
         }
-        console.log('Packages added successfully');
-        alert('Packages added to database!');
-      } else {
-        console.log('No packages to add. packages:', packages, 'language:', snippet.language);
-        alert(`NOT adding packages. packages: ${JSON.stringify(packages)}, language: ${snippet.language}`);
       }
 
       message.success('Snippet duplicated');

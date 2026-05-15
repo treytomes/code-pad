@@ -313,7 +313,8 @@ export const SnippetList: React.FC<SnippetListProps> = ({
       data-testid={`sample-item-${sample.id}`}
       onClick={() => {
         // Convert sample to snippet format for loading
-        onSelectSnippet({
+        // Store packages in a temporary property for samples
+        const snippetWithPackages = {
           id: sample.id,
           name: sample.name,
           language: sample.language,
@@ -323,7 +324,9 @@ export const SnippetList: React.FC<SnippetListProps> = ({
           executionCount: 0,
           starred: false,
           lastOpenedAt: null,
-        } as Snippet);
+          _samplePackages: sample.packages, // Temporary property for samples
+        } as any;
+        onSelectSnippet(snippetWithPackages);
       }}
       style={{
         padding: '12px 16px',
@@ -351,8 +354,6 @@ export const SnippetList: React.FC<SnippetListProps> = ({
               icon={<CopyOutlined />}
               onClick={(e) => {
                 e.stopPropagation();
-                console.log('Sample copy clicked. Sample:', sample.name, 'Packages:', sample.packages);
-                alert(`Copying sample: ${sample.name}\nPackages: ${JSON.stringify(sample.packages)}`);
                 const newSnippet = {
                   id: sample.id,
                   name: `${sample.name} (Copy)`,
@@ -366,7 +367,6 @@ export const SnippetList: React.FC<SnippetListProps> = ({
                 } as Snippet;
 
                 // Pass packages to the duplicate handler
-                console.log('Calling onDuplicateSnippet with packages:', sample.packages);
                 onDuplicateSnippet(newSnippet, sample.packages);
               }}
               style={{ color: textSecondary }}
