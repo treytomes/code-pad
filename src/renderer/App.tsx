@@ -523,13 +523,17 @@ function App() {
       // Add packages if provided (for Python samples)
       if (packages && packages.length > 0 && snippet.language === 'python') {
         console.log('Adding packages:', packages);
+        alert(`About to add ${packages.length} packages to snippet ${newSnippet.id}`);
         for (const pkg of packages) {
           console.log('Adding package:', pkg);
-          await window.electronAPI.db.addSnippetPackage(newSnippet.id, pkg);
+          const result = await window.electronAPI.db.addSnippetPackage(newSnippet.id, pkg);
+          console.log('Package add result:', result);
         }
         console.log('Packages added successfully');
+        alert('Packages added to database!');
       } else {
         console.log('No packages to add. packages:', packages, 'language:', snippet.language);
+        alert(`NOT adding packages. packages: ${JSON.stringify(packages)}, language: ${snippet.language}`);
       }
 
       message.success('Snippet duplicated');
