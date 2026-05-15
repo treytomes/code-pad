@@ -37,7 +37,7 @@ interface SnippetListProps {
   onSelectSnippet: (snippet: Snippet) => void;
   onDeleteSnippet: (id: string) => void;
   onRenameSnippet: (id: string, newName: string) => void;
-  onDuplicateSnippet: (snippet: Snippet) => void;
+  onDuplicateSnippet: (snippet: Snippet, packages?: string[]) => void;
   refreshTrigger?: number;
   isDark?: boolean;
 }
@@ -349,7 +349,7 @@ export const SnippetList: React.FC<SnippetListProps> = ({
               type="text"
               size="small"
               icon={<CopyOutlined />}
-              onClick={async (e) => {
+              onClick={(e) => {
                 e.stopPropagation();
                 const newSnippet = {
                   id: sample.id,
@@ -363,29 +363,8 @@ export const SnippetList: React.FC<SnippetListProps> = ({
                   lastOpenedAt: null,
                 } as Snippet;
 
-                // Duplicate the snippet first
-                onDuplicateSnippet(newSnippet);
-
-                // If sample has packages, add them to the new snippet after a brief delay
-                // (to allow the snippet to be created first)
-                if (sample.packages && sample.packages.length > 0 && sample.language === 'python') {
-                  setTimeout(async () => {
-                    try {
-                      // Get the most recently created snippet (should be our duplicate)
-                      const snippets = await window.electronAPI.db.listSnippets('python');
-                      const newestSnippet = snippets.find(s => s.name === `${sample.name} (Copy)`);
-
-                      if (newestSnippet) {
-                        // Add each package to the duplicated snippet
-                        for (const pkg of sample.packages!) {
-                          await window.electronAPI.db.addSnippetPackage(newestSnippet.id, pkg);
-                        }
-                      }
-                    } catch (error) {
-                      console.error('Failed to add packages to duplicated sample:', error);
-                    }
-                  }, 500);
-                }
+                // Pass packages to the duplicate handler
+                onDuplicateSnippet(newSnippet, sample.packages);
               }}
               style={{ color: textSecondary }}
               title="Copy to My Snippets"

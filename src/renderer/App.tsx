@@ -504,7 +504,7 @@ function App() {
     }
   };
 
-  const handleDuplicateSnippet = async (snippet: Snippet) => {
+  const handleDuplicateSnippet = async (snippet: Snippet, packages?: string[]) => {
     try {
       const newSnippet = await window.electronAPI.db.createSnippet({
         name: `${snippet.name} (Copy)`,
@@ -516,6 +516,14 @@ function App() {
         localReferences: snippet.localReferences ?? [],
         tags: snippet.tags ?? [],
       });
+
+      // Add packages if provided (for Python samples)
+      if (packages && packages.length > 0 && snippet.language === 'python') {
+        for (const pkg of packages) {
+          await window.electronAPI.db.addSnippetPackage(newSnippet.id, pkg);
+        }
+      }
+
       message.success('Snippet duplicated');
       setRefreshTrigger((prev) => prev + 1);
 
