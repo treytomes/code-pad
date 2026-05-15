@@ -351,7 +351,8 @@ export const SnippetList: React.FC<SnippetListProps> = ({
               icon={<CopyOutlined />}
               onClick={(e) => {
                 e.stopPropagation();
-                console.log('Sample copy clicked. Sample packages:', sample.packages);
+                console.log('Sample copy clicked. Sample:', sample.name, 'Packages:', sample.packages);
+                alert(`Copying sample: ${sample.name}\nPackages: ${JSON.stringify(sample.packages)}`);
                 const newSnippet = {
                   id: sample.id,
                   name: `${sample.name} (Copy)`,
