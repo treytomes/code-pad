@@ -507,6 +507,7 @@ function App() {
   const handleDuplicateSnippet = async (snippet: Snippet, packages?: string[]) => {
     try {
       console.log('handleDuplicateSnippet called with packages:', packages);
+      alert(`handleDuplicateSnippet received:\nSnippet: ${snippet.name}\nPackages: ${JSON.stringify(packages)}\nLanguage: ${snippet.language}`);
       const newSnippet = await window.electronAPI.db.createSnippet({
         name: `${snippet.name} (Copy)`,
         language: snippet.language,
