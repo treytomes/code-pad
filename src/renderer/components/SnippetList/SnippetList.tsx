@@ -351,6 +351,7 @@ export const SnippetList: React.FC<SnippetListProps> = ({
               icon={<CopyOutlined />}
               onClick={(e) => {
                 e.stopPropagation();
+                console.log('Sample copy clicked. Sample packages:', sample.packages);
                 const newSnippet = {
                   id: sample.id,
                   name: `${sample.name} (Copy)`,
@@ -364,6 +365,7 @@ export const SnippetList: React.FC<SnippetListProps> = ({
                 } as Snippet;
 
                 // Pass packages to the duplicate handler
+                console.log('Calling onDuplicateSnippet with packages:', sample.packages);
                 onDuplicateSnippet(newSnippet, sample.packages);
               }}
               style={{ color: textSecondary }}
