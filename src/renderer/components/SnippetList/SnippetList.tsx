@@ -605,7 +605,7 @@ export const SnippetList: React.FC<SnippetListProps> = ({
 
       {/* Samples pane */}
       {activeTab === 'samples' && (
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: bg }}>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: bg, minHeight: 0 }}>
           {/* Language filter for samples */}
           <div
             style={{
@@ -659,7 +659,7 @@ export const SnippetList: React.FC<SnippetListProps> = ({
           </div>
 
           {/* Samples list with filtering */}
-          <div style={{ flex: 1, overflowY: 'auto' }}>
+          <div style={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
             {SAMPLE_CATEGORIES.map((category) => {
               // Filter samples by category and language
               const samples = SAMPLES.filter((s) => {
