@@ -10,6 +10,7 @@ export interface SampleSnippet {
   description: string;
   code: string;
   language: string;
+  packages?: string[]; // Required pip packages (Python only)
 }
 
 export const SAMPLE_CATEGORIES = [
@@ -924,6 +925,7 @@ asyncio.run(main())`,
     category: 'Python pip Packages',
     description: 'HTTP requests with the requests library',
     language: 'python',
+    packages: ['requests'],
     code: `# Requires: requests
 # Add "requests" in Script Properties -> Python Packages -> Install
 
@@ -962,6 +964,7 @@ print("Note: Actual POST would require authentication")`,
     category: 'Python pip Packages',
     description: 'Data analysis with pandas DataFrames',
     language: 'python',
+    packages: ['pandas'],
     code: `# Requires: pandas
 # Add "pandas" in Script Properties -> Python Packages -> Install
 

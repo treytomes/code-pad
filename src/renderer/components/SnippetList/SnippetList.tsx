@@ -349,9 +349,9 @@ export const SnippetList: React.FC<SnippetListProps> = ({
               type="text"
               size="small"
               icon={<CopyOutlined />}
-              onClick={(e) => {
+              onClick={async (e) => {
                 e.stopPropagation();
-                onDuplicateSnippet({
+                const newSnippet = {
                   id: sample.id,
                   name: `${sample.name} (Copy)`,
                   language: sample.language,
@@ -361,7 +361,31 @@ export const SnippetList: React.FC<SnippetListProps> = ({
                   executionCount: 0,
                   starred: false,
                   lastOpenedAt: null,
-                } as Snippet);
+                } as Snippet;
+
+                // Duplicate the snippet first
+                onDuplicateSnippet(newSnippet);
+
+                // If sample has packages, add them to the new snippet after a brief delay
+                // (to allow the snippet to be created first)
+                if (sample.packages && sample.packages.length > 0 && sample.language === 'python') {
+                  setTimeout(async () => {
+                    try {
+                      // Get the most recently created snippet (should be our duplicate)
+                      const snippets = await window.electronAPI.db.listSnippets('python');
+                      const newestSnippet = snippets.find(s => s.name === `${sample.name} (Copy)`);
+
+                      if (newestSnippet) {
+                        // Add each package to the duplicated snippet
+                        for (const pkg of sample.packages!) {
+                          await window.electronAPI.db.addSnippetPackage(newestSnippet.id, pkg);
+                        }
+                      }
+                    } catch (error) {
+                      console.error('Failed to add packages to duplicated sample:', error);
+                    }
+                  }, 500);
+                }
               }}
               style={{ color: textSecondary }}
               title="Copy to My Snippets"
@@ -369,9 +393,31 @@ export const SnippetList: React.FC<SnippetListProps> = ({
           </div>
         }
         description={
-          <Text type="secondary" style={{ fontSize: '12px', color: textSecondary }}>
-            {sample.description}
-          </Text>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            <Text type="secondary" style={{ fontSize: '12px', color: textSecondary }}>
+              {sample.description}
+            </Text>
+            {sample.packages && sample.packages.length > 0 && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexWrap: 'wrap' }}>
+                <Text style={{ fontSize: '11px', color: '#ce9178' }}>Requires:</Text>
+                {sample.packages.map((pkg) => (
+                  <Tag
+                    key={pkg}
+                    style={{
+                      fontSize: '10px',
+                      padding: '0 4px',
+                      margin: 0,
+                      background: '#3c2c1e',
+                      border: '1px solid #ce9178',
+                      color: '#ce9178',
+                    }}
+                  >
+                    {pkg}
+                  </Tag>
+                ))}
+              </div>
+            )}
+          </div>
         }
       />
     </List.Item>
